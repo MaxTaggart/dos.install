@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.03.28.03"
+version="2018.03.28.04"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -15,7 +15,7 @@ source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 # this sets the keyboard so it handles backspace properly
 # http://www.peachpit.com/articles/article.aspx?p=659655&seqNum=13
 echo "running stty sane to fix terminal keyboard mappings"
-stty sane
+stty sane < /dev/tty
 
 mkdir -p $HOME/bin
 installscript="$HOME/bin/dos"
