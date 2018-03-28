@@ -9,7 +9,7 @@ GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 # source ./common/common.sh
 
-version="2018.03.27.01"
+version="2018.03.28.01"
 
 echo "---- setup-loadbalancer.sh version $version ------"
 
@@ -66,27 +66,27 @@ if [[ -z "$sslsecret" ]]; then
         kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$certfolder/tls.crt" --from-file="$certfolder/tls.key"
 fi
 
-yamlfile="kubernetes/loadbalancer/configmaps/config.ssl.yaml"
+yamlfile="loadbalancer/configmaps/config.ssl.yaml"
 echo "Downloading $GITHUB_URL/$yamlfile"
 ReadYamlAndReplaceCustomer $GITHUB_URL "$yamlfile" $customerid \
         | kubectl apply -f -
 
-yamlfile="kubernetes/loadbalancer/roles/ingress-roles.yaml"
+yamlfile="loadbalancer/roles/ingress-roles.yaml"
 echo "Downloading $GITHUB_URL/$yamlfile"
 ReadYamlAndReplaceCustomer $GITHUB_URL "$yamlfile" $customerid \
         | kubectl apply -f -
 
-yamlfile="kubernetes/loadbalancer/pods/ingress-onprem.yaml"
+yamlfile="loadbalancer/pods/ingress-onprem.yaml"
 echo "Downloading $GITHUB_URL/$yamlfile"
 ReadYamlAndReplaceCustomer $GITHUB_URL "$yamlfile" $customerid \
         | kubectl apply -f -
 
-yamlfile="kubernetes/loadbalancer/services/cluster/dashboard-onprem.yaml"
+yamlfile="loadbalancer/services/cluster/dashboard-onprem.yaml"
 echo "Downloading $GITHUB_URL/$yamlfile"
 ReadYamlAndReplaceCustomer $GITHUB_URL "$yamlfile" $customerid \
         | kubectl apply -f -
 
-yamlfile="kubernetes/loadbalancer/services/external/loadbalancer.onprem.yaml"
+yamlfile="loadbalancer/services/external/loadbalancer.onprem.yaml"
 echo "Downloading $GITHUB_URL/$yamlfile"
 ReadYamlAndReplaceCustomer $GITHUB_URL "$yamlfile" $customerid \
         | kubectl apply -f -

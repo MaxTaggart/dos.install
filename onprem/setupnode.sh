@@ -16,6 +16,13 @@ sudo yum -y install yum-versionlock
 
 sudo yum update -y
 
+echo "--- stopping docker and kubectl ---"
+servicestatus=$(systemctl show -p SubState kubelet)
+if [[ $servicestatus = *"running"* ]]; then
+  echo "stopping kubelet"
+  sudo systemctl stop kubelet 2>/dev/null
+fi
+
 # remove older versions
 # sudo systemctl stop docker 2>/dev/null
 echo "--- Removing previous versions of kubernetes and docker --"
@@ -32,6 +39,7 @@ sudo yum -y remove docker \
                   docker-selinux \
                   docker-engine-selinux \
                   docker-engine
+                  
 # sudo rm -rf /var/lib/docker
 
 echo "--- Adding docker repo --"
@@ -93,7 +101,7 @@ EOF
 # install kubeadm
 # https://saurabh-deochake.github.io/posts/2017/07/post-1/
 sudo setenforce 0
-# sudo systemctl stop kubelet 2>/dev/null
+
 echo "--- Removing previous versions of kubernetes ---"
 sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
 
