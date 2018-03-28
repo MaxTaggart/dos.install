@@ -67,10 +67,10 @@ while [[ "$input" != "q" ]]; do
     read -p "Please make a selection:" -e input  < /dev/tty 
 
     case "$input" in
-    1)  curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupnode.txt?p=$RANDOM | bash
-        curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupmaster.txt?p=$RANDOM | bash
+    1)  curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupnode.sh?p=$RANDOM | bash
+        curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupmaster.sh?p=$RANDOM | bash
         curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setup-loadbalancer.sh?p=$RANDOM | bash
-        curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/dashboard/setup-kubdashboard.sh?p=$RANDOM | bash
+        InstallStack $GITHUB_URL "kube-system" "dashboard"
         ;;
     2)  echo "Current cluster: $(kubectl config current-context)"
         kubectl version --short

@@ -59,12 +59,44 @@ if [ $u != "root" ]; then
     # from https://superuser.com/questions/272061/reload-a-linux-users-group-assignments-without-logging-out
     # https://man.cx/newgrp(1)
     newgrp docker
-    curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupnode2.txt | sh
-
-    #echo "curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupnode2.txt | sh" | sudo tee -a ~/.bashrc
-    #echo "Please logout and login again"
-else
-    echo "Setting up docker"
-    curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupnode2.txt | sh
 fi
 
+cat << EOF | sudo tee -a /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOF
+
+
+# install kubeadm
+# https://saurabh-deochake.github.io/posts/2017/07/post-1/
+sudo setenforce 0
+# sudo systemctl stop kubelet 2>/dev/null
+sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
+
+echo "checking to see if port 10250 is still busy"
+sudo lsof -i -P -n | grep LISTEN
+
+echo "kubernetes versions available in repo"
+sudo yum --showduplicates list kubelet kubeadm kubectl kubernetes-cni
+
+sudo yum install -y kubelet-1.9.3-0 kubeadm-1.9.3-0 kubectl-1.9.6-0 kubernetes-cni-0.6.0-0
+sudo yum versionlock kubelet
+sudo yum versionlock kubeadm
+sudo yum versionlock kubectl
+sudo yum versionlock kubernetes-cni
+
+sudo systemctl enable kubelet && sudo systemctl start kubelet
+
+# Some users on RHEL/CentOS 7 have reported issues with traffic being routed incorrectly due to iptables being bypassed
+cat << EOF | sudo tee -a /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+sudo sysctl --system
+
+echo "---- finish setupnode version $version ----"
