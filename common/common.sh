@@ -330,6 +330,9 @@ function ShowCommandToJoinCluster(){
 }
 
 function JoinNodeToCluster(){
+    echo "--- resetting kubeadm ---"
+    sudo kubeadm reset 2>/dev/null
+
     while [[ -z "$joincommand" ]]; do
         read -p "Paste kubeadm join command here" joincommand < /dev/tty    
     done      

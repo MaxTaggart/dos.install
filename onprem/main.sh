@@ -89,8 +89,8 @@ while [[ "$input" != "q" ]]; do
         ;;
     7)  InstallStack $GITHUB_URL "kube-system" "dashboard"
         ;;
-    8)  sudo kubeadm reset
-        sudo docker system prune -f
+    8)  sudo kubeadm reset 2>/dev/null
+        sudo docker system prune -f 2>/dev/null
         sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
         sudo docker volume rm etcd 2>/dev/null
         sudo rm -rf /var/etcd/backups/*
@@ -108,7 +108,8 @@ while [[ "$input" != "q" ]]; do
         ;;
     15)  mountAzureFile
         ;;
-    16) sudo docker system prune -f
+    16) sudo kubeadm reset 2>/dev/null
+        sudo docker system prune -f 2>/dev/null
         sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
         sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
         sudo yum -y remove docker docker-common docker-selinux docker-engine    
