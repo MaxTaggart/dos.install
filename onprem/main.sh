@@ -85,10 +85,7 @@ while [[ "$input" != "q" ]]; do
         ;;
     6)  curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setup-loadbalancer.sh?p=$RANDOM | bash
         ;;
-    7)  curl -sSL -o installstack.ps1 https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/installstack.ps1?p=$RANDOM
-        clear
-        # can't put tee on the next line or pwsh has issues including common files
-        pwsh -f installstack.ps1 -namespace "kube-system" -appfolder "dashboard" -isAzure 0 -NonInteractive
+    7)  InstallStack $GITHUB_URL "kube-system" "dashboard"
         ;;
     8)  sudo kubeadm reset
         sudo docker system prune -f

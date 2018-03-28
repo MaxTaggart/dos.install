@@ -31,10 +31,7 @@ while [[ "$input" != "q" ]]; do
     read -p "Please make a selection:" -e input  < /dev/tty 
 
     case "$input" in
-    1)  curl -sSL -o installstack.ps1 https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/installstack.ps1?p=$RANDOM
-        clear
-        # can't put tee on the next line or pwsh has issues including common files
-        pwsh -f installstack.ps1 -namespace "fabricrealtime" -appfolder "realtime" -isAzure 0 -NonInteractive
+    1)  InstallStack $GITHUB_URL "fabricrealtime" "realtime"
         ;;
     2)  kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=fabricrealtime -o wide
         ;;

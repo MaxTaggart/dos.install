@@ -286,4 +286,15 @@ function CleanOutNamespace(){
         fi
     done
 }
+
+function InstallStack(){
+    local baseUrl=$1
+    local namespace=$2
+    local appfolder=$3
+    
+    curl -sSL -o installstack.ps1 "$baseUrl/kubernetes/installstack.ps1?p=$RANDOM"
+    clear
+    # can't put tee on the next line or pwsh has issues including common files
+    pwsh -f installstack.ps1 -namespace "$namespace" -appfolder "$appfolder" -isAzure 0 -NonInteractive    
+}
 echo "--- Finished including common.sh version $versioncommon ---"
