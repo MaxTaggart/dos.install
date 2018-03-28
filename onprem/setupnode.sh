@@ -32,7 +32,7 @@ sudo yum -y remove docker \
                   docker-selinux \
                   docker-engine-selinux \
                   docker-engine
-sudo rm -rf /var/lib/docker
+# sudo rm -rf /var/lib/docker
 
 echo "--- Adding docker repo --"
 sudo yum-config-manager \
