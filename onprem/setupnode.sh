@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 #
 # This script is meant for quick & easy install via:
@@ -54,7 +54,7 @@ sudo yum versionlock docker-engine
 # https://docs.docker.com/config/containers/logging/json-file/
 echo "--- Configuring docker to use systemd and set logs to max size of 10MB and 5 days --"
 sudo mkdir -p /etc/docker
-cat << EOF | sudo tee -a /etc/docker/daemon.json
+cat << EOF | sudo tee /etc/docker/daemon.json
 {
   "exec-opts": ["native.cgroupdriver=systemd"],
   "log-driver": "json-file",
@@ -116,7 +116,7 @@ sudo systemctl enable kubelet && sudo systemctl start kubelet
 
 echo "--- setting up iptables for kubernetes ---"
 # Some users on RHEL/CentOS 7 have reported issues with traffic being routed incorrectly due to iptables being bypassed
-cat << EOF | sudo tee -a /etc/sysctl.d/k8s.conf
+cat << EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 EOF
