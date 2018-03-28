@@ -1,9 +1,10 @@
-param([int]$ssl, [string]$ingressInternal, [string]$ingressExternal, [string]$publicIp)
+param([int]$ssl, [string]$ingressInternal, [string]$ingressExternal, [string]$customerid, [string]$publicIp)
 # the above MUST be the first line
 Write-Host "Received parameters:"
 Write-Host "ssl:$ssl"
 Write-Host "ingressInternal:$ingressInternal"
 Write-Host "ingressExternal:$ingressExternal"
+Write-Host "customerid:$customerid"
 Write-Host "publicIp:$publicIp"
 Write-Host "----"
 Write-output "Version 2018.03.28.01"
