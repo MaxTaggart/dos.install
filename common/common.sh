@@ -1,5 +1,5 @@
 
-versioncommon="2018.03.19.01"
+versioncommon="2018.03.28.01"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -199,6 +199,18 @@ function WaitForPodsInNamespace(){
         done
         sleep $interval
     done     
+}
+
+function mountSharedFolder(){
+    while [[ -z "$mountAzure" ]]; do
+        read -p "Do you want to mount an Azure file share? (y/n)" mountAzure < /dev/tty    
+    done      
+    if [[ $mountAzure =~ ^[Yy]$ ]]
+    then
+        mountAzureFile
+    else
+        mountSMB
+    fi
 }
 
 function mountSMB(){

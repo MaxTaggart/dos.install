@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.03.28.01"
+version="2018.03.28.02"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -61,6 +61,7 @@ while [[ "$input" != "q" ]]; do
     case "$input" in
     1)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash
         curl -sSL $GITHUB_URL/onprem/setupmaster.sh?p=$RANDOM | bash
+        mountSharedFolder
         curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
         InstallStack $GITHUB_URL "kube-system" "dashboard"
         ;;
@@ -89,6 +90,7 @@ while [[ "$input" != "q" ]]; do
         echo "Please restart this computer"
         ;;
     12)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash
+        mountSharedFolder
         ;;
     14)  mountSMB
         ;;
