@@ -1574,13 +1574,15 @@ function global:InstallStack([ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNu
         $userInfo = $(GetLoggedInUserInfo)
     }
     
-    if ($isAzure) {
-        CreateAzureStorage -namespace $namespace
+    if ($namespace -ne "kube-system") {
+        if ($isAzure) {
+            CreateAzureStorage -namespace $namespace
+        }
+        else {
+            CreateOnPremStorage -namespace $namespace    
+        }
     }
-    else {
-        CreateOnPremStorage -namespace $namespace    
-    }
-    
+
     LoadStack -namespace $namespace -baseUrl $baseUrl -appfolder "$appfolder" -isAzure $isAzure
     
     if ($isAzure) {

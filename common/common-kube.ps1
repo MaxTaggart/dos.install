@@ -303,7 +303,9 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
         }
     }
    
-    CleanOutNamespace -namespace $namespace
+    if ($namespace -ne "kube-system") {
+        CleanOutNamespace -namespace $namespace
+    }
     
     $customerid = ReadSecret -secretname customerid
     $customerid = $customerid.ToLower().Trim()
