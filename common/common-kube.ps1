@@ -378,7 +378,11 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     Write-Host "Deploying pods"
     $folder = "loadbalancer/pods"
 
-    if ($ingressInternal -eq "public" ) {
+    if ($ingressExternal -eq "onprem" ) {
+        $files = "ingress-onprem.yaml"
+        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+    }
+    elseif ($ingressInternal -eq "public" ) {
         $files = "ingress-azure.both.yaml"
         DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
     }
@@ -412,7 +416,12 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
 
     $folder = "loadbalancer/services/external"
 
-    if ("$ingressExternal" -ne "vnetonly") {
+    if ($ingressExternal -eq "onprem" ) {
+        Write-Output "Setting up external load balancer"
+        $files = "loadbalancer.onprem.yaml"
+        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
+    }    
+    elseif ("$ingressExternal" -ne "vnetonly") {
         Write-Output "Setting up a public load balancer"
 
         Write-Host "Using Public IP: [$publicip]"
@@ -428,13 +437,15 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     }
 
 
-    Write-Output "Setting up an internal load balancer"
-    if ("$ingressInternal" -eq "public") {
+    if ($ingressExternal -eq "onprem" ) {
+    }
+    elseif ("$ingressInternal" -eq "public") {
+        Write-Output "Setting up an internal load balancer"
         $files = "loadbalancer.internal.open.yaml"
     }
     else {
+        Write-Output "Setting up an internal load balancer"
         $files = "loadbalancer.internal.yaml"
-
     }
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
 }

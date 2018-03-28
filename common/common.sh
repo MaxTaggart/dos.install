@@ -315,7 +315,7 @@ function InstallLoadBalancerStack(){
     local customerid=$2
     local ssl=0
     local ingressInternal="public"
-    local ingressExternal="public"
+    local ingressExternal="onprem"
     local publicIp=""
     
     curl -sSL -o installloadbalancerstack.ps1 "$baseUrl/kubernetes/installloadbalancerstack.ps1?p=$RANDOM"
