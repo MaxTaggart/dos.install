@@ -1,4 +1,4 @@
-Write-Host "--- create-bare-metal Version 2018.03.27.02 ----"
+Write-Host "--- create-bare-metal Version 2018.03.28.01 ----"
 
 #
 # This script is meant for quick & easy install via:
@@ -77,7 +77,9 @@ else {
     }        
 }
 
-$AKS_PERS_STORAGE_ACCOUNT_NAME = $(CreateStorageIfNotExists -resourceGroup $AKS_PERS_RESOURCE_GROUP -deleteStorageAccountIfExists $config.storage_account.delete_if_exists).AKS_PERS_STORAGE_ACCOUNT_NAME
+$storageInfo = $(CreateStorageIfNotExists -resourceGroup $AKS_PERS_RESOURCE_GROUP -deleteStorageAccountIfExists $config.storage_account.delete_if_exists)
+$AKS_PERS_STORAGE_ACCOUNT_NAME = $storageInfo.AKS_PERS_STORAGE_ACCOUNT_NAME
+$STORAGE_KEY = $storageInfo.STORAGE_KEY
 
 $AKS_VNET_NAME = $config.networking.vnet
 $AKS_SUBNET_NAME = $config.networking.subnet
@@ -85,7 +87,7 @@ $AKS_SUBNET_RESOURCE_GROUP = $config.networking.subnet_resource_group
 
 # see if the user wants to use a specific virtual network
 $VnetInfo = GetVnetInfo -subscriptionId $AKS_SUBSCRIPTION_ID -subnetResourceGroup $AKS_SUBNET_RESOURCE_GROUP -vnetName $AKS_VNET_NAME -subnetName $AKS_SUBNET_NAME
-$AKS_SUBNET_ID=$VnetInfo.AKS_SUBNET_ID
+$AKS_SUBNET_ID = $VnetInfo.AKS_SUBNET_ID
 
 CleanResourceGroup -resourceGroup ${AKS_PERS_RESOURCE_GROUP} -location $AKS_PERS_LOCATION -vnet $AKS_VNET_NAME `
     -subnet $AKS_SUBNET_NAME -subnetResourceGroup $AKS_SUBNET_RESOURCE_GROUP `
@@ -93,7 +95,8 @@ CleanResourceGroup -resourceGroup ${AKS_PERS_RESOURCE_GROUP} -location $AKS_PERS
 
 Write-Host "Using Storage Account: $AKS_PERS_STORAGE_ACCOUNT_NAME"
 
-CreateShareInStorageAccount -storageAccountName $AKS_PERS_STORAGE_ACCOUNT_NAME -resourceGroup $AKS_PERS_RESOURCE_GROUP -sharename "data"
+$SHARE_NAME="data"
+CreateShareInStorageAccount -storageAccountName $AKS_PERS_STORAGE_ACCOUNT_NAME -resourceGroup $AKS_PERS_RESOURCE_GROUP -sharename "$SHARE_NAME"
 
 $NETWORK_SECURITY_GROUP = "cluster-nsg"
 Write-Host "Creating network security group: $NETWORK_SECURITY_GROUP"
@@ -221,4 +224,8 @@ if ($AKS_SUPPORT_WINDOWS_CONTAINERS -eq "y") {
 
 }
 
+Write-Host "For mounting azure storage as a shared drive"
+Write-Host "Storage Account Name: $AKS_PERS_STORAGE_ACCOUNT_NAME"
+Write-Host "Share Name: $SHARE_NAME"
+Write-Host "Storage key: $STORAGE_KEY"
 

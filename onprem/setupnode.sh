@@ -22,6 +22,16 @@ echo "--- Removing previous versions of kubernetes and docker --"
 sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
 sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
 sudo yum -y remove docker docker-common docker-selinux docker-engine
+sudo yum -y remove docker \
+                  docker-client \
+                  docker-client-latest \
+                  docker-common \
+                  docker-latest \
+                  docker-latest-logrotate \
+                  docker-logrotate \
+                  docker-selinux \
+                  docker-engine-selinux \
+                  docker-engine
 sudo rm -rf /var/lib/docker
 
 echo "--- Adding docker repo --"
@@ -29,10 +39,10 @@ sudo yum-config-manager \
     --add-repo \
     https://docs.docker.com/v1.13/engine/installation/linux/repo_files/centos/docker.repo
 
-sudo yum repolist
+sudo yum -y repolist
 
 echo "-- docker versions available in repo --"
-sudo yum --showduplicates list docker-engine
+sudo yum -y --showduplicates list docker-engine
 
 echo "--- Installing docker via yum --"
 sudo yum install -y docker-engine-selinux-17.03.1.ce-1.el7.centos.noarch docker-engine-17.03.1.ce-1.el7.centos
@@ -70,7 +80,7 @@ fi
 
 echo "--- Adding kubernetes repo ---"
 
-cat << EOF | sudo tee -a /etc/yum.repos.d/kubernetes.repo
+cat << EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
 baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
@@ -79,7 +89,6 @@ gpgcheck=1
 repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOF
-
 
 # install kubeadm
 # https://saurabh-deochake.github.io/posts/2017/07/post-1/
@@ -92,7 +101,7 @@ echo "--- checking to see if port 10250 is still busy ---"
 sudo lsof -i -P -n | grep LISTEN
 
 echo "--- kubernetes versions available in repo ---"
-sudo yum --showduplicates list kubelet kubeadm kubectl kubernetes-cni
+sudo yum -y --showduplicates list kubelet kubeadm kubectl kubernetes-cni
 
 echo "--- installing kubernetes ---"
 sudo yum install -y kubelet-1.9.3-0 kubeadm-1.9.3-0 kubectl-1.9.6-0 kubernetes-cni-0.6.0-0

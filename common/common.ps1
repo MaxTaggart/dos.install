@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.03.28.01"
+$versioncommon = "2018.03.28.02"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -377,6 +377,9 @@ function global:CreateStorageIfNotExists([ValidateNotNullOrEmpty()] $resourceGro
         }
     }
 
+    $storageKey = az storage account keys list --resource-group $resourceGroup --account-name $storageAccountName --query "[0].value" --output tsv
+    
+    $Return.STORAGE_KEY = $storageKey
     $Return.AKS_PERS_STORAGE_ACCOUNT_NAME = $storageAccountName
     return $Return
 }
