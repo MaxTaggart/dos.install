@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.03.27.06"
+version="2018.03.28.01"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -16,7 +16,7 @@ mkdir -p $HOME/bin
 installscript="$HOME/bin/dos"
 if [[ ! -f "$installscript" ]]; then
     echo "#!/bin/bash" > $installscript
-    echo "curl -sSL $GITHUB_URL/"'kubernetes/main.sh?p=$RANDOM | bash' >> $installscript
+    echo "curl -sSL $GITHUB_URL/"'onprem/main.sh?p=$RANDOM | bash' >> $installscript
     chmod +x $installscript
     echo "NOTE: Next time just type 'dos' to bring up this menu"
 
