@@ -15,9 +15,10 @@ echo "---- setup-loadbalancer.sh version $version ------"
 
 # enable running pods on master
 # kubectl taint node mymasternode node-role.kubernetes.io/master:NoSchedule
-
+echo "--- deleting existing resources with label traefik ---"
 kubectl delete 'pods,services,configMaps,deployments,ingress' -l k8s-traefik=traefik -n kube-system --ignore-not-found=true
 
+echo "--- deleting existing service account for traefik ---"
 kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
 
 AKS_IP_WHITELIST=""

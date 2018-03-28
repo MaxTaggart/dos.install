@@ -18,26 +18,31 @@ sudo yum update -y
 
 # remove older versions
 # sudo systemctl stop docker 2>/dev/null
+echo "--- Removing previous versions of kubernetes and docker --"
 sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
 sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
 sudo yum -y remove docker docker-common docker-selinux docker-engine
 sudo rm -rf /var/lib/docker
 
+echo "--- Adding docker repo --"
 sudo yum-config-manager \
     --add-repo \
     https://docs.docker.com/v1.13/engine/installation/linux/repo_files/centos/docker.repo
 
 sudo yum repolist
 
-echo "docker versions available in repo"
+echo "-- docker versions available in repo --"
 sudo yum --showduplicates list docker-engine
 
+echo "--- Installing docker via yum --"
 sudo yum install -y docker-engine-selinux-17.03.1.ce-1.el7.centos.noarch docker-engine-17.03.1.ce-1.el7.centos
+echo "--- Locking version of docker so it does not get updated via yum update --"
 sudo yum versionlock docker-engine
 
 # https://kubernetes.io/docs/setup/independent/install-kubeadm/
 # log rotation for docker: https://docs.docker.com/config/daemon/
 # https://docs.docker.com/config/containers/logging/json-file/
+echo "--- Configuring docker to use systemd and set logs to max size of 10MB and 5 days --"
 sudo mkdir -p /etc/docker
 cat << EOF | sudo tee -a /etc/docker/daemon.json
 {
@@ -50,16 +55,20 @@ cat << EOF | sudo tee -a /etc/docker/daemon.json
 }
 EOF
 
+echo "--- Starting docker service --"
 sudo systemctl enable docker && sudo systemctl start docker
 
 if [ $u != "root" ]; then
-    echo "giving permission to $u"
+    echo "--- Giving permission to $u to interact with docker ---"
     sudo usermod -aG docker $u
     # reload permissions without requiring a logout
     # from https://superuser.com/questions/272061/reload-a-linux-users-group-assignments-without-logging-out
     # https://man.cx/newgrp(1)
+    echo "--- Reloading permissions via newgrp ---"
     newgrp docker
 fi
+
+echo "--- Adding kubernetes repo ---"
 
 cat << EOF | sudo tee -a /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
@@ -76,22 +85,27 @@ EOF
 # https://saurabh-deochake.github.io/posts/2017/07/post-1/
 sudo setenforce 0
 # sudo systemctl stop kubelet 2>/dev/null
+echo "--- Removing previous versions of kubernetes ---"
 sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
 
-echo "checking to see if port 10250 is still busy"
+echo "--- checking to see if port 10250 is still busy ---"
 sudo lsof -i -P -n | grep LISTEN
 
-echo "kubernetes versions available in repo"
+echo "--- kubernetes versions available in repo ---"
 sudo yum --showduplicates list kubelet kubeadm kubectl kubernetes-cni
 
+echo "--- installing kubernetes ---"
 sudo yum install -y kubelet-1.9.3-0 kubeadm-1.9.3-0 kubectl-1.9.6-0 kubernetes-cni-0.6.0-0
+echo "--- locking versions of kubernetes so they don't get updated by yum update ---"
 sudo yum versionlock kubelet
 sudo yum versionlock kubeadm
 sudo yum versionlock kubectl
 sudo yum versionlock kubernetes-cni
 
+echo "--- starting kubernetes service ---"
 sudo systemctl enable kubelet && sudo systemctl start kubelet
 
+echo "--- setting up iptables for kubernetes ---"
 # Some users on RHEL/CentOS 7 have reported issues with traffic being routed incorrectly due to iptables being bypassed
 cat << EOF | sudo tee -a /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-ip6tables = 1
