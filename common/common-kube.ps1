@@ -335,6 +335,109 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
     return $Return
 }
 
+function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, [ValidateNotNullOrEmpty()] [string]$ingressInternal, [ValidateNotNullOrEmpty()] [string]$ingressExternal, [ValidateNotNullOrEmpty()] [string]$customerid, [string]$publicIp) {
+    # delete existing containers
+    kubectl delete 'pods,services,configMaps,deployments,ingress' -l k8s-traefik=traefik -n kube-system --ignore-not-found=true
+
+    # set Google DNS servers to resolve external  urls
+    # http://blog.kubernetes.io/2017/04/configuring-private-dns-zones-upstream-nameservers-kubernetes.html
+    kubectl delete -f "$baseUrl/loadbalancer/dns/upstream.yaml" --ignore-not-found=true
+    Start-Sleep -Seconds 10
+    kubectl create -f "$baseUrl/loadbalancer/dns/upstream.yaml"
+    # to debug dns: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#inheriting-dns-from-the-node
+
+    kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
+
+    Write-Host "GITHUB_URL: $baseUrl"
+
+    # setting up traefik
+    # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
+
+    Write-Host "Deploying configmaps"
+    $folder = "loadbalancer/configmaps"
+    if ($ssl) {
+        $files = "config.ssl.yaml"
+        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+    }
+    else {
+        $files = "config.yaml"
+        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+    }
+
+    $kubectlversion = $(kubectl version --short=true)[1]
+    if ($kubectlversion -match "v1.8") {
+        Write-Host "Since kubectlversion ($kubectlversion) is less than 1.9 no roles are needed"
+    }
+    else {
+        Write-Host "Deploying roles"
+        $folder = "loadbalancer/roles"
+        $files = "ingress-roles.yaml"
+        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+    }
+
+    Write-Host "Deploying pods"
+    $folder = "loadbalancer/pods"
+
+    if ($ingressInternal -eq "public" ) {
+        $files = "ingress-azure.both.yaml"
+        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+    }
+    else {
+        if ($ssl) {
+            $files = "ingress-azure.ssl.yaml ingress-azure.internal.ssl.yaml"
+            DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+        }
+        else {
+            $files = "ingress-azure.yaml ingress-azure.internal.yaml"
+            DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+        }    
+    }
+
+    Write-Host "Deploying services"
+    $folder = "loadbalancer/services/cluster"
+    $files = "dashboard.yaml dashboard-internal.yaml"
+    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+
+    Write-Host "Deploying ingress"
+    $folder = "loadbalancer/ingress"
+
+    if ($ssl ) {
+        $files = "dashboard.ssl.yaml"
+        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+    }
+    else {
+        $files = "dashboard.yaml"
+        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+    }
+
+    $folder = "loadbalancer/services/external"
+
+    if ("$ingressExternal" -ne "vnetonly") {
+        Write-Output "Setting up a public load balancer"
+
+        Write-Host "Using Public IP: [$publicip]"
+
+        Write-Output "Setting up external load balancer"
+        $files = "loadbalancer.external.yaml"
+        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
+    }
+    else {
+        Write-Output "Setting up an external load balancer"
+        $files = "loadbalancer.external.restricted.yaml"
+        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
+    }
+
+
+    Write-Output "Setting up an internal load balancer"
+    if ("$ingressInternal" -eq "public") {
+        $files = "loadbalancer.internal.open.yaml"
+    }
+    else {
+        $files = "loadbalancer.internal.yaml"
+
+    }
+    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
+}
 # from http://www.bricelam.net/2012/09/simple-template-engine-for-powershell.html
 function Merge-Tokens($template, $tokens) {
     return [regex]::Replace(

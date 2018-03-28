@@ -161,68 +161,6 @@ if ($($config.ssl) ) {
 
 Write-Host "GITHUB_URL: $GITHUB_URL"
 
-# setting up traefik
-# https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
-
-Write-Host "Deploying configmaps"
-$folder = "loadbalancer/configmaps"
-if ($($config.ssl)) {
-    $files = "config.ssl.yaml"
-    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
-}
-else {
-    $files = "config.yaml"
-    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
-}
-
-$kubectlversion = $(kubectl version --short=true)[1]
-if ($kubectlversion -match "v1.8") {
-    Write-Host "Since kubectlversion ($kubectlversion) is less than 1.9 no roles are needed"
-}
-else {
-    Write-Host "Deploying roles"
-    $folder = "loadbalancer/roles"
-    $files = "ingress-roles.yaml"
-    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
-}
-
-Write-Host "Deploying pods"
-$folder = "loadbalancer/pods"
-
-if ($($config.ingress.internal) -eq "public" ) {
-    $files = "ingress-azure.both.yaml"
-    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
-}
-else {
-    if ($($config.ssl) ) {
-        $files = "ingress-azure.ssl.yaml ingress-azure.internal.ssl.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
-    }
-    else {
-        $files = "ingress-azure.yaml ingress-azure.internal.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
-    }    
-}
-
-Write-Host "Deploying services"
-$folder = "loadbalancer/services/cluster"
-$files = "dashboard.yaml dashboard-internal.yaml"
-DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
-
-Write-Host "Deploying ingress"
-$folder = "loadbalancer/ingress"
-
-if ($($config.ssl) ) {
-    $files = "dashboard.ssl.yaml"
-    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
-}
-else {
-    $files = "dashboard.yaml"
-    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
-}
-
-$folder = "loadbalancer/services/external"
-
 if ("$($config.ingress.external)" -ne "vnetonly") {
     Write-Output "Setting up a public load balancer"
 
@@ -231,30 +169,13 @@ if ("$($config.ingress.external)" -ne "vnetonly") {
         az network public-ip create -g $AKS_PERS_RESOURCE_GROUP -n IngressPublicIP --location $AKS_PERS_LOCATION --allocation-method Static
         $publicip = az network public-ip show -g $AKS_PERS_RESOURCE_GROUP -n IngressPublicIP --query "ipAddress" -o tsv;
     }  
-
     Write-Host "Using Public IP: [$publicip]"
-
-    Write-Output "Setting up external load balancer"
-    $files = "loadbalancer.external.yaml"
-    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid -public_ip $publicip
-}
-else {
-    Write-Output "Setting up an external load balancer"
-    $files = "loadbalancer.external.restricted.yaml"
-    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid -public_ip $publicip
 }
 
-if ($($config.ingress.internal) -ne "public" ) {
-    Write-Output "Setting up an internal load balancer"
-    if ("$($config.ingress.internal)" -eq "public") {
-        $files = "loadbalancer.internal.open.yaml"
-    }
-    else {
-        $files = "loadbalancer.internal.yaml"
+LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl $ssl -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -publicIp $publicIp
 
-    }
-    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid -public_ip $publicip
-}
+# setting up traefik
+# https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
 
 $loadBalancerIPResult = GetLoadBalancerIPs
 $EXTERNAL_IP = $loadBalancerIPResult.ExternalIP

@@ -309,4 +309,18 @@ function InstallStack(){
     # can't put tee on the next line or pwsh has issues including common files
     pwsh -f installstack.ps1 -namespace "$namespace" -appfolder "$appfolder" -isAzure 0 -NonInteractive    
 }
+
+function InstallLoadBalancerStack(){
+    local baseUrl=$1
+    local ssl=0
+    local ingressInternal="public"
+    local ingressExternal="public"
+    local publicIp=""
+    
+    curl -sSL -o installloadbalancerstack.ps1 "$baseUrl/kubernetes/installloadbalancerstack.ps1?p=$RANDOM"
+    clear
+    # can't put tee on the next line or pwsh has issues including common files
+    pwsh -f installloadbalancerstack.ps1 -ssl $ssl -ingressInternal $ingressInternal -ingressExternal $ingressExternal -publicIp $publicIp -NonInteractive    
+}
+
 echo "--- Finished including common.sh version $versioncommon ---"

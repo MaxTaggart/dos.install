@@ -66,36 +66,6 @@ if [[ -z "$sslsecret" ]]; then
         kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$certfolder/tls.crt" --from-file="$certfolder/tls.key"
 fi
 
-yamlfile="loadbalancer/configmaps/config.ssl.yaml"
-echo "Downloading $GITHUB_URL/$yamlfile"
-ReadYamlAndReplaceCustomer $GITHUB_URL "$yamlfile" $customerid \
-        | kubectl apply -f -
-
-yamlfile="loadbalancer/roles/ingress-roles.yaml"
-echo "Downloading $GITHUB_URL/$yamlfile"
-ReadYamlAndReplaceCustomer $GITHUB_URL "$yamlfile" $customerid \
-        | kubectl apply -f -
-
-yamlfile="loadbalancer/pods/ingress-onprem.yaml"
-echo "Downloading $GITHUB_URL/$yamlfile"
-ReadYamlAndReplaceCustomer $GITHUB_URL "$yamlfile" $customerid \
-        | kubectl apply -f -
-
-yamlfile="loadbalancer/services/cluster/dashboard-onprem.yaml"
-echo "Downloading $GITHUB_URL/$yamlfile"
-ReadYamlAndReplaceCustomer $GITHUB_URL "$yamlfile" $customerid \
-        | kubectl apply -f -
-
-yamlfile="loadbalancer/services/external/loadbalancer.onprem.yaml"
-echo "Downloading $GITHUB_URL/$yamlfile"
-ReadYamlAndReplaceCustomer $GITHUB_URL "$yamlfile" $customerid \
-        | kubectl apply -f -
-
-loadbalancer="traefik-ingress-service-public"
-loadBalancerIP="$(dig +short myip.opendns.com @resolver1.opendns.com)"
-echo "My WAN/Public IP address: ${loadBalancerIP}"
-    
-echo "To test out the load balancer, open Git Bash and run:"
-echo "curl -L --verbose --header 'Host: $dnsrecordname' 'http://$loadBalancerIP/' -k"        
+InstallLoadBalancerStack $GITHUB_URL
 
 echo "---- end of setup-loadbalancer.sh version $version ------"
