@@ -66,6 +66,6 @@ if [[ -z "$sslsecret" ]]; then
         kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$certfolder/tls.crt" --from-file="$certfolder/tls.key"
 fi
 
-InstallLoadBalancerStack $GITHUB_URL
+InstallLoadBalancerStack $GITHUB_URL "$customerid"
 
 echo "---- end of setup-loadbalancer.sh version $version ------"
