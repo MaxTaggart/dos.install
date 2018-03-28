@@ -2,7 +2,7 @@
 set -e
 #
 # This script is meant for quick & easy install via:
-#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/main.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
 version="2018.03.27.06"
@@ -42,8 +42,6 @@ while [[ "$input" != "q" ]]; do
     echo "14: Mount shared folder"
     echo "15: Mount Azure Storage as shared folder"
     echo "16: Uninstall Docker & Kubernetes"
-    echo "------ Product Install -------"
-    echo "25: Install NLP"
     echo "----- Troubleshooting ----"
     echo "31: Show status of cluster"
     # echo "32: Launch Kubernetes Admin Dashboard"
@@ -53,23 +51,17 @@ while [[ "$input" != "q" ]]; do
     echo "37: Test DNS"
     echo "38: Show contents of shared folder"
     echo "39: Show dashboard url"
-    echo "------ NLP -----"
-    echo "41: Show status of NLP"
-    echo "42: Test web sites"
-    echo "43: Show NLP passwords"
-    echo "44: Show detailed status of NLP"
-    echo "45: Show NLP logs"
-    # echo "46: Restart NLP"
     echo "-----------"
     echo "51: Load Fabric Realtime Menu"
+    echo "52: Load NLP Menu"
     echo "q: Quit"
 
     read -p "Please make a selection:" -e input  < /dev/tty 
 
     case "$input" in
-    1)  curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupnode.sh?p=$RANDOM | bash
-        curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupmaster.sh?p=$RANDOM | bash
-        curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setup-loadbalancer.sh?p=$RANDOM | bash
+    1)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash
+        curl -sSL $GITHUB_URL/onprem/setupmaster.sh?p=$RANDOM | bash
+        curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
         InstallStack $GITHUB_URL "kube-system" "dashboard"
         ;;
     2)  echo "Current cluster: $(kubectl config current-context)"
@@ -83,7 +75,7 @@ while [[ "$input" != "q" ]]; do
         ;;
     5)  mountAzureFile
         ;;
-    6)  curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setup-loadbalancer.sh?p=$RANDOM | bash
+    6)  curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
         ;;
     7)  InstallStack $GITHUB_URL "kube-system" "dashboard"
         ;;
@@ -96,7 +88,7 @@ while [[ "$input" != "q" ]]; do
         sudo yum -y remove docker docker-common docker-selinux docker-engine    
         echo "Please restart this computer"
         ;;
-    12)  curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupnode.txt?p=$RANDOM | bash
+    12)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash
         ;;
     14)  mountSMB
         ;;
@@ -107,8 +99,6 @@ while [[ "$input" != "q" ]]; do
         sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
         sudo yum -y remove docker docker-common docker-selinux docker-engine    
         echo "Please restart this computer"
-        ;;
-    25)  curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/nlp/installnlpkubernetes.sh?p=$RANDOM | bash
         ;;
     31)  echo "Current cluster: $(kubectl config current-context)"
         kubectl version --short
@@ -135,14 +125,14 @@ while [[ "$input" != "q" ]]; do
             sleep 5
         done
 
-        kubectl create -f https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/busybox.yml
+        kubectl create -f $GITHUB_URL/kubernetes/test/busybox.yaml
         while [[ "$(kubectl get pods busybox -n default -o jsonpath='{.status.phase}')" != "Running" ]]; do
             echo "."
             sleep 5
         done
         kubectl exec busybox nslookup kubernetes.default
         kubectl exec busybox cat /etc/resolv.conf
-        kubectl delete -f https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/busybox.yml
+        kubectl delete -f $GITHUB_URL/kubernetes/test/busybox.yaml
         ;;
     38)  ls -al /mnt/data
         ;;
@@ -154,29 +144,9 @@ while [[ "$input" != "q" ]]; do
         echo $token
         echo "-------- End of Bearer Token -------------"
         ;;
-    41)  kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=fabricnlp -o wide
+    51) curl -sSL $GITHUB_URL/onprem/menu-realtime.sh?p=$RANDOM | bash
         ;;
-    43)  Write-Host "MySql root password: $(ReadSecretPassword mysqlrootpassword fabricnlp)"
-            Write-Host "MySql NLP_APP_USER password: $(ReadSecretPassword mysqlpassword fabricnlp)"
-            Write-Host "SendGrid SMTP Relay key: $(ReadSecretPassword smtprelaypassword fabricnlp)"
-        ;;
-    44)  pods=$(kubectl get pods -n fabricnlp -o jsonpath='{.items[*].metadata.name}')
-        for pod in $pods
-        do
-                Write-Output "=============== Describe Pod: $pod ================="
-                kubectl describe pods $pod -n fabricnlp
-                read -n1 -r -p "Press space to continue..." key < /dev/tty
-        done
-        ;;
-    45)  pods=$(kubectl get pods -n fabricnlp -o jsonpath='{.items[*].metadata.name}')
-        for pod in $pods
-        do
-                Write-Output "=============== Logs for Pod: $pod ================="
-                kubectl logs --tail=20 $pod -n fabricnlp
-                read -n1 -r -p "Press space to continue..." key < /dev/tty
-        done
-        ;;          
-    51) curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/menu-realtime.sh?p=$RANDOM | bash
+    51) curl -sSL $GITHUB_URL/onprem/menu-nlp.sh?p=$RANDOM | bash
         ;;
     q) echo  "Exiting" 
     ;;

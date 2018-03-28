@@ -2,7 +2,7 @@
 set -e
 #
 # This script is meant for quick & easy install via:
-#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/menu-realtime.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/menu-realtime.sh | bash
 #
 version="2018.03.28.01"
 
