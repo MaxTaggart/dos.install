@@ -9,7 +9,7 @@ set -e
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 source <(curl -sSL "$GITHUB_URL/common/common.sh")
 
-version="2018.03.27.01"
+version="2018.03.28.01"
 echo "---- setupmaster version $version ----"
 
 u="$(whoami)"
@@ -56,10 +56,16 @@ kubectl get pods -n kube-system -o wide
 echo "--- waiting for pods to run ---"
 WaitForPodsInNamespace kube-system 5
 
-echo "--- creating /mnt/data ---"
-sudo mkdir -p /mnt/data
-sudo chown $(id -u):$(id -g) /mnt/data
-sudo chmod -R 777 /mnt/data
+echo "--- current pods ---"
+kubectl get pods -n kube-system -o wide
+
+if [[ ! -d "/mnt/data" ]]; then
+    echo "--- creating /mnt/data ---"
+    sudo mkdir -p /mnt/data
+    sudo chown $(id -u):$(id -g) /mnt/data
+    sudo chmod -R 777 /mnt/data
+fi
+
 
 # testing
 # kubectl run nginx --image=nginx --port=80
