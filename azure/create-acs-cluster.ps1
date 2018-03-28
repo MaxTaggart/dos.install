@@ -7,11 +7,11 @@ Write-output "--- create-acs-cluster Version 2018.03.27.01 ----"
 $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 # $GITHUB_URL = "C:\Catalyst\git\Installscripts"
 
-Invoke-WebRequest -useb ${GITHUB_URL}/kubernetes/common-kube.ps1 | Invoke-Expression;
-# Get-Content ./kubernetes/common-kube.ps1 -Raw | Invoke-Expression;
+Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1 | Invoke-Expression;
+# Get-Content ./common/common-kube.ps1 -Raw | Invoke-Expression;
 
-Invoke-WebRequest -useb $GITHUB_URL/azure/common.ps1 | Invoke-Expression;
-# Get-Content ./azure/common.ps1 -Raw | Invoke-Expression;
+Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1 | Invoke-Expression;
+# Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
 
 
 write-output "Checking if you're already logged in..."

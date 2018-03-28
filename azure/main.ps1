@@ -9,14 +9,14 @@ $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/mast
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
 
-Invoke-WebRequest -useb ${GITHUB_URL}/kubernetes/common-kube.ps1?f=$randomstring | Invoke-Expression;
-# Get-Content ./kubernetes/common-kube.ps1 -Raw | Invoke-Expression;
+Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring | Invoke-Expression;
+# Get-Content ./common/common-kube.ps1 -Raw | Invoke-Expression;
 
-Invoke-WebRequest -useb $GITHUB_URL/azure/common.ps1?f=$randomstring | Invoke-Expression;
-# Get-Content ./azure/common.ps1 -Raw | Invoke-Expression;
+Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring | Invoke-Expression;
+# Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
 
 
-# Get-Content -Path "./azure/common.ps1" | Invoke-Expression;
+# Get-Content -Path "./common/common.ps1" | Invoke-Expression;
 
 $userinput = ""
 while ($userinput -ne "q") {
