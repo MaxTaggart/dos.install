@@ -136,9 +136,9 @@ kubectl delete 'pods,services,configMaps,deployments,ingress' -l k8s-traefik=tra
 
 # set Google DNS servers to resolve external  urls
 # http://blog.kubernetes.io/2017/04/configuring-private-dns-zones-upstream-nameservers-kubernetes.html
-kubectl delete -f "$GITHUB_URL/kubernetes/loadbalancer/dns/upstream.yaml" --ignore-not-found=true
+kubectl delete -f "$GITHUB_URL/loadbalancer/dns/upstream.yaml" --ignore-not-found=true
 Start-Sleep -Seconds 10
-kubectl create -f "$GITHUB_URL/kubernetes/loadbalancer/dns/upstream.yaml"
+kubectl create -f "$GITHUB_URL/loadbalancer/dns/upstream.yaml"
 # to debug dns: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#inheriting-dns-from-the-node
 
 kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
@@ -165,7 +165,7 @@ Write-Host "GITHUB_URL: $GITHUB_URL"
 # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
 
 Write-Host "Deploying configmaps"
-$folder = "kubernetes/loadbalancer/configmaps"
+$folder = "loadbalancer/configmaps"
 if ($($config.ssl)) {
     $files = "config.ssl.yaml"
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
@@ -181,13 +181,13 @@ if ($kubectlversion -match "v1.8") {
 }
 else {
     Write-Host "Deploying roles"
-    $folder = "kubernetes/loadbalancer/roles"
+    $folder = "loadbalancer/roles"
     $files = "ingress-roles.yaml"
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
 }
 
 Write-Host "Deploying pods"
-$folder = "kubernetes/loadbalancer/pods"
+$folder = "loadbalancer/pods"
 
 if ($($config.ingress.internal) -eq "public" ) {
     $files = "ingress-azure.both.yaml"
@@ -205,12 +205,12 @@ else {
 }
 
 Write-Host "Deploying services"
-$folder = "kubernetes/loadbalancer/services/cluster"
+$folder = "loadbalancer/services/cluster"
 $files = "dashboard.yaml dashboard-internal.yaml"
 DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
 
 Write-Host "Deploying ingress"
-$folder = "kubernetes/loadbalancer/ingress"
+$folder = "loadbalancer/ingress"
 
 if ($($config.ssl) ) {
     $files = "dashboard.ssl.yaml"
@@ -221,7 +221,7 @@ else {
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $GITHUB_URL -customerid $customerid
 }
 
-$folder = "kubernetes/loadbalancer/services/external"
+$folder = "loadbalancer/services/external"
 
 if ("$($config.ingress.external)" -ne "vnetonly") {
     Write-Output "Setting up a public load balancer"
