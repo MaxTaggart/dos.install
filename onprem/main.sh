@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.03.28.04"
+version="2018.03.28.05"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -33,17 +33,21 @@ input=""
 while [[ "$input" != "q" ]]; do
 
     echo "================ Health Catalyst version $version, common functions $(GetCommonVersion) ================"
-    echo "------ Master Node -------"
+    echo "------ Setup Master Node -------"
     echo "1: Add this VM as Master"
+    echo "------ Setup Worker Node -------"
+    echo "12: Add this VM as Worker"
+    echo "--- Master Node tasks --------"
     echo "2: Show all nodes"
-    echo "3: Join a new node to this cluster"
+    echo "3: Show command to join another node to this cluster"
     echo "4: Mount shared folder"
     echo "5: Mount Azure Storage as shared folder"
     echo "6: Setup Load Balancer"
     echo "7: Setup Kubernetes Dashboard"
     echo "8: Uninstall Docker & Kubernetes"
-    echo "------ Worker Node -------"
+    echo "------ Worker Node Tasks-------"
     echo "12: Add this VM as Worker"
+    echo "13: Join this VM to an existing cluster"
     echo "14: Mount shared folder"
     echo "15: Mount Azure Storage as shared folder"
     echo "16: Uninstall Docker & Kubernetes"
@@ -69,13 +73,13 @@ while [[ "$input" != "q" ]]; do
         mountSharedFolder
         curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
         InstallStack $GITHUB_URL "kube-system" "dashboard"
+        ShowCommandToJoinCluster
         ;;
     2)  echo "Current cluster: $(kubectl config current-context)"
         kubectl version --short
         kubectl get "nodes"
         ;;
-    3)  echo "Run this command on the new node to join this cluster:"
-        echo "sudo $(sudo kubeadm token create --print-join-command)"
+    3)  ShowCommandToJoinCluster
         ;;
     4)  mountSMB
         ;;
@@ -96,6 +100,9 @@ while [[ "$input" != "q" ]]; do
         ;;
     12)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash
         mountSharedFolder
+        JoinNodeToCluster
+        ;;
+    13) JoinNodeToCluster
         ;;
     14)  mountSMB
         ;;

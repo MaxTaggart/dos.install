@@ -324,4 +324,16 @@ function InstallLoadBalancerStack(){
     pwsh -f installloadbalancerstack.ps1 -ssl $ssl -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -publicIp $publicIp -NonInteractive    
 }
 
+function ShowCommandToJoinCluster(){
+    echo "Run this command on any new node to join this cluster (this command expires in 24 hours):"
+    echo "sudo $(sudo kubeadm token create --print-join-command)"
+}
+
+function JoinNodeToCluster(){
+    while [[ -z "$joincommand" ]]; do
+        read -p "Paste kubeadm join command here" joincommand < /dev/tty    
+    done      
+    echo "--- running command to join cluster ---"
+    $($joincommand)
+}
 echo "--- Finished including common.sh version $versioncommon ---"
