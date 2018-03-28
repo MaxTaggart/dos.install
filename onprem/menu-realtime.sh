@@ -8,8 +8,8 @@ version="2018.03.28.01"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
-source <(curl -sSL "$GITHUB_URL/kubernetes/common.sh?p=$RANDOM")
-# source ./kubernetes/common.sh
+source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
+# source ./common/common.sh
 
 input=""
 while [[ "$input" != "q" ]]; do
@@ -33,7 +33,8 @@ while [[ "$input" != "q" ]]; do
     case "$input" in
     1)  curl -sSL -o installstack.ps1 https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/installstack.ps1?p=$RANDOM
         clear
-        pwsh -f installstack.ps1 -namespace "fabricrealtime" -appfolder "realtime" -isAzure 0 -NonInteractive | tee ./installstack.log
+        # can't put tee on the next line or pwsh has issues including common files
+        pwsh -f installstack.ps1 -namespace "fabricrealtime" -appfolder "realtime" -isAzure 0 -NonInteractive
         ;;
     2)  kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=fabricrealtime -o wide
         ;;

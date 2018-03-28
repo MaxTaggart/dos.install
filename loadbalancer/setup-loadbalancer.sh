@@ -6,8 +6,8 @@ set -e
 #
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
-source <(curl -sSL "$GITHUB_URL/kubernetes/common.sh?p=$RANDOM")
-# source ./kubernetes/common.sh
+source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
+# source ./common/common.sh
 
 version="2018.03.27.01"
 

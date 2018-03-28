@@ -341,7 +341,7 @@ function global:CreateStorageIfNotExists([ValidateNotNullOrEmpty()] $resourceGro
         # remove non-alphanumeric characters and use lowercase since azure doesn't allow those in a storage account
         $storageAccountName = $storageAccountName -replace '[^a-zA-Z0-9]', ''
         $storageAccountName = $storageAccountName.ToLower()
-        if ($storageAccountName.Length > 24) {
+        if ($storageAccountName.Length -gt 24) {
             $storageAccountName = $storageAccountName.Substring(0, 24) # azure does not allow names longer than 24
         }
         Write-Host "Using storage account: [$storageAccountName]"
