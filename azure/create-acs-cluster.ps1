@@ -2,9 +2,9 @@ Write-output "--- create-acs-cluster Version 2018.03.27.01 ----"
 
 #
 # This script is meant for quick & easy install via:
-#   curl -useb https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/azure/create-acs-cluster.ps1 | iex;
+#   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/create-acs-cluster.ps1 | iex;
 
-$GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master"
+$GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 # $GITHUB_URL = "C:\Catalyst\git\Installscripts"
 
 Invoke-WebRequest -useb ${GITHUB_URL}/kubernetes/common-kube.ps1 | Invoke-Expression;

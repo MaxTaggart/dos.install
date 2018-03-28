@@ -109,7 +109,7 @@ function global:SetupCronTab([ValidateNotNullOrEmpty()] $resourceGroup) {
     $virtualmachines = az vm list -g $resourceGroup --query "[?storageProfile.osDisk.osType != 'Windows'].name" -o tsv
     ForEach ($vm in $virtualmachines) {
         if ($vm -match "master" ) {
-            $cmd = "crontab -e; mkdir -p /opt/healthcatalyst; curl -sSL https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/azure/restartkubedns.txt -o /opt/healthcatalyst/restartkubedns.sh; chmod +x /opt/healthcatalyst/restartkubedns.sh; crontab -l | grep -v 'restartkubedns.sh' - | { cat; echo '*/10 * * * * /opt/healthcatalyst/restartkubedns.sh >> /tmp/restartkubedns.log 2>&1 \n'; } | crontab -"
+            $cmd = "crontab -e; mkdir -p /opt/healthcatalyst; curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/restartkubedns.txt -o /opt/healthcatalyst/restartkubedns.sh; chmod +x /opt/healthcatalyst/restartkubedns.sh; crontab -l | grep -v 'restartkubedns.sh' - | { cat; echo '*/10 * * * * /opt/healthcatalyst/restartkubedns.sh >> /tmp/restartkubedns.log 2>&1 \n'; } | crontab -"
             az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "$cmd"
         }
     }
@@ -1473,7 +1473,7 @@ function global:GetConfigFile() {
         }
     }
 
-    Write-Host "Sample config file: https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/deployments/sample.json"
+    Write-Host "Sample config file: https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/deployments/sample.json"
     Do { $fullpath = Read-Host "Type full path to config file: "}
     while ([string]::IsNullOrWhiteSpace($fullpath))
     

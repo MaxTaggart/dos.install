@@ -2,11 +2,11 @@
 set -e
 #
 # This script is meant for quick & easy install via:
-#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/kubernetes/setupmaster.txt | bash
+#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupmaster.txt | bash
 #
 #
 
-GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master"
+GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 source <(curl -sSL "$GITHUB_URL/kubernetes/common.sh")
 
 version="2018.03.27.01"

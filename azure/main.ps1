@@ -1,10 +1,10 @@
 $version = "2018.03.27.01"
 
 # This script is meant for quick & easy install via:
-#   curl -useb https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/azure/main.ps1 | iex;
-#   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/azure/main.ps1 | pwsh -Interactive -NoExit -c -;
+#   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
+#   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | pwsh -Interactive -NoExit -c -;
 
-$GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master"
+$GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random

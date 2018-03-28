@@ -2,9 +2,9 @@ Write-Host "--- create-bare-metal Version 2018.03.27.02 ----"
 
 #
 # This script is meant for quick & easy install via:
-#   curl -useb https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/azure/create-bare-metal.ps1 | iex;
+#   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/create-bare-metal.ps1 | iex;
 
-$GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master"
+$GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 # $GITHUB_URL = "C:\Catalyst\git\Installscripts"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()

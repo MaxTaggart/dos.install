@@ -2,9 +2,9 @@
 set -e
 #
 # This script is meant for quick & easy install via:
-#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/kubernetes/dashboard/setup-kubdashboard.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/dashboard/setup-kubdashboard.sh | bash
 #
-GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master"
+GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
 source <(curl -sSL "$GITHUB_URL/kubernetes/common.sh?p=$RANDOM")
 # source ./kubernetes/common.sh

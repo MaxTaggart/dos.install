@@ -94,13 +94,13 @@ kubectl get pods -n kube-system -o wide
 
 
 # kubectl apply -f https://raw.githubusercontent.com/Microsoft/SDN/master/Kubernetes/WebServer.yaml
-kubectl apply -f https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/kubernetes/testwindowsnanoserver.yml
+kubectl apply -f https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/testwindowsnanoserver.yml
 
 kubectl get all -o wide
 
 kubectl describe po -l app=win-nanoserver
 
-kubectl apply -f https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/kubernetes/testwindowswebserver.yml
+kubectl apply -f https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/testwindowswebserver.yml
 
 # https://github.com/MicrosoftDocs/Virtualization-Documentation/tree/master/windows-server-container-tools/Debug-ContainerHost
 Invoke-WebRequest https://raw.githubusercontent.com/MicrosoftDocs/Virtualization-Documentation/master/windows-server-container-tools/Debug-ContainerHost/Debug-ContainerHost.ps1 -o Debug-ContainerHost.ps1

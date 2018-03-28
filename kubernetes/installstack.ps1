@@ -7,9 +7,9 @@ Write-Host "isAzure:$isAzure"
 Write-Host "----"
 Write-Host "Version 2018.03.28.02"
 
-# curl -useb https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/realtime/installrealtimekubernetes.ps1 | iex;
+# curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/realtime/installrealtimekubernetes.ps1 | iex;
 
-$GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master"
+$GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 # $GITHUB_URL = "."
 
 Invoke-WebRequest -useb ${GITHUB_URL}/kubernetes/common-kube.ps1 | Invoke-Expression;
