@@ -38,8 +38,8 @@ while [[ "$input" != "q" ]]; do
     3) certhostname=$(ReadSecret certhostname fabricrealtime)
         echo "Send HL7 to Mirth: server=${certhostname} port=6661"
         echo "Rabbitmq Queue: server=${certhostname} port=5671"
-        echo "RabbitMq Mgmt UI is at: http://${certhostname}/rabbitmq/"
-        echo "Mirth Mgmt UI is at: http://${certhostname}/mirth/"
+        echo "RabbitMq Mgmt UI is at: http://${certhostname}/rabbitmq/ user: admin password: $(ReadSecretPassword rabbitmqmgmtuipassword fabricrealtime)"
+        echo "Mirth Mgmt UI is at: http://${certhostname}/mirth/ user: admin password:admin"
         ;;
     4)  Write-Host "MySql root password: $(ReadSecretPassword mysqlrootpassword fabricrealtime)"
             Write-Host "MySql NLP_APP_USER password: $(ReadSecretPassword mysqlpassword fabricrealtime)"

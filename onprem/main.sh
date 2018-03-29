@@ -68,10 +68,10 @@ while [[ "$input" != "q" ]]; do
     read -p "Please make a selection:" -e input  < /dev/tty 
 
     case "$input" in
-    1)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash
-        curl -sSL $GITHUB_URL/onprem/setupmaster.sh?p=$RANDOM | bash
+    1)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
+        curl -sSL $GITHUB_URL/onprem/setupmaster.sh?p=$RANDOM | bash 2>&1 | tee setupmaster.log
         mountSharedFolder
-        curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
+        curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash 2>&1 | tee setup-loadbalancer.log
         InstallStack $GITHUB_URL "kube-system" "dashboard"
         ShowCommandToJoinCluster
         ;;
@@ -85,7 +85,7 @@ while [[ "$input" != "q" ]]; do
         ;;
     5)  mountAzureFile
         ;;
-    6)  curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
+    6)  curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash 2>&1 | tee setup-loadbalancer.log
         ;;
     7)  InstallStack $GITHUB_URL "kube-system" "dashboard"
         ;;
@@ -98,7 +98,7 @@ while [[ "$input" != "q" ]]; do
         sudo yum -y remove docker docker-common docker-selinux docker-engine    
         echo "Please restart this computer"
         ;;
-    12)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash
+    12)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
         mountSharedFolder
         JoinNodeToCluster
         ;;
