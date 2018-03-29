@@ -69,17 +69,19 @@ $SSH_PRIVATE_KEY_FILE_UNIX_PATH = $SSHKeyInfo.SSH_PRIVATE_KEY_FILE_UNIX_PATH
 DownloadKubectl -localFolder $AKS_LOCAL_FOLDER
 
 # download acs-engine
+# download acs-engine
 $ACS_ENGINE_FILE = "$AKS_LOCAL_FOLDER\acs-engine.exe"
 $DESIRED_ACS_ENGINE_VERSION = "v0.13.0"
+$SYSTEM_VERSION_ACS_VERSION = [System.Version] "0.13.0"
 $downloadACSEngine = "n"
 if (!(Test-Path "$ACS_ENGINE_FILE")) {
     $downloadACSEngine = "y"
 }
 else {
     $acsengineversion = acs-engine version
-    $acsengineversion = $acsengineversion -match "^Version: v[0-9.]+"
-    $acsengineversion = "[$acsengineversion]"
-    if ( !$acsengineversion.equals("[Version: $DESIRED_ACS_ENGINE_VERSION]")) {
+    $acsengineversion = ($acsengineversion -match "^Version: v[0-9.]+")[0]
+    $systemAcsVersion = [System.Version] $acsengineversion.Substring($acsengineversion.IndexOf('v') + 1, $acsengineversion.Length - $acsengineversion.IndexOf('v') -1)
+    if ($systemAcsVersion -lt $SYSTEM_VERSION_ACS_VERSION) {
         $downloadACSEngine = "y"
     }
 }
