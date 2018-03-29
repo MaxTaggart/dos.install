@@ -326,7 +326,9 @@ function InstallLoadBalancerStack(){
 
 function ShowCommandToJoinCluster(){
     echo "Run this command on any new node to join this cluster (this command expires in 24 hours):"
+    echo "---- COPY BELOW THIS LINE ----"
     echo "sudo $(sudo kubeadm token create --print-join-command)"
+    echo "---- COPY ABOVE THIS LINE ----"
 }
 
 function JoinNodeToCluster(){
