@@ -41,7 +41,7 @@
                 "resourceGroup": {
                     "$id": "/properties/azure/properties/resourceGroup",
                     "type": "string",
-                    "title": "The Resourcegroup Schema ",
+                    "title": "Resourcegroup",
                     "default": "",
                     "examples": [
                         "Prod-Kub-HCUT-RG"
@@ -50,7 +50,7 @@
                 "location": {
                     "$id": "/properties/azure/properties/location",
                     "type": "string",
-                    "title": "The Location Schema ",
+                    "title": "Location",
                     "default": "",
                     "examples": [
                         "westus"
@@ -173,6 +173,7 @@
                 "external": {
                     "$id": "/properties/ingress/properties/external",
                     "type": "string",
+                    "enum": ["public", "onprem", "whitelist", "vnetonly"],
                     "title": "The External Schema ",
                     "default": "",
                     "examples": [
@@ -182,6 +183,7 @@
                 "internal": {
                     "$id": "/properties/ingress/properties/internal",
                     "type": "string",
+                    "enum": ["public", "onprem", "vnetonly"],
                     "title": "The Internal Schema ",
                     "default": "",
                     "examples": [
