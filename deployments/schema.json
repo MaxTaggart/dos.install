@@ -1,0 +1,293 @@
+{
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "properties": {
+        "kubectl": {
+            "$id": "/properties/kubectl",
+            "type": "object",
+            "properties": {
+                "version": {
+                    "$id": "/properties/kubectl/properties/version",
+                    "type": "string",
+                    "title": "The Version Schema ",
+                    "default": "",
+                    "examples": [
+                        ""
+                    ]
+                }
+            }
+        },
+        "azcli": {
+            "$id": "/properties/azcli",
+            "type": "object",
+            "properties": {
+                "version": {
+                    "$id": "/properties/azcli/properties/version",
+                    "type": "string",
+                    "title": "The Version Schema ",
+                    "default": "",
+                    "examples": [
+                        "2.0.27"
+                    ]
+                }
+            }
+        },
+        "azure": {
+            "$id": "/properties/azure",
+            "type": "object",
+            "properties": {
+                "resourceGroup": {
+                    "$id": "/properties/azure/properties/resourceGroup",
+                    "type": "string",
+                    "title": "The Resourcegroup Schema ",
+                    "default": "",
+                    "examples": [
+                        "Prod-Kub-HCUT-RG"
+                    ]
+                },
+                "location": {
+                    "$id": "/properties/azure/properties/location",
+                    "type": "string",
+                    "title": "The Location Schema ",
+                    "default": "",
+                    "examples": [
+                        "westus"
+                    ]
+                },
+                "create_windows_containers": {
+                    "$id": "/properties/azure/properties/create_windows_containers",
+                    "type": "boolean",
+                    "title": "The Create_windows_containers Schema ",
+                    "default": false,
+                    "examples": [
+                        false
+                    ]
+                },
+                "use_azure_networking": {
+                    "$id": "/properties/azure/properties/use_azure_networking",
+                    "type": "boolean",
+                    "title": "The Use_azure_networking Schema ",
+                    "default": false,
+                    "examples": [
+                        true
+                    ]
+                },
+                "acs_engine": {
+                    "$id": "/properties/azure/properties/acs_engine",
+                    "type": "object",
+                    "properties": {
+                        "version": {
+                            "$id": "/properties/azure/properties/acs_engine/properties/version",
+                            "type": "string",
+                            "title": "The Version Schema ",
+                            "default": "",
+                            "examples": [
+                                "v0.13.0"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "service_principal": {
+            "$id": "/properties/service_principal",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "$id": "/properties/service_principal/properties/name",
+                    "type": "string",
+                    "title": "The Name Schema ",
+                    "default": "",
+                    "examples": [
+                        ""
+                    ]
+                },
+                "delete_if_exists": {
+                    "$id": "/properties/service_principal/properties/delete_if_exists",
+                    "type": "boolean",
+                    "title": "The Delete_if_exists Schema ",
+                    "default": false,
+                    "examples": [
+                        true
+                    ]
+                }
+            }
+        },
+        "storage_account": {
+            "$id": "/properties/storage_account",
+            "type": "object",
+            "properties": {
+                "delete_if_exists": {
+                    "$id": "/properties/storage_account/properties/delete_if_exists",
+                    "type": "boolean",
+                    "title": "The Delete_if_exists Schema ",
+                    "default": false,
+                    "examples": [
+                        false
+                    ]
+                }
+            }
+        },
+        "local_folder": {
+            "$id": "/properties/local_folder",
+            "type": "string",
+            "title": "The Local_folder Schema ",
+            "default": "",
+            "examples": [
+                "c:\\kubernetes"
+            ]
+        },
+        "customerid": {
+            "$id": "/properties/customerid",
+            "type": "string",
+            "title": "The Customerid Schema ",
+            "default": "",
+            "examples": [
+                "hcut"
+            ]
+        },
+        "ssl": {
+            "$id": "/properties/ssl",
+            "type": "boolean",
+            "title": "The Ssl Schema ",
+            "default": false,
+            "examples": [
+                false
+            ]
+        },
+        "allow_kubectl_from_outside_vnet": {
+            "$id": "/properties/allow_kubectl_from_outside_vnet",
+            "type": "boolean",
+            "title": "The Allow_kubectl_from_outside_vnet Schema ",
+            "default": false,
+            "examples": [
+                false
+            ]
+        },
+        "ingress": {
+            "$id": "/properties/ingress",
+            "type": "object",
+            "properties": {
+                "external": {
+                    "$id": "/properties/ingress/properties/external",
+                    "type": "string",
+                    "title": "The External Schema ",
+                    "default": "",
+                    "examples": [
+                        "public"
+                    ]
+                },
+                "internal": {
+                    "$id": "/properties/ingress/properties/internal",
+                    "type": "string",
+                    "title": "The Internal Schema ",
+                    "default": "",
+                    "examples": [
+                        "private"
+                    ]
+                },
+                "external_ip_whitelist": {
+                    "$id": "/properties/ingress/properties/external_ip_whitelist",
+                    "type": "string",
+                    "title": "The External_ip_whitelist Schema ",
+                    "default": "",
+                    "examples": [
+                        ""
+                    ]
+                }
+            }
+        },
+        "networking": {
+            "$id": "/properties/networking",
+            "type": "object",
+            "properties": {
+                "vnet": {
+                    "$id": "/properties/networking/properties/vnet",
+                    "type": "string",
+                    "title": "The Vnet Schema ",
+                    "default": "",
+                    "examples": [
+                        "CAPVnet"
+                    ]
+                },
+                "subnet": {
+                    "$id": "/properties/networking/properties/subnet",
+                    "type": "string",
+                    "title": "The Subnet Schema ",
+                    "default": "",
+                    "examples": [
+                        "HCUT"
+                    ]
+                },
+                "subnet_resource_group": {
+                    "$id": "/properties/networking/properties/subnet_resource_group",
+                    "type": "string",
+                    "title": "The Subnet_resource_group Schema ",
+                    "default": "",
+                    "examples": [
+                        "capresourcegroup"
+                    ]
+                }
+            }
+        },
+        "network_security_group": {
+            "$id": "/properties/network_security_group",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "$id": "/properties/network_security_group/properties/name",
+                    "type": "string",
+                    "title": "The Name Schema ",
+                    "default": "",
+                    "examples": [
+                        ""
+                    ]
+                },
+                "create_nsg_rules": {
+                    "$id": "/properties/network_security_group/properties/create_nsg_rules",
+                    "type": "boolean",
+                    "title": "The Create_nsg_rules Schema ",
+                    "default": false,
+                    "examples": [
+                        true
+                    ]
+                }
+            }
+        },
+        "dns": {
+            "$id": "/properties/dns",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "$id": "/properties/dns/properties/name",
+                    "type": "string",
+                    "title": "The Name Schema ",
+                    "default": "",
+                    "examples": [
+                        "hcut.healthcatalyst.net"
+                    ]
+                },
+                "create_dns_entries": {
+                    "$id": "/properties/dns/properties/create_dns_entries",
+                    "type": "boolean",
+                    "title": "The Create_dns_entries Schema ",
+                    "default": false,
+                    "examples": [
+                        false
+                    ]
+                },
+                "dns_resource_group": {
+                    "$id": "/properties/dns/properties/dns_resource_group",
+                    "type": "string",
+                    "title": "The Dns_resource_group Schema ",
+                    "default": "",
+                    "examples": [
+                        "dns"
+                    ]
+                }
+            }
+        }
+    }
+}
