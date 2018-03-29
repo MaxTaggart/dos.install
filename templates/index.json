@@ -1,4 +1,5 @@
 {
+    "$schema": "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/templates/schema.json",
     "name": "Name os stack",
     "version": "4.0.0.2",
     "secrets": {

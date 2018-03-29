@@ -1,0 +1,252 @@
+{
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "properties": {
+        "name": {
+            "$id": "/properties/name",
+            "type": "string",
+            "title": "The Name Schema ",
+            "default": "",
+            "examples": [
+                "Fabric Realtime"
+            ]
+        },
+        "version": {
+            "$id": "/properties/version",
+            "type": "string",
+            "title": "The Version Schema ",
+            "default": "",
+            "examples": [
+                "4.0.0.2"
+            ]
+        },
+        "secrets": {
+            "$id": "/properties/secrets",
+            "type": "object",
+            "properties": {
+                "password": {
+                    "$id": "/properties/secrets/properties/password",
+                    "type": "array",
+                    "items": {
+                        "$id": "/properties/secrets/properties/password/items",
+                        "type": "string",
+                        "title": "The 0th Schema ",
+                        "default": "",
+                        "examples": [
+                            "mysqlrootpassword",
+                            "mysqlpassword",
+                            "certpassword",
+                            "rabbitmqmgmtuipassword"
+                        ]
+                    }
+                },
+                "value": {
+                    "$id": "/properties/secrets/properties/value",
+                    "type": "array",
+                    "items": {
+                        "$id": "/properties/secrets/properties/value/items",
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "$id": "/properties/secrets/properties/value/items/properties/name",
+                                "type": "string",
+                                "title": "The Name Schema ",
+                                "default": "",
+                                "examples": [
+                                    "certhostname"
+                                ]
+                            },
+                            "valueFromSecret": {
+                                "$id": "/properties/secrets/properties/value/items/properties/valueFromSecret",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "$id": "/properties/secrets/properties/value/items/properties/valueFromSecret/properties/name",
+                                        "type": "string",
+                                        "title": "The Name Schema ",
+                                        "default": "",
+                                        "examples": [
+                                            "dnshostname"
+                                        ]
+                                    },
+                                    "namespace": {
+                                        "$id": "/properties/secrets/properties/value/items/properties/valueFromSecret/properties/namespace",
+                                        "type": "string",
+                                        "title": "The Namespace Schema ",
+                                        "default": "",
+                                        "examples": [
+                                            "default"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "resources": {
+            "$id": "/properties/resources",
+            "type": "object",
+            "properties": {
+                "dns": {
+                    "$id": "/properties/resources/properties/dns",
+                    "type": "array"
+                },
+                "configmaps": {
+                    "$id": "/properties/resources/properties/configmaps",
+                    "type": "array"
+                },
+                "roles": {
+                    "$id": "/properties/resources/properties/roles",
+                    "type": "array"
+                },
+                "volumes": {
+                    "$id": "/properties/resources/properties/volumes",
+                    "type": "object",
+                    "properties": {
+                        "onprem": {
+                            "$id": "/properties/resources/properties/volumes/properties/onprem",
+                            "type": "array",
+                            "items": {
+                                "$id": "/properties/resources/properties/volumes/properties/onprem/items",
+                                "type": "string",
+                                "title": "The 0th Schema ",
+                                "default": "",
+                                "examples": [
+                                    "certificateserver.yaml",
+                                    "mysqlserver.yaml",
+                                    "rabbitmq-cert.yaml",
+                                    "rabbitmq.yaml"
+                                ]
+                            }
+                        },
+                        "azure": {
+                            "$id": "/properties/resources/properties/volumes/properties/azure",
+                            "type": "array",
+                            "items": {
+                                "$id": "/properties/resources/properties/volumes/properties/azure/items",
+                                "type": "string",
+                                "title": "The 0th Schema ",
+                                "default": "",
+                                "examples": [
+                                    "certificateserver.yaml",
+                                    "mysqlserver.yaml",
+                                    "rabbitmq-cert.yaml",
+                                    "rabbitmq.yaml"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "volumeclaims": {
+                    "$id": "/properties/resources/properties/volumeclaims",
+                    "type": "array",
+                    "items": {
+                        "$id": "/properties/resources/properties/volumeclaims/items",
+                        "type": "string",
+                        "title": "The 0th Schema ",
+                        "default": "",
+                        "examples": [
+                            "certificateserver.yaml",
+                            "mysqlserver.yaml",
+                            "rabbitmq-cert.yaml",
+                            "rabbitmq.yaml"
+                        ]
+                    }
+                },
+                "pods": {
+                    "$id": "/properties/resources/properties/pods",
+                    "type": "array",
+                    "items": {
+                        "$id": "/properties/resources/properties/pods/items",
+                        "type": "string",
+                        "title": "The 0th Schema ",
+                        "default": "",
+                        "examples": [
+                            "certificateserver.yaml",
+                            "mysqlserver.yaml",
+                            "interfaceengine.yaml",
+                            "rabbitmq.yaml"
+                        ]
+                    }
+                },
+                "services": {
+                    "$id": "/properties/resources/properties/services",
+                    "type": "object",
+                    "properties": {
+                        "cluster": {
+                            "$id": "/properties/resources/properties/services/properties/cluster",
+                            "type": "array",
+                            "items": {
+                                "$id": "/properties/resources/properties/services/properties/cluster/items",
+                                "type": "string",
+                                "title": "The 0th Schema ",
+                                "default": "",
+                                "examples": [
+                                    "certificateserver.yaml",
+                                    "mysqlserver.yaml",
+                                    "interfaceengine.yaml",
+                                    "rabbitmq.yaml"
+                                ]
+                            }
+                        },
+                        "external": {
+                            "$id": "/properties/resources/properties/services/properties/external",
+                            "type": "array",
+                            "items": {
+                                "$id": "/properties/resources/properties/services/properties/external/items",
+                                "type": "string",
+                                "title": "The 0th Schema ",
+                                "default": "",
+                                "examples": [
+                                    "certificateserver.yaml",
+                                    "rabbitmq.yaml",
+                                    "interfaceengine.yaml"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "ingress": {
+                    "$id": "/properties/resources/properties/ingress",
+                    "type": "object",
+                    "properties": {
+                        "http": {
+                            "$id": "/properties/resources/properties/ingress/properties/http",
+                            "type": "array",
+                            "items": {
+                                "$id": "/properties/resources/properties/ingress/properties/http/items",
+                                "type": "string",
+                                "title": "The 0th Schema ",
+                                "default": "",
+                                "examples": [
+                                    "web.yaml",
+                                    "rabbitmq.yaml",
+                                    "interfaceengine.yaml"
+                                ]
+                            }
+                        },
+                        "tcp": {
+                            "$id": "/properties/resources/properties/ingress/properties/tcp",
+                            "type": "array",
+                            "items": {
+                                "$id": "/properties/resources/properties/ingress/properties/tcp/items",
+                                "type": "string",
+                                "title": "The 0th Schema ",
+                                "default": "",
+                                "examples": [
+                                    "mysqlserver.yaml",
+                                    "interfaceengine.yaml",
+                                    "rabbitmq.yaml"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

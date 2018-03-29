@@ -1,4 +1,5 @@
 {
+    "$schema": "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/deployments/schema.json",
     "kubectl": {
         "version": ""
     },
