@@ -1,5 +1,5 @@
 
-versioncommon="2018.03.28.01"
+versioncommon="2018.03.28.02"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -332,11 +332,12 @@ function ShowCommandToJoinCluster(){
 function JoinNodeToCluster(){
     echo "--- resetting kubeadm ---"
     sudo kubeadm reset 2>/dev/null
-
+    echo "-----------------------"
     while [[ -z "$joincommand" ]]; do
-        read -p "Paste kubeadm join command here" joincommand < /dev/tty    
+        read -p "Paste kubeadm join command here: " joincommand < /dev/tty    
     done      
     echo "--- running command to join cluster ---"
-    $($joincommand)
+    eval $joincommand
+    echo "--- finished running command to join cluster ----"
 }
 echo "--- Finished including common.sh version $versioncommon ---"
