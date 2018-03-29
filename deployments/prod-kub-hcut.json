@@ -28,7 +28,7 @@
     "allow_kubectl_from_outside_vnet": false,
     "ingress": {
         "external": "public",
-        "internal": "private",
+        "internal": "vnetonly",
         "external_ip_whitelist": ""
     },
     "networking": {
