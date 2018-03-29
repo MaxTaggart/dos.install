@@ -245,6 +245,19 @@
                             }
                         }
                     }
+                },
+                "jobs": {
+                    "$id": "/properties/resources/properties/jobs",
+                    "type": "array",
+                    "items": {
+                        "$id": "/properties/resources/properties/jobs/items",
+                        "type": "string",
+                        "title": "The 0th Schema ",
+                        "default": "",
+                        "examples": [
+                            "certificateserver.yaml"
+                        ]
+                    }
                 }
             }
         }

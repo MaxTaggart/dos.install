@@ -1,0 +1,67 @@
+{
+    "$schema": "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/templates/schema.json",
+    "name": "Fabric NLP",
+    "version": "4.0.0.2",
+    "secrets": {
+        "password": [
+            "mysqlrootpassword",
+            "mysqlpassword"
+        ],
+        "value": []
+    },
+    "resources": {
+        "dns": [],
+        "configmaps": [],
+        "roles": [],
+        "volumes": {
+            "onprem": [],
+            "azure": [
+                "mysqlserver.yaml",
+                "solrserver.yaml",
+                "jobserver.yaml",
+                "mysqlbackup.yaml"
+            ]
+        },
+        "volumeclaims": [
+            "mysqlserver.yaml",
+            "solrserver.yaml",
+            "jobserver.yaml",
+            "mysqlbackup.yaml"
+        ],
+        "pods": [
+            "mysqlserver.yaml",
+            "solrserver.yaml",
+            "jobserver.yaml",
+            "nlpwebserver.yaml",
+            "mysqlclient.yaml",
+            "smtpserver.yaml"
+        ],
+        "services": {
+            "cluster": [
+                "mysqlserver.yaml",
+                "solrserver.yaml",
+                "jobserver.yaml",
+                "nlpwebserver.yaml",
+                "smtpserver.yaml"
+            ],
+            "external": [
+                "solrserver.yaml",
+                "jobserver.yaml",
+                "nlpwebserver.yaml"
+            ]
+        },
+        "ingress": {
+            "http": [
+                "web.yaml",
+                "solr.yaml",
+                "web.internal.yaml"
+            ],
+            "tcp": [
+                "mysqlserver.internal.yaml"
+            ]
+        },
+        "jobs": [
+            "mysqlserver-backup-cron.yaml"
+        ]
+    }
+}

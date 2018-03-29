@@ -74,10 +74,10 @@ while ($userinput -ne "q") {
         } 
         '1' {
             Invoke-WebRequest -useb $GITHUB_URL/azure/create-acs-cluster.ps1?f=$randomstring | Invoke-Expression;
-            Invoke-WebRequest -useb $GITHUB_URL/kubernetes/setup-loadbalancer.ps1?f=$randomstring | Invoke-Expression;
+            Invoke-WebRequest -useb $GITHUB_URL/loadbalancer/setup-loadbalancer.ps1?f=$randomstring | Invoke-Expression;
         } 
         '2' {
-            Invoke-WebRequest -useb $GITHUB_URL/kubernetes/setup-loadbalancer.ps1?f=$randomstring | Invoke-Expression;
+            Invoke-WebRequest -useb $GITHUB_URL/loadbalancer/setup-loadbalancer.ps1?f=$randomstring | Invoke-Expression;
         } 
         '3' {
             Do { 
@@ -136,7 +136,7 @@ while ($userinput -ne "q") {
             WriteDNSCommands
         } 
         '11' {
-            Invoke-WebRequest -useb $GITHUB_URL/nlp/installnlpkubernetes.ps1?f=$randomstring | Invoke-Expression;
+            InstallStack -namespace "fabricnlp" -baseUrl $GITHUB_URL -appfolder "nlp" -isAzure 1
         } 
         '12' {
             InstallStack -namespace "fabricrealtime" -baseUrl $GITHUB_URL -appfolder "realtime" -isAzure 1
