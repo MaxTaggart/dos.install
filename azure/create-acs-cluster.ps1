@@ -16,10 +16,10 @@ Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1 | Invoke-Expression;
 
 write-output "Checking if you're already logged in..."
 
-DownloadAzCliIfNeeded
-
 $config = $(ReadConfigFile).Config
 Write-Host $config
+
+DownloadAzCliIfNeeded -version $($config.azcli.version)
 
 $userInfo=$(GetLoggedInUserInfo)
 $AKS_SUBSCRIPTION_ID = $userInfo.AKS_SUBSCRIPTION_ID
@@ -66,13 +66,13 @@ AddFolderToPathEnvironmentVariable -folder $AKS_LOCAL_FOLDER
 $SSHKeyInfo = CreateSSHKey -resourceGroup $AKS_PERS_RESOURCE_GROUP -localFolder $AKS_LOCAL_FOLDER
 $AKS_SSH_KEY = $SSHKeyInfo.AKS_SSH_KEY
 $SSH_PRIVATE_KEY_FILE_UNIX_PATH = $SSHKeyInfo.SSH_PRIVATE_KEY_FILE_UNIX_PATH
-DownloadKubectl -localFolder $AKS_LOCAL_FOLDER
+DownloadKubectl -localFolder $AKS_LOCAL_FOLDER -version $($config.kubectl.version)
 
 # download acs-engine
 # download acs-engine
 $ACS_ENGINE_FILE = "$AKS_LOCAL_FOLDER\acs-engine.exe"
-$DESIRED_ACS_ENGINE_VERSION = "v0.13.0"
-$SYSTEM_VERSION_ACS_VERSION = [System.Version] "0.13.0"
+$SYSTEM_VERSION_ACS_VERSION = [System.Version] "$($config.azure.acs_engine.version)"
+$DESIRED_ACS_ENGINE_VERSION = "v$($config.azure.acs_engine.version)"
 $downloadACSEngine = "n"
 if (!(Test-Path "$ACS_ENGINE_FILE")) {
     $downloadACSEngine = "y"

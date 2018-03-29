@@ -583,9 +583,9 @@ function global:AddFolderToPathEnvironmentVariable([ValidateNotNullOrEmpty()] $f
         Write-Host "$folder is already in PATH"
     }
 }
-function global:DownloadAzCliIfNeeded() {
+function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()] $version) {
     # install az cli from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
-    $desiredAzClVersion = "2.0.27"
+    $desiredAzClVersion = $version
     $downloadazcli = $False
     if (!(Test-CommandExists az)) {
         $downloadazcli = $True
@@ -779,10 +779,10 @@ function global:DeleteNetworkSecurityGroupRule([ValidateNotNullOrEmpty()] $resou
     }    
 }
 
-function global:DownloadKubectl([ValidateNotNullOrEmpty()] $localFolder) {
+function global:DownloadKubectl([ValidateNotNullOrEmpty()] $localFolder,[ValidateNotNullOrEmpty()] $version) {
     # download kubectl
     $kubeCtlFile = "$localFolder\kubectl.exe"
-    $desiredKubeCtlVersion = "v1.9.3"
+    $desiredKubeCtlVersion = "v${version}"
     $downloadkubectl = "n"
     if (!(Test-Path "$kubeCtlFile")) {
         $downloadkubectl = "y"

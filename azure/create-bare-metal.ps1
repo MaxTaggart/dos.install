@@ -16,10 +16,10 @@ Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring | I
 Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring | Invoke-Expression;
 # Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
 
-DownloadAzCliIfNeeded
-
 $config = $(ReadConfigFile).Config
 Write-Host $config
+
+DownloadAzCliIfNeeded -version $($config.azcli.version)
 
 $AKS_SUBSCRIPTION_ID = $(GetLoggedInUserInfo).AKS_SUBSCRIPTION_ID
 
@@ -56,7 +56,7 @@ $SSHKeyInfo = CreateSSHKey -resourceGroup $AKS_PERS_RESOURCE_GROUP -localFolder 
 $SSH_PUBLIC_KEY_FILE = $SSHKeyInfo.SSH_PUBLIC_KEY_FILE
 $SSH_PRIVATE_KEY_FILE_UNIX_PATH = $SSHKeyInfo.SSH_PRIVATE_KEY_FILE_UNIX_PATH
 
-DownloadKubectl -localFolder $AKS_LOCAL_FOLDER
+DownloadKubectl -localFolder $AKS_LOCAL_FOLDER -version $($config.kubectl.version)
 
 if ([string]::IsNullOrEmpty($(kubectl config current-context 2> $null))) {
     Write-Host "kube config is not set"
