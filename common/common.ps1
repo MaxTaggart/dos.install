@@ -592,9 +592,9 @@ function global:DownloadAzCliIfNeeded() {
     }
     else {
         $azcurrentversion = az -v | Select-String "azure-cli" | Select-Object -exp line
+        $justVersion = [System.Version] $azcurrentversion.Substring($azcurrentversion.IndexOf('(') + 1, $azcurrentversion.IndexOf(')') - $azcurrentversion.IndexOf('(') - 1)
         # we should get: azure-cli (2.0.22)
-        $azversionMatches = $($azcurrentversion -match "$desiredAzClVersion")
-        if (!$azversionMatches) {
+        if ($justVersion -lt $desiredAzClVersion) {
             Write-Host "az version $azcurrentversion is not the same as desired version: $desiredAzClVersion"
             $downloadazcli = $True
         }
@@ -818,6 +818,8 @@ function global:DownloadFile([ValidateNotNullOrEmpty()] $url, [ValidateNotNullOr
     $Index = $url.LastIndexOf("/")
     $file = $url.Substring($Index + 1)
     $newurl = $url.Substring(0, $index)
+    #Some of the URLs have changed SSL versions - this should allow all SSL connections
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Ssl3 -bor [System.Net.SecurityProtocolType]::Tls -bor [System.Net.SecurityProtocolType]::Tls11 -bor [System.Net.SecurityProtocolType]::Tls12
     Register-ObjectEvent -InputObject $web -EventName DownloadFileCompleted `
         -SourceIdentifier Web.DownloadFileCompleted -Action {    
         $Global:isDownloaded = $True
@@ -827,7 +829,7 @@ function global:DownloadFile([ValidateNotNullOrEmpty()] $url, [ValidateNotNullOr
         $Global:Data = $event
     }
     $web.DownloadFileAsync($url, ($targetFile -f $file))
-    While (-Not $isDownloaded) {
+    While (-Not $Global:isDownloaded) {
         $percent = $Global:Data.SourceArgs.ProgressPercentage
         $totalBytes = $Global:Data.SourceArgs.TotalBytesToReceive
         $receivedBytes = $Global:Data.SourceArgs.BytesReceived
