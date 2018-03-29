@@ -14,7 +14,12 @@
         "configmaps": [],
         "roles": [],
         "volumes": {
-            "onprem": [],
+            "onprem": [
+                "mysqlserver.yaml",
+                "solrserver.yaml",
+                "jobserver.yaml",
+                "mysqlbackup.yaml"
+            ],
             "azure": [
                 "mysqlserver.yaml",
                 "solrserver.yaml",
