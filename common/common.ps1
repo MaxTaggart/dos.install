@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.01.01"
+$versioncommon = "2018.04.01.02"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -928,13 +928,27 @@ function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
             $ipconfig = $(az network nic ip-config list --resource-group $resourceGroup --nic-name $nic --query "[?primary].name" -o tsv)
 
             $loadbalancerForNic = $(az network nic ip-config show --resource-group $resourceGroup --nic-name $nic --name $ipconfig --query "loadBalancerBackendAddressPools[].id" -o tsv)
+
+            $foundNicInLoadbalancer=$false
             # if loadBalancerBackendAddressPools is missing then
             if ([string]::IsNullOrEmpty($loadbalancerForNic)) {
                 Write-Warning "Fixing load balancer for vm: $vm by adding nic $nic with ip-config $ipconfig to backend pool $loadbalancerBackendPoolName in load balancer $loadbalancer "
                 # --lb-address-pools: Space-separated list of names or IDs of load balancer address pools to associate with the NIC. If names are used, --lb-name must be specified.
                 az network nic ip-config update --resource-group $resourceGroup --nic-name $nic --name $ipconfig --lb-name $loadbalancer --lb-address-pools $loadbalancerBackendPoolName
+                $foundNicInLoadbalancer=$true
+            }
+            elseif ($($loadbalancerForNic -is [array])){
+                foreach($lb in $loadbalancerForNic){
+                    if($($lb -contains $loadbalancer)){
+                        $foundNicInLoadbalancer=$true
+                    }
+                }
             }
             elseif (!($($loadbalancerForNic -contains $loadbalancer))) {
+                $foundNicInLoadbalancer=$true
+            }
+
+            if(!$foundNicInLoadbalancer){
                 Write-Host "nic is already bound to load balancer $loadbalancerForNic with ip-config $ipconfig"
                 Write-Host "adding internal load balancer to secondary ip-config"
                 # get the first secondary ipconfig
