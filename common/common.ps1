@@ -586,7 +586,7 @@ function global:AddFolderToPathEnvironmentVariable([ValidateNotNullOrEmpty()] $f
             Write-Host "$newpath".split(";")
         }
         # for current session set the PATH too.  the above only takes effect if powershell is reopened
-        $ENV:PATH = "$ENV:PATH;$folder"
+        $ENV:PATH = "$folder;$ENV:PATH"
         Write-Host "Set path for current powershell session"
         Write-Host ($env:path).split(";")
     }
