@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.01.05"
+$versioncommon = "2018.04.02.01"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -612,9 +612,10 @@ function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()] $version) {
     }
 
     if ($downloadazcli) {
-        $azCliFile = ([System.IO.Path]::GetTempPath() + ("az-cli-latest.msi"))
-        $url = "https://azurecliprod.blob.core.windows.net/msi/azure-cli-latest.msi"
-        Write-Host "Downloading az-cli-latest.msi from url $url to $azCliFile"
+        $azCliFile = ([System.IO.Path]::GetTempPath() + ("azure-cli-${desiredAzClVersion}.msi"))
+        # $url = "https://azurecliprod.blob.core.windows.net/msi/azure-cli-latest.msi"
+        $url = "https://azurecliprod.blob.core.windows.net/msi/azure-cli-${desiredAzClVersion}.msi"
+        Write-Host "Downloading azure-cli-${desiredAzClVersion}.msi from url $url to $azCliFile"
         If (Test-Path $azCliFile) {
             Remove-Item $azCliFile -Force
         }
