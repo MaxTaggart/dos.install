@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.04.02.04"
+version="2018.04.02.05"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -98,7 +98,7 @@ while [[ "$input" != "q" ]]; do
         sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
         if [ -x "$(command -v docker)" ]; then
             sudo docker system prune -f
-            sudo docker volume rm etcd
+            # sudo docker volume rm etcd
         fi
         sudo rm -rf /var/etcd/backups/*
         sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
