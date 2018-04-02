@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.02.01"
+versioncommon="2018.04.02.02"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -278,7 +278,7 @@ function mountSMBWithParams(){
 
     sudo mount -a
 
-    if [[ "saveIntoSecret" == true ]]; then
+    if [[ $saveIntoSecret == true ]]; then
         echo "saving mount information into a secret"
         secretname="mountsharedfolder"
         namespace="default"
