@@ -9,7 +9,7 @@ $CLUSTER_DOMAIN="cluster.local"
 $SERVICE_CIDR="10.0.0.0/16"
 $POD_CIDR="10.244.0.0/24"
 
-Write-Output "Removing kube-dns-v20 deployment"
+Write-Host "Removing kube-dns-v20 deployment"
 kubectl delete --namespace=kube-system deployment kube-dns-v20
 
 $serviceyaml = @"
@@ -157,7 +157,7 @@ spec:
 ---
 "@
 
-    Write-Output $serviceyaml | kubectl apply -f -
+    Write-Host $serviceyaml | kubectl apply -f -
 
 
 

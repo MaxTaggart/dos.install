@@ -1,4 +1,4 @@
-Write-output "Version 2018.03.27.01"
+Write-Host "Version 2018.03.27.01"
 
 #
 # This script is meant for quick & easy install via:
@@ -32,11 +32,11 @@ $AKS_PERS_LOCATION = $config.azure.location
 
 # Get location name from resource group
 $AKS_PERS_LOCATION = az group show --name $AKS_PERS_RESOURCE_GROUP --query "location" -o tsv
-Write-Output "Using location: [$AKS_PERS_LOCATION]"
+Write-Host "Using location: [$AKS_PERS_LOCATION]"
 
 $customerid = $config.customerid
 $customerid = $customerid.ToLower().Trim()
-Write-Output "Customer ID: $customerid"
+Write-Host "Customer ID: $customerid"
 
 $ingressExternal = $config.ingress.external
 $ingressInternal = $config.ingress.internal
@@ -47,34 +47,34 @@ $AKS_VNET_NAME = $config.networking.vnet
 $AKS_SUBNET_NAME = $config.networking.subnet
 $AKS_SUBNET_RESOURCE_GROUP = $config.networking.subnet_resource_group
 
-Write-Output "Found vnet info from secret: vnet: $AKS_VNET_NAME, subnet: $AKS_SUBNET_NAME, subnetResourceGroup: $AKS_SUBNET_RESOURCE_GROUP"
+Write-Host "Found vnet info from secret: vnet: $AKS_VNET_NAME, subnet: $AKS_SUBNET_NAME, subnetResourceGroup: $AKS_SUBNET_RESOURCE_GROUP"
 
 if ($ingressExternal -eq "whitelist") {
-    Write-Output "Whitelist: $AKS_IP_WHITELIST"
+    Write-Host "Whitelist: $AKS_IP_WHITELIST"
 
     SaveSecretValue -secretname whitelistip -valueName iprange -value "${AKS_IP_WHITELIST}"
 }
 
-Write-Output "Setting up Network Security Group for the subnet"
+Write-Host "Setting up Network Security Group for the subnet"
 
 # setup network security group
 $AKS_PERS_NETWORK_SECURITY_GROUP = "$($AKS_PERS_RESOURCE_GROUP.ToLower())-nsg"
 
 if ([string]::IsNullOrWhiteSpace($(az network nsg show -g $AKS_PERS_RESOURCE_GROUP -n $AKS_PERS_NETWORK_SECURITY_GROUP))) {
 
-    Write-Output "Creating the Network Security Group for the subnet"
+    Write-Host "Creating the Network Security Group for the subnet"
     az network nsg create -g $AKS_PERS_RESOURCE_GROUP -n $AKS_PERS_NETWORK_SECURITY_GROUP --query "provisioningState"
 }
 else {
-    Write-Output "Network Security Group already exists: $AKS_PERS_NETWORK_SECURITY_GROUP"
+    Write-Host "Network Security Group already exists: $AKS_PERS_NETWORK_SECURITY_GROUP"
 }
 
 if ($($config.network_security_group.create_nsg_rules)) {
-    Write-Output "Adding or updating rules to Network Security Group for the subnet"
+    Write-Host "Adding or updating rules to Network Security Group for the subnet"
     $sourceTagForAdminAccess = "VirtualNetwork"
     if($($config.allow_kubectl_from_outside_vnet)){
         $sourceTagForAdminAccess = "Internet"
-        Write-Output "Enabling admin access to cluster from Internet"
+        Write-Host "Enabling admin access to cluster from Internet"
     }
 
     $sourceTagForHttpAccess = "Internet"
@@ -107,7 +107,7 @@ if ($($config.network_security_group.create_nsg_rules)) {
             
     # if we already have opened the ports for admin access then we're not allowed to add another rule for opening them
     if (($sourceTagForHttpAccess -eq "Internet") -and ($sourceTagForAdminAccess -eq "Internet")) {
-        Write-Output "Since we already have rules open port 80 and 443 to the Internet, we do not need to create separate ones for the Internet"
+        Write-Host "Since we already have rules open port 80 and 443 to the Internet, we do not need to create separate ones for the Internet"
     }
     else {
         if($($config.ingress.external) -ne "vnetonly"){
@@ -124,9 +124,9 @@ if ($($config.network_security_group.create_nsg_rules)) {
     }
 
     $nsgid = az network nsg list --resource-group ${AKS_PERS_RESOURCE_GROUP} --query "[?name == '${AKS_PERS_NETWORK_SECURITY_GROUP}'].id" -o tsv
-    Write-Output "Found ID for ${AKS_PERS_NETWORK_SECURITY_GROUP}: $nsgid"
+    Write-Host "Found ID for ${AKS_PERS_NETWORK_SECURITY_GROUP}: $nsgid"
 
-    Write-Output "Setting NSG into subnet"
+    Write-Host "Setting NSG into subnet"
     az network vnet subnet update -n "${AKS_SUBNET_NAME}" -g "${AKS_SUBNET_RESOURCE_GROUP}" --vnet-name "${AKS_VNET_NAME}" --network-security-group "$nsgid" --query "provisioningState" -o tsv
 }
 
@@ -154,7 +154,7 @@ if ($($config.ssl) ) {
 
         kubectl delete secret traefik-cert-ahmn -n kube-system --ignore-not-found=true
 
-        Write-Output "Storing TLS certs as kubernetes secret"
+        Write-Host "Storing TLS certs as kubernetes secret"
         kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.crt" --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.key"
     }
 }
@@ -162,7 +162,7 @@ if ($($config.ssl) ) {
 Write-Host "GITHUB_URL: $GITHUB_URL"
 
 if ("$($config.ingress.external)" -ne "vnetonly") {
-    Write-Output "Setting up a public load balancer"
+    Write-Host "Setting up a public load balancer"
 
     $publicip = az network public-ip show -g $AKS_PERS_RESOURCE_GROUP -n IngressPublicIP --query "ipAddress" -o tsv;
     if ([string]::IsNullOrWhiteSpace($publicip)) {
@@ -191,8 +191,8 @@ if ($($config.dns.create_dns_entries)) {
     SetupDNS -dnsResourceGroup $DNS_RESOURCE_GROUP -dnsrecordname $dnsrecordname -externalIP $EXTERNAL_IP 
 }
 else {
-    Write-Output "To access the urls from your browser, add the following entries in your c:\windows\system32\drivers\etc\hosts file"
-    Write-Output "$EXTERNAL_IP $dnsrecordname"
+    Write-Host "To access the urls from your browser, add the following entries in your c:\windows\system32\drivers\etc\hosts file"
+    Write-Host "$EXTERNAL_IP $dnsrecordname"
 }
 
 

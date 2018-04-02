@@ -1316,16 +1316,16 @@ function global:SetupWAF() {
     #         --source-address-prefixes "$iprangetoallow"
     # }
 
-    # Write-Output "Creating network security group to restrict IP address"
+    # Write-Host "Creating network security group to restrict IP address"
 
-    Write-Output "Setting up Azure Application Gateway"
+    Write-Host "Setting up Azure Application Gateway"
 
     $gatewayName = "${customerid}Gateway"
 
     az network application-gateway show --name "$gatewayName" --resource-group "$AKS_PERS_RESOURCE_GROUP"
     $gatewayipName = "${gatewayName}PublicIP"
 
-    Write-Output "Checking if Application Gateway already exists"
+    Write-Host "Checking if Application Gateway already exists"
     if ([string]::IsNullOrEmpty($(az network application-gateway show --name "$gatewayName" --resource-group "$AKS_PERS_RESOURCE_GROUP" ))) {
 
         # note application gateway provides no way to specify the resourceGroup of the vnet so we HAVE to create the App Gateway in the same resourceGroup
@@ -1334,10 +1334,10 @@ function global:SetupWAF() {
         if ([string]::IsNullOrWhiteSpace($gatewayip)) {
             az network public-ip create -g $AKS_PERS_RESOURCE_GROUP -n "$gatewayipName" --location $AKS_PERS_LOCATION --allocation-method Dynamic
 
-            # Write-Output "Waiting for IP address to get assigned to $gatewayipName"
+            # Write-Host "Waiting for IP address to get assigned to $gatewayipName"
             # Do { 
             #     Start-Sleep -Seconds 10
-            #     Write-Output "."                
+            #     Write-Host "."                
             #     $gatewayip = az network public-ip show -g $AKS_PERS_RESOURCE_GROUP -n "$gatewayipName" --query "ipAddress" -o tsv; 
             # }
             # while ([string]::IsNullOrWhiteSpace($gatewayip))
@@ -1347,9 +1347,9 @@ function global:SetupWAF() {
 
         $mysubnetid = "/subscriptions/${AKS_SUBSCRIPTION_ID}/resourceGroups/${AKS_SUBNET_RESOURCE_GROUP}/providers/Microsoft.Network/virtualNetworks/${AKS_VNET_NAME}/subnets/${AKS_SUBNET_NAME}"
             
-        Write-Output "Using subnet id: $mysubnetid"
+        Write-Host "Using subnet id: $mysubnetid"
 
-        Write-Output "Creating new application gateway with WAF (This can take 10-15 minutes)"
+        Write-Host "Creating new application gateway with WAF (This can take 10-15 minutes)"
         # https://docs.microsoft.com/en-us/cli/azure/network/application-gateway?view=azure-cli-latest#az_network_application_gateway_create
 
         az network application-gateway create `
@@ -1364,7 +1364,7 @@ function global:SetupWAF() {
     
         # https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-faq
 
-        Write-Output "Waiting for Azure Application Gateway to be created."
+        Write-Host "Waiting for Azure Application Gateway to be created."
         az network application-gateway wait `
             --name "$gatewayName" `
             --resource-group "$AKS_PERS_RESOURCE_GROUP" `
@@ -1374,7 +1374,7 @@ function global:SetupWAF() {
 
         # # set public IP
         $frontendPoolName = az network application-gateway show --name "$gatewayName" --resource-group "$AKS_SUBNET_RESOURCE_GROUP" --query "frontendIpConfigurations[0].name" -o tsv
-        Write-Output "Setting $gatewayipName as IP for frontend pool $frontendPoolName"
+        Write-Host "Setting $gatewayipName as IP for frontend pool $frontendPoolName"
         az network application-gateway frontend-ip update `
             --gateway-name "$gatewayName" `
             --resource-group "$AKS_PERS_RESOURCE_GROUP" `
@@ -1382,7 +1382,7 @@ function global:SetupWAF() {
             --public-ip-address "$gatewayipName"
 
         $backendPoolName = az network application-gateway show --name "$gatewayName" --resource-group "$AKS_SUBNET_RESOURCE_GROUP" --query "backendAddressPools[0].name" -o tsv
-        Write-Output "Setting $EXTERNAL_IP as IP for backend pool $backendPoolName"
+        Write-Host "Setting $EXTERNAL_IP as IP for backend pool $backendPoolName"
         # set backend private IP
         az network application-gateway address-pool update  `
             --gateway-name "$gatewayName" `
@@ -1399,7 +1399,7 @@ function global:SetupWAF() {
     if ($(az network application-gateway waf-config show --gateway-name "$gatewayName" --resource-group "$AKS_PERS_RESOURCE_GROUP" --query "firewallMode" -o tsv) -eq "Prevention") {
     }
     else {
-        Write-Output "Enabling Prevention mode of firewall"
+        Write-Host "Enabling Prevention mode of firewall"
         az network application-gateway waf-config set `
             --enabled true `
             --firewall-mode Prevention `
@@ -1428,7 +1428,7 @@ function global:SetupWAF() {
     # }
 
 
-    Write-Output "Checking for health of backend pool"
+    Write-Host "Checking for health of backend pool"
     az network application-gateway show-backend-health `
         --name "$gatewayName" `
         --resource-group "$AKS_PERS_RESOURCE_GROUP" `
@@ -1451,17 +1451,17 @@ function global:ConfigureWAF() {
     while ([string]::IsNullOrWhiteSpace($confirmation))
 
     if ($confirmation -eq 'y') {
-        Write-Output "Finding existing vnets..."
+        Write-Host "Finding existing vnets..."
         # az network vnet list --query "[].[name,resourceGroup ]" -o tsv    
 
         $vnets = az network vnet list --query "[].[name]" -o tsv
 
         Do { 
-            Write-Output "------  Existing vnets -------"
+            Write-Host "------  Existing vnets -------"
             for ($i = 1; $i -le $vnets.count; $i++) {
                 Write-Host "$i. $($vnets[$i-1])"
             }    
-            Write-Output "------  End vnets -------"
+            Write-Host "------  End vnets -------"
 
             $index = Read-Host "Enter number of vnet to use (1 - $($vnets.count))"
             $AKS_VNET_NAME = $($vnets[$index - 1])
@@ -1474,17 +1474,17 @@ function global:ConfigureWAF() {
             # while ([string]::IsNullOrWhiteSpace($AKS_SUBNET_RESOURCE_GROUP)) 
 
             $AKS_SUBNET_RESOURCE_GROUP = az network vnet list --query "[?name == '$AKS_VNET_NAME'].resourceGroup" -o tsv
-            Write-Output "Using subnet resource group: [$AKS_SUBNET_RESOURCE_GROUP]"
+            Write-Host "Using subnet resource group: [$AKS_SUBNET_RESOURCE_GROUP]"
 
-            Write-Output "Finding existing subnets in $AKS_VNET_NAME ..."
+            Write-Host "Finding existing subnets in $AKS_VNET_NAME ..."
             $subnets = az network vnet subnet list --resource-group $AKS_SUBNET_RESOURCE_GROUP --vnet-name $AKS_VNET_NAME --query "[].name" -o tsv
         
             Do { 
-                Write-Output "------  Subnets in $AKS_VNET_NAME -------"
+                Write-Host "------  Subnets in $AKS_VNET_NAME -------"
                 for ($i = 1; $i -le $subnets.count; $i++) {
                     Write-Host "$i. $($subnets[$i-1])"
                 }    
-                Write-Output "------  End Subnets -------"
+                Write-Host "------  End Subnets -------"
 
                 Write-Host "NOTE: Each customer should have their own gateway subnet.  This subnet should be different than the cluster subnet"
                 $index = Read-Host "Enter number of subnet to use (1 - $($subnets.count))"
@@ -1566,7 +1566,7 @@ function global:CreateAzureStorage([ValidateNotNullOrEmpty()] $namespace) {
     
     $resourceGroup = $(GetResourceGroup).ResourceGroup
 
-    Write-Output "Using resource group: $resourceGroup"        
+    Write-Host "Using resource group: $resourceGroup"        
     
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
         kubectl create namespace $namespace
@@ -1588,14 +1588,14 @@ function global:DeleteAzureStorage([ValidateNotNullOrEmpty()] $namespace) {
     
     $resourceGroup = $(GetResourceGroup).ResourceGroup
 
-    Write-Output "Using resource group: $resourceGroup"        
+    Write-Host "Using resource group: $resourceGroup"        
     
     $shareName = "$namespace"
     $storageAccountName = ReadSecretValue -secretname azure-secret -valueName "azurestorageaccountname" 
     
     $storageAccountConnectionString = az storage account show-connection-string -n $storageAccountName -g $resourceGroup -o tsv
     
-    Write-Output "deleting the file share: $shareName"
+    Write-Host "deleting the file share: $shareName"
     DeleteAzureFileShare -sharename $sharename -storageAccountConnectionString $storageAccountConnectionString
     return $Return
 }
@@ -1612,7 +1612,7 @@ function global:CreateOnPremStorage([ValidateNotNullOrEmpty()] $namespace) {
     $shareName = "$namespace"
     $sharePath = "/mnt/data/$shareName"
 
-    Write-Output "Create the file share: $sharePath"
+    Write-Host "Create the file share: $sharePath"
 
     New-Item -ItemType Directory -Force -Path $sharePath   
     
@@ -1630,7 +1630,7 @@ function global:DeleteOnPremStorage([ValidateNotNullOrEmpty()] $namespace) {
     $shareName = "$namespace"
     $sharePath = "/mnt/data/$shareName"
 
-    Write-Output "Deleting the file share: $sharePath"
+    Write-Host "Deleting the file share: $sharePath"
 
     Remove-Item -Recurse -Force $sharePath 
     

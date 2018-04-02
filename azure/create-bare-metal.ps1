@@ -46,7 +46,7 @@ $AKS_LOCAL_FOLDER = $config.local_folder
 if ([string]::IsNullOrWhiteSpace($AKS_LOCAL_FOLDER)) {$AKS_LOCAL_FOLDER = "C:\kubernetes"}
 
 if (!(Test-Path -Path "$AKS_LOCAL_FOLDER")) {
-    Write-Output "$AKS_LOCAL_FOLDER does not exist.  Creating it..."
+    Write-Host "$AKS_LOCAL_FOLDER does not exist.  Creating it..."
     New-Item -ItemType directory -Path $AKS_LOCAL_FOLDER
 }
 

@@ -7,7 +7,7 @@ Write-Host "ingressExternal:$ingressExternal"
 Write-Host "customerid:$customerid"
 Write-Host "publicIp:$publicIp"
 Write-Host "----"
-Write-output "Version 2018.03.28.01"
+Write-Host "Version 2018.03.28.01"
 
 #
 # This script is meant for quick & easy install via:

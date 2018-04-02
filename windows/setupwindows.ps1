@@ -6,7 +6,7 @@ Install-Module -Name DockerMsftProvider -Repository PSGallery -Force
 Install-Package -Name Docker -ProviderName DockerMsftProvider -Force -RequiredVersion 17.06.1-ee-2
 Restart-Computer -Force
 
-Write-Output "Checking if docker is working properly"
+Write-Host "Checking if docker is working properly"
 docker run microsoft/dotnet-samples:dotnetapp-nanoserver
 
 # https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/configuring-host-gateway-mode
@@ -17,7 +17,7 @@ docker run microsoft/dotnet-samples:dotnetapp-nanoserver
 
 mkdir C:/k/
 
-Write-Output "installing Windows tools to set up networking"
+Write-Host "installing Windows tools to set up networking"
 
 Invoke-WebRequest https://github.com/Microsoft/SDN/archive/master.zip -o master.zip
 Expand-Archive master.zip -DestinationPath master
@@ -31,7 +31,7 @@ rm -recurse -force master,master.zip
 Invoke-WebRequest "http://7-zip.org/a/7z1801-x64.exe" -o 7z1801-x64.exe
 Start-Process .\7z1801-x64.exe
 
-Write-Output "Downloading Windows Kube tools: kubectl, kubeadm"
+Write-Host "Downloading Windows Kube tools: kubectl, kubeadm"
 Invoke-WebRequest https://dl.k8s.io/v1.9.2/kubernetes-node-windows-amd64.tar.gz -o kubernetes-node-windows-amd64.tar.gz
 mv kubernetes-node-windows-amd64.tar.gz C:/k/
 
@@ -41,7 +41,7 @@ mv kubernetes-node-windows-amd64.tar.gz C:/k/
 # Expand-Archive kubernetes-node-windows-amd64.tar.gz -DestinationPath kubernetes-node-windows-amd64
 # install 7-zip and extract
 
-Write-Output "Creating the pause container"
+Write-Host "Creating the pause container"
 docker pull microsoft/windowsservercore
 docker tag microsoft/windowsservercore microsoft/windowsservercore:latest
 cd C:/k/
@@ -61,16 +61,16 @@ docker images
 # copy to c:\k
 
 
-Write-Output "TODO: Copy and create config here"
+Write-Host "TODO: Copy and create config here"
 
-Write-Output "Setting environment variable to point to kube config"
+Write-Host "Setting environment variable to point to kube config"
 $env:Path += ";C:\k"
 [Environment]::SetEnvironmentVariable("Path", $env:Path, [EnvironmentVariableTarget]::Machine)
 $env:KUBECONFIG="C:\k\config"
 [Environment]::SetEnvironmentVariable("KUBECONFIG", "C:\k\config", [EnvironmentVariableTarget]::User)
 Get-ChildItem Env:
 
-Write-Output "Checking to see if we can connect to kube master"
+Write-Host "Checking to see if we can connect to kube master"
 kubectl version
 
 Get-NetAdapter

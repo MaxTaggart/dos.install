@@ -187,7 +187,7 @@ while ($userinput -ne "q") {
                 $sb = [scriptblock]::Create("kubectl proxy -p $port")
                 $job = Start-Job -Name "KubDashboard" -ScriptBlock $sb -ErrorAction Stop
                 Wait-Job $job -Timeout 5;
-                Write-Output "job state: $($job.state)"  
+                Write-Host "job state: $($job.state)"  
                 Receive-Job -Job $job 6>&1  
             }
 
@@ -230,8 +230,8 @@ while ($userinput -ne "q") {
             $SSH_PRIVATE_KEY_FILE = "$AKS_FOLDER_FOR_SSH_KEY\id_rsa"
             $SSH_PRIVATE_KEY_FILE_UNIX_PATH = "/" + (($SSH_PRIVATE_KEY_FILE -replace "\\", "/") -replace ":", "").ToLower().Trim("/")                                       
             $MASTER_VM_NAME = "${AKS_PERS_RESOURCE_GROUP}.${AKS_PERS_LOCATION}.cloudapp.azure.com"
-            # Write-Output "You can connect to master VM in Git Bash for debugging using:"
-            # Write-Output "ssh -i ${SSH_PRIVATE_KEY_FILE_UNIX_PATH} azureuser@${MASTER_VM_NAME}"            
+            # Write-Host "You can connect to master VM in Git Bash for debugging using:"
+            # Write-Host "ssh -i ${SSH_PRIVATE_KEY_FILE_UNIX_PATH} azureuser@${MASTER_VM_NAME}"            
 
             $virtualmachines = az vm list -g $AKS_PERS_RESOURCE_GROUP --query "[?storageProfile.osDisk.osType != 'Windows'].name" -o tsv
             ForEach ($vm in $virtualmachines) {
@@ -240,18 +240,18 @@ while ($userinput -ne "q") {
                     $firstpublicip = az vm show -g $AKS_PERS_RESOURCE_GROUP -n $vm -d --query privateIps -otsv
                     $firstpublicip = $firstpublicip.Split(",")[0]
                 }
-                Write-Output "Connect to ${vm}:"
-                Write-Output "ssh -i ${SSH_PRIVATE_KEY_FILE_UNIX_PATH} azureuser@${firstpublicip}"            
+                Write-Host "Connect to ${vm}:"
+                Write-Host "ssh -i ${SSH_PRIVATE_KEY_FILE_UNIX_PATH} azureuser@${firstpublicip}"            
             }
 
-            Write-Output "Command to show errors: sudo journalctl -xef --priority 0..3"
-            Write-Output "Command to see apiserver logs: sudo journalctl -fu kube-apiserver"
-            Write-Output "Command to see kubelet status: sudo systemctl status kubelet"
+            Write-Host "Command to show errors: sudo journalctl -xef --priority 0..3"
+            Write-Host "Command to see apiserver logs: sudo journalctl -fu kube-apiserver"
+            Write-Host "Command to see kubelet status: sudo systemctl status kubelet"
             # sudo systemctl restart kubelet.service
             # sudo service kubelet status
             # /var/log/pods
             
-            Write-Output "Cheat Sheet for journalctl: https://www.cheatography.com/airlove/cheat-sheets/journalctl/"
+            Write-Host "Cheat Sheet for journalctl: https://www.cheatography.com/airlove/cheat-sheets/journalctl/"
             # systemctl list-unit-files | grep .service | grep enabled
             # https://askubuntu.com/questions/795226/how-to-list-all-enabled-services-from-systemctl
 
@@ -293,8 +293,8 @@ while ($userinput -ne "q") {
                                     
             # Invoke-WebRequest -useb -Headers @{"Host" = "nlp.$customerid.healthcatalyst.net"} -Uri http://$loadBalancerIP/nlpweb | Select-Object -Expand Content
     
-            Write-Output "To test out the load balancer, open Git Bash and run:"
-            Write-Output "curl --header 'Host: $url' 'http://$ip/dashboard' -k" 
+            Write-Host "To test out the load balancer, open Git Bash and run:"
+            Write-Host "curl --header 'Host: $url' 'http://$ip/dashboard' -k" 
             } 
         '31' {
             $DEFAULT_RESOURCE_GROUP = ReadSecretValue -secretname azure-secret -valueName resourcegroup
@@ -313,7 +313,7 @@ while ($userinput -ne "q") {
         '32' {
             $pods = $(kubectl get pods -l k8s-traefik=traefik -n kube-system -o jsonpath='{.items[*].metadata.name}')
             foreach ($pod in $pods.Split(" ")) {
-                Write-Output "=============== Pod: $pod ================="
+                Write-Host "=============== Pod: $pod ================="
                 kubectl logs --tail=20 $pod -n kube-system 
             }
         }         
@@ -329,7 +329,7 @@ while ($userinput -ne "q") {
         '41' {
             $pods = $(kubectl get pods -n fabricnlp -o jsonpath='{.items[*].metadata.name}')
             foreach ($pod in $pods.Split(" ")) {
-                Write-Output "=============== Describe Pod: $pod ================="
+                Write-Host "=============== Describe Pod: $pod ================="
                 kubectl describe pods $pod -n fabricnlp 
             }            
         } 
@@ -344,15 +344,15 @@ while ($userinput -ne "q") {
                                     
             # Invoke-WebRequest -useb -Headers @{"Host" = "nlp.$customerid.healthcatalyst.net"} -Uri http://$loadBalancerIP/nlpweb | Select-Object -Expand Content
 
-            Write-Output "To test out the NLP services, open Git Bash and run:"
-            Write-Output "curl -L --verbose --header 'Host: solr.$customerid.healthcatalyst.net' 'http://$loadBalancerInternalIP/solr' -k" 
-            Write-Output "curl -L --verbose --header 'Host: nlp.$customerid.healthcatalyst.net' 'http://$loadBalancerIP/nlpweb' -k" 
-            Write-Output "curl -L --verbose --header 'Host: nlpjobs.$customerid.healthcatalyst.net' 'http://$loadBalancerIP/nlp' -k"
+            Write-Host "To test out the NLP services, open Git Bash and run:"
+            Write-Host "curl -L --verbose --header 'Host: solr.$customerid.healthcatalyst.net' 'http://$loadBalancerInternalIP/solr' -k" 
+            Write-Host "curl -L --verbose --header 'Host: nlp.$customerid.healthcatalyst.net' 'http://$loadBalancerIP/nlpweb' -k" 
+            Write-Host "curl -L --verbose --header 'Host: nlpjobs.$customerid.healthcatalyst.net' 'http://$loadBalancerIP/nlp' -k"
 
-            Write-Output "If you didn't setup DNS, add the following entries in your c:\windows\system32\drivers\etc\hosts file to access the urls from your browser"
-            Write-Output "$loadBalancerInternalIP solr.$customerid.healthcatalyst.net"            
-            Write-Output "$loadBalancerIP nlp.$customerid.healthcatalyst.net"            
-            Write-Output "$loadBalancerIP nlpjobs.$customerid.healthcatalyst.net"
+            Write-Host "If you didn't setup DNS, add the following entries in your c:\windows\system32\drivers\etc\hosts file to access the urls from your browser"
+            Write-Host "$loadBalancerInternalIP solr.$customerid.healthcatalyst.net"            
+            Write-Host "$loadBalancerIP nlp.$customerid.healthcatalyst.net"            
+            Write-Host "$loadBalancerIP nlpjobs.$customerid.healthcatalyst.net"
             
             # clear Google DNS cache: http://www.redsome.com/flush-clear-dns-cache-google-chrome-browser/
             Write-Host "Launching http://solr.$customerid.healthcatalyst.net/solr in the web browser"
@@ -368,7 +368,7 @@ while ($userinput -ne "q") {
         '44' {
             $pods = $(kubectl get pods -n fabricnlp -o jsonpath='{.items[*].metadata.name}')
             foreach ($pod in $pods.Split(" ")) {
-                Write-Output "=============== Pod: $pod ================="
+                Write-Host "=============== Pod: $pod ================="
                 kubectl logs --tail=20 $pod -n fabricnlp
             }
         } 
@@ -378,7 +378,7 @@ while ($userinput -ne "q") {
         '46' {
             $pods = $(kubectl get pods -n fabricnlp -o jsonpath='{.items[*].metadata.name}')
             foreach ($pod in $pods.Split(" ")) {
-                Write-Output "kubectl exec -it $pod -n fabricnlp -- sh"
+                Write-Host "kubectl exec -it $pod -n fabricnlp -- sh"
             }
         } 
         '47' {

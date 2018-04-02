@@ -242,7 +242,7 @@ function global:DeleteAllSecrets([ValidateNotNullOrEmpty()] $namespace) {
     Write-Host "--- Deleting all secrets in $namespace ---"
     $secrets = $(kubectl get secrets -n $namespace -o jsonpath="{.items[?(@.type=='Opaque')].metadata.name}")
     foreach ($secret in $secrets.Split(" ")) {
-        Write-Output "deleting secret: $secret"
+        Write-Host "deleting secret: $secret"
         kubectl delete secret $secret -n $namespace
     }
 
@@ -260,7 +260,7 @@ function global:SwitchToKubCluster([ValidateNotNullOrEmpty()] $folderToUse) {
     if (Test-Path -Path $fileToUse) {
         $userKubeConfigFolder = "${env:userprofile}\.kube"
         If (!(Test-Path $userKubeConfigFolder)) {
-            Write-Output "Creating $userKubeConfigFolder"
+            Write-Host "Creating $userKubeConfigFolder"
             New-Item -ItemType Directory -Force -Path "$userKubeConfigFolder"
         }            
 
@@ -346,7 +346,7 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
     
     $customerid = ReadSecret -secretname customerid
     $customerid = $customerid.ToLower().Trim()
-    Write-Output "Customer ID: $customerid"
+    Write-Host "Customer ID: $customerid"
 
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "dns" -customerid $customerid -resources $($config.resources.dns)
 
@@ -460,21 +460,21 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     $folder = "loadbalancer/services/external"
 
     if ($ingressExternal -eq "onprem" ) {
-        Write-Output "Setting up external load balancer"
+        Write-Host "Setting up external load balancer"
         $files = "loadbalancer.onprem.yaml"
         DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
     }    
     elseif ("$ingressExternal" -ne "vnetonly") {
-        Write-Output "Setting up a public load balancer"
+        Write-Host "Setting up a public load balancer"
 
         Write-Host "Using Public IP: [$publicip]"
 
-        Write-Output "Setting up external load balancer"
+        Write-Host "Setting up external load balancer"
         $files = "loadbalancer.external.yaml"
         DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
     }
     else {
-        Write-Output "Setting up an external load balancer"
+        Write-Host "Setting up an external load balancer"
         $files = "loadbalancer.external.restricted.yaml"
         DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
     }
@@ -483,11 +483,11 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     if ($ingressExternal -eq "onprem" ) {
     }
     elseif ("$ingressInternal" -eq "public") {
-        Write-Output "Setting up an internal load balancer"
+        Write-Host "Setting up an internal load balancer"
         $files = "loadbalancer.internal.open.yaml"
     }
     else {
-        Write-Output "Setting up an internal load balancer"
+        Write-Host "Setting up an internal load balancer"
         $files = "loadbalancer.internal.yaml"
     }
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip

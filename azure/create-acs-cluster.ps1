@@ -1,4 +1,4 @@
-Write-output "--- create-acs-cluster Version 2018.04.01.01 ----"
+Write-Host "--- create-acs-cluster Version 2018.04.01.01 ----"
 
 #
 # This script is meant for quick & easy install via:
@@ -14,7 +14,7 @@ Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1 | Invoke-Expression;
 # Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
 
 
-write-output "Checking if you're already logged in..."
+Write-Host "Checking if you're already logged in..."
 
 $config = $(ReadConfigFile).Config
 Write-Host $config
@@ -27,7 +27,7 @@ $IS_CAFE_ENVIRONMENT=$userInfo.IS_CAFE_ENVIRONMENT
 
 $customerid=$($config.customerid)
 
-Write-Output "Customer ID: $customerid"
+Write-Host "Customer ID: $customerid"
 
 $AKS_PERS_RESOURCE_GROUP = $config.azure.resourceGroup
 $AKS_PERS_LOCATION = $config.azure.location
@@ -57,7 +57,7 @@ $AKS_LOCAL_FOLDER = $config.local_folder
 if ([string]::IsNullOrWhiteSpace($AKS_LOCAL_FOLDER)) {$AKS_LOCAL_FOLDER = "C:\kubernetes"}
 
 if (!(Test-Path -Path "$AKS_LOCAL_FOLDER")) {
-    Write-Output "$AKS_LOCAL_FOLDER does not exist.  Creating it..."
+    Write-Host "$AKS_LOCAL_FOLDER does not exist.  Creating it..."
     New-Item -ItemType directory -Path $AKS_LOCAL_FOLDER
 }
 
@@ -87,7 +87,7 @@ else {
 }
 if ($downloadACSEngine -eq "y") {
     $url = "https://github.com/Azure/acs-engine/releases/download/${DESIRED_ACS_ENGINE_VERSION}/acs-engine-${DESIRED_ACS_ENGINE_VERSION}-windows-amd64.zip"
-    Write-Output "Downloading acs-engine.exe from $url to $ACS_ENGINE_FILE"
+    Write-Host "Downloading acs-engine.exe from $url to $ACS_ENGINE_FILE"
     Remove-Item -Path "$ACS_ENGINE_FILE" -Force
 
     DownloadFile -url $url -targetFile "$AKS_LOCAL_FOLDER\acs-engine.zip"
@@ -100,10 +100,10 @@ if ($downloadACSEngine -eq "y") {
     Copy-Item -Path "$AKS_LOCAL_FOLDER\acs-engine-${DESIRED_ACS_ENGINE_VERSION}-windows-amd64\acs-engine.exe" -Destination $ACS_ENGINE_FILE
 }
 else {
-    Write-Output "acs-engine.exe already exists at $ACS_ENGINE_FILE"    
+    Write-Host "acs-engine.exe already exists at $ACS_ENGINE_FILE"    
 }
 
-Write-Output "ACS Engine version"
+Write-Host "ACS Engine version"
 acs-engine version
 
 $AKS_CLUSTER_NAME = "kubcluster"
@@ -126,7 +126,7 @@ CleanResourceGroup -resourceGroup ${AKS_PERS_RESOURCE_GROUP} -location $AKS_PERS
 
 # Read-Host "continue?"
 
-Write-Output "checking if Service Principal already exists"
+Write-Host "checking if Service Principal already exists"
 $AKS_SERVICE_PRINCIPAL_CLIENTID = az ad sp list --display-name ${AKS_SERVICE_PRINCIPAL_NAME} --query "[].appId" --output tsv
 
 $myscope = "/subscriptions/${AKS_SUBSCRIPTION_ID}/resourceGroups/${AKS_PERS_RESOURCE_GROUP}"
@@ -138,18 +138,19 @@ if ("$AKS_SERVICE_PRINCIPAL_CLIENTID") {
     if ([string]::IsNullOrWhiteSpace($AKS_SERVICE_PRINCIPAL_CLIENTSECRET)) {
 
         if($($config.service_principal.delete_if_exists)) {
-            Write-Output "Deleting service principal:$AKS_SERVICE_PRINCIPAL_CLIENTID ..."
+            Write-Host "Deleting service principal:$AKS_SERVICE_PRINCIPAL_CLIENTID ..."
             az ad sp delete --id "$AKS_SERVICE_PRINCIPAL_CLIENTID" --verbose
             # https://github.com/Azure/azure-cli/issues/1332
-            Write-Output "Sleeping to wait for Service Principal to propagate"
+            Write-Host "Sleeping to wait for Service Principal to propagate"
             Start-Sleep -Seconds 30;
     
-            Write-Output "Creating Service Principal: [$AKS_SERVICE_PRINCIPAL_NAME]"
+            Write-Host "Creating Service Principal: [$AKS_SERVICE_PRINCIPAL_NAME]"
             $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = az ad sp create-for-rbac --role="Owner" --scopes="$myscope" --name ${AKS_SERVICE_PRINCIPAL_NAME} --query "password" --output tsv
             # the above command changes the color because it retries role assignment creation
             [Console]::ResetColor()
         }
         else {
+            Write-Host "Cannot get client secret from secrets but service_principal.delete_if_exists is false"
         }
     }
     else {
@@ -157,30 +158,30 @@ if ("$AKS_SERVICE_PRINCIPAL_CLIENTID") {
     }
 
     # https://github.com/Azure/azure-cli/issues/1332
-    Write-Output "Sleeping to wait for Service Principal to propagate"
+    Write-Host "Sleeping to wait for Service Principal to propagate"
     Start-Sleep -Seconds 30;
     $AKS_SERVICE_PRINCIPAL_CLIENTID = az ad sp list --display-name ${AKS_SERVICE_PRINCIPAL_NAME} --query "[].appId" --output tsv
-    Write-Output "created $AKS_SERVICE_PRINCIPAL_NAME clientId=$AKS_SERVICE_PRINCIPAL_CLIENTID clientsecret=$AKS_SERVICE_PRINCIPAL_CLIENTSECRET"
+    Write-Host "created $AKS_SERVICE_PRINCIPAL_NAME clientId=$AKS_SERVICE_PRINCIPAL_CLIENTID clientsecret=$AKS_SERVICE_PRINCIPAL_CLIENTSECRET"
 }
 else {
-    Write-Output "Creating Service Principal: [$AKS_SERVICE_PRINCIPAL_NAME]"
+    Write-Host "Creating Service Principal: [$AKS_SERVICE_PRINCIPAL_NAME]"
     $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = az ad sp create-for-rbac --role="Contributor" --scopes="$myscope" --name ${AKS_SERVICE_PRINCIPAL_NAME} --query "password" --output tsv
     # https://github.com/Azure/azure-cli/issues/1332
-    Write-Output "Sleeping to wait for Service Principal to propagate"
+    Write-Host "Sleeping to wait for Service Principal to propagate"
     Start-Sleep -Seconds 30;
     [Console]::ResetColor()
 
     $AKS_SERVICE_PRINCIPAL_CLIENTID = az ad sp list --display-name ${AKS_SERVICE_PRINCIPAL_NAME} --query "[].appId" --output tsv
-    Write-Output "created $AKS_SERVICE_PRINCIPAL_NAME clientId=$AKS_SERVICE_PRINCIPAL_CLIENTID clientsecret=$AKS_SERVICE_PRINCIPAL_CLIENTSECRET"
+    Write-Host "created $AKS_SERVICE_PRINCIPAL_NAME clientId=$AKS_SERVICE_PRINCIPAL_CLIENTID clientsecret=$AKS_SERVICE_PRINCIPAL_CLIENTSECRET"
 }
 
 if ("$AKS_SUBNET_RESOURCE_GROUP") {
-    Write-Output "Giving service principal access to vnet resource group: [${AKS_SUBNET_RESOURCE_GROUP}]"
+    Write-Host "Giving service principal access to vnet resource group: [${AKS_SUBNET_RESOURCE_GROUP}]"
     $subnetscope = "/subscriptions/${AKS_SUBSCRIPTION_ID}/resourceGroups/${AKS_SUBNET_RESOURCE_GROUP}"
     az role assignment create --assignee $AKS_SERVICE_PRINCIPAL_CLIENTID --role "contributor" --scope "$subnetscope"
 }
 
-Write-Output "Create Azure Container Service cluster"
+Write-Host "Create Azure Container Service cluster"
 
 $mysubnetid = "/subscriptions/${AKS_SUBSCRIPTION_ID}/resourceGroups/${AKS_SUBNET_RESOURCE_GROUP}/providers/Microsoft.Network/virtualNetworks/${AKS_VNET_NAME}/subnets/${AKS_SUBNET_NAME}"
 
@@ -202,7 +203,7 @@ elseif ($AKS_USE_AZURE_NETWORKING) {
     $templateFile = "acs.template.azurenetwork.json"             
 }
 
-Write-Output "Using template: $GITHUB_URL/azure/$templateFile"
+Write-Host "Using template: $GITHUB_URL/azure/$templateFile"
 
 $AKS_LOCAL_TEMP_FOLDER = "$AKS_LOCAL_FOLDER\$AKS_PERS_RESOURCE_GROUP\temp"
 if (!(Test-Path -Path "$AKS_LOCAL_TEMP_FOLDER")) {
@@ -214,14 +215,14 @@ if (!(Test-Path -Path "$AKS_LOCAL_TEMP_FOLDER")) {
 Set-Location -Path $AKS_LOCAL_TEMP_FOLDER
 
 $output = "$AKS_LOCAL_TEMP_FOLDER\acs.json"
-Write-Output "Downloading parameters file from github to $output"
+Write-Host "Downloading parameters file from github to $output"
 if (Test-Path $output) {
     Remove-Item $output
 }
 
 # download the template file from github
 if ($GITHUB_URL.StartsWith("http")) { 
-    Write-Output "Downloading file: $GITHUB_URL/azure/$templateFile"
+    Write-Host "Downloading file: $GITHUB_URL/azure/$templateFile"
     Invoke-WebRequest -Uri "$GITHUB_URL/azure/$templateFile" -OutFile $output -ContentType "text/plain; charset=utf-8"
 }
 else {
@@ -231,15 +232,15 @@ else {
 # subnet CIDR to mask
 # https://doc.m0n0.ch/quickstartpc/intro-CIDR.html
 $WINDOWS_PASSWORD = "replacepassword1234$"
-Write-Output "replacing values in the acs.json file"
-Write-Output "AKS_SSH_KEY: $AKS_SSH_KEY"
-Write-Output "AKS_SERVICE_PRINCIPAL_CLIENTID: $AKS_SERVICE_PRINCIPAL_CLIENTID"
-Write-Output "AKS_SERVICE_PRINCIPAL_CLIENTSECRET: $AKS_SERVICE_PRINCIPAL_CLIENTSECRET"
-Write-Output "SUBNET: ${mysubnetid}"
-Write-Output "DNS NAME: ${dnsNamePrefix}"
-Write-Output "FIRST STATIC IP: $AKS_FIRST_STATIC_IP"
-Write-Output "WINDOWS PASSWORD: $WINDOWS_PASSWORD"
-Write-Output "AKS_SUBNET_CIDR: $AKS_SUBNET_CIDR"
+Write-Host "replacing values in the acs.json file"
+Write-Host "AKS_SSH_KEY: $AKS_SSH_KEY"
+Write-Host "AKS_SERVICE_PRINCIPAL_CLIENTID: $AKS_SERVICE_PRINCIPAL_CLIENTID"
+Write-Host "AKS_SERVICE_PRINCIPAL_CLIENTSECRET: $AKS_SERVICE_PRINCIPAL_CLIENTSECRET"
+Write-Host "SUBNET: ${mysubnetid}"
+Write-Host "DNS NAME: ${dnsNamePrefix}"
+Write-Host "FIRST STATIC IP: $AKS_FIRST_STATIC_IP"
+Write-Host "WINDOWS PASSWORD: $WINDOWS_PASSWORD"
+Write-Host "AKS_SUBNET_CIDR: $AKS_SUBNET_CIDR"
 $MyFile = (Get-Content $output) | 
     Foreach-Object {$_ -replace 'REPLACE-SSH-KEY', "${AKS_SSH_KEY}"}  | 
     Foreach-Object {$_ -replace 'REPLACE-CLIENTID', "${AKS_SERVICE_PRINCIPAL_CLIENTID}"}  | 
@@ -262,10 +263,10 @@ if (!(Test-Path -Path "$acsoutputfolder")) {
     New-Item -ItemType directory -Path "$acsoutputfolder"
 }
 
-Write-Output "Deleting everything in the output folder"
+Write-Host "Deleting everything in the output folder"
 Remove-Item -Path $acsoutputfolder -Recurse -Force
 
-Write-Output "Generating ACS engine template"
+Write-Host "Generating ACS engine template"
 
 # acs-engine deploy --subscription-id "$AKS_SUBSCRIPTION_ID" `
 #                     --dns-prefix $dnsNamePrefix --location $AKS_PERS_LOCATION `
@@ -278,7 +279,7 @@ acs-engine generate $output --output-directory $acsoutputfolder
 if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
 
     if ("$AKS_VNET_NAME") {
-        Write-Output "Adding subnet to azuredeploy.json to work around acs-engine bug"
+        Write-Host "Adding subnet to azuredeploy.json to work around acs-engine bug"
         $outputdeployfile = "$acsoutputfolder\azuredeploy.json"
         # https://github.com/Azure/acs-engine/issues/1767
         # "subnet": "${mysubnetid}"
@@ -308,13 +309,13 @@ if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
 #     --master-vnet-subnet-id="$mysubnetid" `
 #     --agent-vnet-subnet-id="$mysubnetid"
 
-Write-Output "Validating deployment"
+Write-Host "Validating deployment"
 az group deployment validate `
     --template-file "$acsoutputfolder\azuredeploy.json" `
     --resource-group $AKS_PERS_RESOURCE_GROUP `
     --parameters "$acsoutputfolder\azuredeploy.parameters.json"
 
-Write-Output "Starting deployment..."
+Write-Host "Starting deployment..."
 
 az group deployment create `
     --template-file "$acsoutputfolder\azuredeploy.json" `
@@ -322,22 +323,22 @@ az group deployment create `
     --parameters "$acsoutputfolder\azuredeploy.parameters.json" `
     --verbose	
 
-# Write-Output "Saved to $acsoutputfolder\azuredeploy.json"
+# Write-Host "Saved to $acsoutputfolder\azuredeploy.json"
 
 # if joining a vnet, and not using azure networking then we have to manually set the route-table
 if ("$AKS_VNET_NAME") {
     if (!$AKS_USE_AZURE_NETWORKING) {
-        Write-Output "Attaching route table"
+        Write-Host "Attaching route table"
         # https://github.com/Azure/acs-engine/blob/master/examples/vnet/k8s-vnet-postdeploy.sh
         $rt = az network route-table list -g "${AKS_PERS_RESOURCE_GROUP}" --query "[?name != 'temproutetable'].id" -o tsv
         $nsg = az network nsg list --resource-group ${AKS_PERS_RESOURCE_GROUP} --query "[?name != 'tempnsg'].id" -o tsv
 
-        Write-Output "new route: $rt"
-        Write-Output "new nsg: $nsg"
+        Write-Host "new route: $rt"
+        Write-Host "new nsg: $nsg"
 
         az network vnet subnet update -n "${AKS_SUBNET_NAME}" -g "${AKS_SUBNET_RESOURCE_GROUP}" --vnet-name "${AKS_VNET_NAME}" --route-table "$rt" --network-security-group "$nsg"
         
-        Write-Output "Sleeping to let subnet be updated"
+        Write-Host "Sleeping to let subnet be updated"
         Start-Sleep -Seconds 30
 
         az network route-table delete --name temproutetable --resource-group $AKS_PERS_RESOURCE_GROUP
@@ -349,7 +350,7 @@ if ("$AKS_VNET_NAME") {
 #     --resource-group=$AKS_PERS_RESOURCE_GROUP `
 #     --name=$AKS_CLUSTER_NAME
 
-# Write-Output "Getting kube config by ssh to the master VM"
+# Write-Host "Getting kube config by ssh to the master VM"
 # $MASTER_VM_NAME = "${AKS_PERS_RESOURCE_GROUP}.${AKS_PERS_LOCATION}.cloudapp.azure.com"
 # $SSH_PRIVATE_KEY_FILE = "$env:userprofile\.ssh\id_rsa"
 
@@ -369,7 +370,7 @@ if ("$AKS_VNET_NAME") {
 
 # store kube config in local folder
 if (!(Test-Path -Path "$env:userprofile\.kube")) {
-    Write-Output "$env:userprofile\.kube does not exist.  Creating it..."
+    Write-Host "$env:userprofile\.kube does not exist.  Creating it..."
     New-Item -ItemType directory -Path "$env:userprofile\.kube"
 }
 if (!(Test-Path -Path "$AKS_LOCAL_TEMP_FOLDER\.kube")) {
@@ -393,10 +394,10 @@ Copy-Item -Path "$kubeconfigjsonfile" -Destination "$AKS_LOCAL_TEMP_FOLDER\.kube
 #  {ac -Encoding UTF8  "$($env:windir)\system32\Drivers\etc\hosts" "127.0.0.1 hostname1" }
 
 $MASTER_VM_NAME = "${AKS_PERS_RESOURCE_GROUP}.${AKS_PERS_LOCATION}.cloudapp.azure.com"
-Write-Output "You can connect to master VM in Git Bash for debugging using:"
-Write-Output "ssh -i ${SSH_PRIVATE_KEY_FILE_UNIX_PATH} azureuser@${MASTER_VM_NAME}"
+Write-Host "You can connect to master VM in Git Bash for debugging using:"
+Write-Host "ssh -i ${SSH_PRIVATE_KEY_FILE_UNIX_PATH} azureuser@${MASTER_VM_NAME}"
 
-Write-Output "Check nodes via kubectl"
+Write-Host "Check nodes via kubectl"
 # set the environment variable so kubectl gets the new config
 $env:KUBECONFIG = "${HOME}\.kube\config"
 kubectl get nodes -o=name
@@ -412,21 +413,21 @@ while ($nodeCount -lt 3) {
 
 # create storage account
 
-Write-Output "Get storage account key"
+Write-Host "Get storage account key"
 $STORAGE_KEY = az storage account keys list --resource-group $AKS_PERS_RESOURCE_GROUP --account-name $AKS_PERS_STORAGE_ACCOUNT_NAME --query "[0].value" --output tsv
 
-# Write-Output "Storagekey: [$STORAGE_KEY]"
+# Write-Host "Storagekey: [$STORAGE_KEY]"
 
-Write-Output "Creating kubernetes secret for Azure Storage Account: azure-secret"
+Write-Host "Creating kubernetes secret for Azure Storage Account: azure-secret"
 kubectl create secret generic azure-secret --from-literal=resourcegroup="${AKS_PERS_RESOURCE_GROUP}" --from-literal=azurestorageaccountname="${AKS_PERS_STORAGE_ACCOUNT_NAME}" --from-literal=azurestorageaccountkey="${STORAGE_KEY}"
-Write-Output "Creating kubernetes secret for customerid: customerid"
+Write-Host "Creating kubernetes secret for customerid: customerid"
 kubectl create secret generic customerid --from-literal=value=$customerid
-Write-Output "Creating kubernetes secret for vnet: azure-vnet"
+Write-Host "Creating kubernetes secret for vnet: azure-vnet"
 kubectl create secret generic azure-vnet --from-literal=vnet="${AKS_VNET_NAME}" --from-literal=subnet="${AKS_SUBNET_NAME}" --from-literal=subnetResourceGroup="${AKS_SUBNET_RESOURCE_GROUP}"
-Write-Output "Creating kubernetes secret for service principal"
+Write-Host "Creating kubernetes secret for service principal"
 kubectl create secret generic serviceprincipal --from-literal=clientid="$AKS_SERVICE_PRINCIPAL_CLIENTID" --from-literal=password="$AKS_SERVICE_PRINCIPAL_CLIENTSECRET"
 if (![string]::IsNullOrEmpty($WINDOWS_PASSWORD)) {
-    Write-Output "Creating kubernetes secret for windows VM"
+    Write-Host "Creating kubernetes secret for windows VM"
     kubectl create secret generic windowspassword --from-literal=password="$WINDOWS_PASSWORD"
 }
 
@@ -435,7 +436,7 @@ kubectl get "deployments,pods,services,ingress,secrets" --namespace=kube-system 
 # kubectl patch deployment kube-dns-v20 -n kube-system -p '{"spec":{"template":{"spec":{"containers":[{"name":"myapp","image":"172.20.34.206:5000/myapp:img:3.0"}]}}}}'
 # kubectl patch deployment kube-dns-v20 -n kube-system -p '{"spec":{"template":{"spec":{"restartPolicy":"Never"}}}}'
 
-# Write-Output "Restarting DNS Pods (sometimes they get in a CrashLoopBackoff loop)"
+# Write-Host "Restarting DNS Pods (sometimes they get in a CrashLoopBackoff loop)"
 # $failedItems = kubectl get pods -l k8s-app=kube-dns -n kube-system -o jsonpath='{range.items[*]}{.metadata.name}{\"\n\"}{end}'
 # ForEach ($line in $failedItems) {
 #     Write-Host "Deleting pod $line"
@@ -467,5 +468,5 @@ Write-Host "Removing extra stuff that acs-engine creates"
 # az vm run-command invoke -g Prod-Kub-AHMN-RG -n k8s-master-37819884-0 --command-id RunShellScript --scripts "whomai"
 # az vm run-command invoke -g Prod-Kub-AHMN-RG -n k8s-master-37819884-0 --command-id RunShellScript --scripts "crontab -l | { cat; echo '*/10 * * * * /etc/cron.hourly/restartkubedns.sh >>/tmp/restartkubedns.log 2>&1'; } | crontab -"
 
-Write-Output "Run the following to see status of the cluster"
-Write-Output "kubectl get deployments,pods,services,ingress,secrets --namespace=kube-system -o wide"
+Write-Host "Run the following to see status of the cluster"
+Write-Host "kubectl get deployments,pods,services,ingress,secrets --namespace=kube-system -o wide"
