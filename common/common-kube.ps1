@@ -104,7 +104,11 @@ function global:AskForPasswordAnyCharacters ([ValidateNotNullOrEmpty()] $secretn
         # MySQL password requirements: https://dev.mysql.com/doc/refman/5.6/en/validate-password-plugin.html
         # we also use sed to replace configs: https://unix.stackexchange.com/questions/32907/what-characters-do-i-need-to-escape-when-using-sed-in-a-sh-script
         Do {
-            $mysqlrootpassword = Read-host "$prompt (leave empty for default)"
+            $fullprompt = $prompt
+            if ($defaultvalue) {
+                $fullprompt = "$prompt (leave empty for default)"
+            }
+            $mysqlrootpassword = Read-host "$fullprompt"
             if ($mysqlrootpassword.Length -lt 1) {
                 $mysqlrootpassword = $defaultvalue
             }
