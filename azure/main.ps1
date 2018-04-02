@@ -137,7 +137,7 @@ while ($userinput -ne "q") {
         } 
         '11' {
             CreateNamespaceIfNotExists "fabricnlp"
-            AskForSecretValue "smtprelaypassword", "Please enter SMTP relay password" "fabricnlp"
+            AskForSecretValue "smtprelaypassword" "Please enter SMTP relay password" "fabricnlp"
             InstallStack -namespace "fabricnlp" -baseUrl $GITHUB_URL -appfolder "nlp" -isAzure 1
         } 
         '12' {

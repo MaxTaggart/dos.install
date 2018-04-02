@@ -191,6 +191,7 @@ function global:CreateNamespaceIfNotExists([ValidateNotNullOrEmpty()] $namespace
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
+        Write-Host "Creating namespace: $namespace"
         kubectl create namespace $namespace
     }
     return $Return
