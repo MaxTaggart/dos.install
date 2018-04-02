@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.02.01"
+$versioncommon = "2018.04.02.02"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -1134,15 +1134,24 @@ function global:GetDNSCommands() {
     
     $internalDNSEntries = $(kubectl get ing --all-namespaces -l expose=internal -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true).Split(" ")
     ForEach ($dns in $internalDNSEntries) { 
+        if([string]::IsNullOrEmpty($loadBalancerInternalIP)){
+            throw "loadBalancerInternalIP cannot be found"
+        }
         $dnsWithoutDomain = $dns -replace ".healthcatalyst.net", ""
         $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dnsWithoutDomain A /f"
         $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dnsWithoutDomain A $loadBalancerInternalIP"
         # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns PTR /f"
         # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd 10.in-addr-arpa $loadBalancerInternalIP PTR $dns"
     }
+    $customerid = ReadSecret -secretname customerid
+    $customerid = $customerid.ToLower().Trim()
+
+    $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $customerid A /f"
+    $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $customerid A $loadBalancerInternalIP"
 
     $loadBalancerIP = kubectl get svc traefik-ingress-service-public -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
     
+
     $externalDNSEntries = $(kubectl get ing --all-namespaces -l expose=external -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true).Split(" ")
 
     ForEach ($dns in $externalDNSEntries) { 
@@ -1150,6 +1159,9 @@ function global:GetDNSCommands() {
             # already included in internal load balancer
         }
         else {
+            if([string]::IsNullOrEmpty($loadBalancerIP)){
+                throw "loadBalancerIP cannot be found"
+            }
             $dnsWithoutDomain = $dns -replace ".healthcatalyst.net", ""
             $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dnsWithoutDomain A /f"
             $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dnsWithoutDomain A $loadBalancerIP"
