@@ -29,6 +29,14 @@ if [[ ! -f "$installscript" ]]; then
     # curl -o ~/.inputrc "$GITHUB_URL/kubernetes/inputrc"
 fi
 
+if [ ! -x "$(command -v yum)" ]; then
+    echo "yum command is not available"
+    exit
+fi
+
+echo "CentOS version: $(cat /etc/redhat-release | grep -o '[0-9]\.[0-9]')"
+echo "$(cat /etc/redhat-release)"
+
 input=""
 while [[ "$input" != "q" ]]; do
 
