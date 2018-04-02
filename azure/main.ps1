@@ -359,10 +359,10 @@ while ($userinput -ne "q") {
             # clear Google DNS cache: http://www.redsome.com/flush-clear-dns-cache-google-chrome-browser/
             Write-Host "Launching http://$loadBalancerInternalIP/dashboard in the web browser"
             Start-Process -FilePath "http://$loadBalancerInternalIP/dashboard";
-            Write-Host "Launching http://solr.$customerid.healthcatalyst.net/solr in the web browser"
-            Start-Process -FilePath "http://solr.$customerid.healthcatalyst.net/solr";
-            Write-Host "Launching http://nlp.$customerid.healthcatalyst.net/nlpweb in the web browser"
-            Start-Process -FilePath "http://nlp.$customerid.healthcatalyst.net/nlpweb";
+            Write-Host "Launching http://$loadBalancerInternalIP/solr in the web browser"
+            Start-Process -FilePath "http://$loadBalancerInternalIP/solr";
+            Write-Host "Launching http://$loadBalancerIP/nlpweb in the web browser"
+            Start-Process -FilePath "http://$loadBalancerIP/nlpweb";
         } 
         '43' {
             Write-Host "MySql root password: $(ReadSecretPassword -secretname mysqlrootpassword -namespace fabricnlp)"

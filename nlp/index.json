@@ -60,7 +60,9 @@
                 "web.yaml",
                 "solr.yaml",
                 "web.internal.yaml",
-                "web.onprem.yaml"
+                "solr.path.yaml",
+                "nlpweb.path.yaml",
+                "nlpjobs.path.yaml"
             ],
             "tcp": [
                 "mysqlserver.internal.yaml"

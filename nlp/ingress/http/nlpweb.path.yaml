@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+    name: nlp-ingress-internal-path
+    namespace: fabricnlp
+    labels:  
+        expose: internal    
+    annotations:
+        kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /nlpweb
+        backend:
+          serviceName: nlpserverpublic
+          servicePort: 80
