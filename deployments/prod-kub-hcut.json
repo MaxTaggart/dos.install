@@ -16,7 +16,7 @@
         }
     },
     "service_principal": {
-        "name": "",
+        "name": "prod-kub-hcut-rg2",
         "delete_if_exists": true
     },
     "storage_account": {

@@ -625,11 +625,11 @@ function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()] $version) {
         Write-Host "Waiting for 10 seconds"
         Start-Sleep -Seconds 10
         # https://kevinmarquette.github.io/2016-10-21-powershell-installing-msi-files/
-        Write-Host "Running MSI to install az cli: $azCliFile"
+        Write-Host "Running MSI to install az cli: $azCliFile.  This may take a few minutes."
         $azCliInstallLog = ([System.IO.Path]::GetTempPath() + ('az-cli-latest.log'))
         # msiexec flags: https://msdn.microsoft.com/en-us/library/windows/desktop/aa367988(v=vs.85).aspx
         # Start-Process -Verb runAs msiexec.exe -Wait -ArgumentList "/i $azCliFile /qn /L*e $azCliInstallLog"
-        Start-Process -Verb runAs msiexec.exe -Wait -ArgumentList "/i $azCliFile"
+        Start-Process -Verb runAs msiexec.exe -Wait -ArgumentList "/a $azCliFile"
         Write-Host "Finished installing az-cli-latest.msi"
     }
     
