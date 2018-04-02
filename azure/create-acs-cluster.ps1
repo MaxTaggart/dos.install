@@ -1,4 +1,4 @@
-Write-Host "--- create-acs-cluster Version 2018.04.02.01 ----"
+Write-Host "--- create-acs-cluster Version 2018.04.02.02 ----"
 
 #
 # This script is meant for quick & easy install via:
@@ -21,11 +21,11 @@ Write-Host $config
 
 DownloadAzCliIfNeeded -version $($config.azcli.version)
 
-$userInfo=$(GetLoggedInUserInfo)
+$userInfo = $(GetLoggedInUserInfo)
 $AKS_SUBSCRIPTION_ID = $userInfo.AKS_SUBSCRIPTION_ID
-$IS_CAFE_ENVIRONMENT=$userInfo.IS_CAFE_ENVIRONMENT
+$IS_CAFE_ENVIRONMENT = $userInfo.IS_CAFE_ENVIRONMENT
 
-$customerid=$($config.customerid)
+$customerid = $($config.customerid)
 
 Write-Host "Customer ID: $customerid"
 
@@ -39,7 +39,7 @@ $AKS_USE_AZURE_NETWORKING = $config.azure.use_azure_networking
 
 if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
     # azure networking is not supported with windows containers
-    if($AKS_USE_AZURE_NETWORKING){
+    if ($AKS_USE_AZURE_NETWORKING) {
         Write-Error "Azure networking is not supported with Windows containers"
     }
 }
@@ -80,7 +80,7 @@ if (!(Test-Path "$ACS_ENGINE_FILE")) {
 else {
     $acsengineversion = acs-engine version
     $acsengineversion = ($acsengineversion -match "^Version: v[0-9.]+")[0]
-    $systemAcsVersion = [System.Version] $acsengineversion.Substring($acsengineversion.IndexOf('v') + 1, $acsengineversion.Length - $acsengineversion.IndexOf('v') -1)
+    $systemAcsVersion = [System.Version] $acsengineversion.Substring($acsengineversion.IndexOf('v') + 1, $acsengineversion.Length - $acsengineversion.IndexOf('v') - 1)
     if ($systemAcsVersion -lt $SYSTEM_VERSION_ACS_VERSION) {
         $downloadACSEngine = "y"
     }
@@ -136,26 +136,20 @@ if ("$AKS_SERVICE_PRINCIPAL_CLIENTID") {
     Write-Host "Service Principal already exists with name: [$AKS_SERVICE_PRINCIPAL_NAME]"
     $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = ReadSecretPassword -secretname "serviceprincipal"
     if ([string]::IsNullOrWhiteSpace($AKS_SERVICE_PRINCIPAL_CLIENTSECRET)) {
-
-        if($($config.service_principal.delete_if_exists)) {
-            Write-Host "Could not read client secret from kub secrets so deleting service principal:$AKS_SERVICE_PRINCIPAL_CLIENTID ..."
-            az ad sp delete --id "$AKS_SERVICE_PRINCIPAL_CLIENTID" --verbose
-            # https://github.com/Azure/azure-cli/issues/1332
-            Write-Host "Sleeping to wait for Service Principal to propagate"
-            Start-Sleep -Seconds 30;
+        Write-Host "Could not read client secret from kub secrets so deleting service principal:$AKS_SERVICE_PRINCIPAL_CLIENTID ..."
+        az ad sp delete --id "$AKS_SERVICE_PRINCIPAL_CLIENTID" --verbose
+        # https://github.com/Azure/azure-cli/issues/1332
+        Write-Host "Sleeping to wait for Service Principal to propagate"
+        Start-Sleep -Seconds 30;
     
-            Write-Host "Creating Service Principal: [$AKS_SERVICE_PRINCIPAL_NAME]"
-            $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = az ad sp create-for-rbac --role="Owner" --scopes="$myscope" --name ${AKS_SERVICE_PRINCIPAL_NAME} --query "password" --output tsv
-            # the above command changes the color because it retries role assignment creation
-            [Console]::ResetColor()
-        }
-        else {
-            Write-Host "Cannot get client secret from secrets but service_principal.delete_if_exists is false"
-        }
+        Write-Host "Creating Service Principal: [$AKS_SERVICE_PRINCIPAL_NAME]"
+        $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = az ad sp create-for-rbac --role="Owner" --scopes="$myscope" --name ${AKS_SERVICE_PRINCIPAL_NAME} --query "password" --output tsv
+        # the above command changes the color because it retries role assignment creation
+        [Console]::ResetColor()
     }
     else {
         Write-Host "Found past servicePrincipal client secret: $AKS_SERVICE_PRINCIPAL_CLIENTSECRET"
-        if($($config.service_principal.delete_if_exists)) {
+        if ($($config.service_principal.delete_if_exists)) {
             Write-Host "Since delete_if_exists is set in config, deleting service principal:$AKS_SERVICE_PRINCIPAL_CLIENTID ..."
             az ad sp delete --id "$AKS_SERVICE_PRINCIPAL_CLIENTID" --verbose
             # https://github.com/Azure/azure-cli/issues/1332
@@ -394,7 +388,7 @@ $privateIpOfMasterVM = $(GetPrivateIPofMasterVM -resourceGroup $AKS_PERS_RESOURC
 $publicNameOfMasterVM = $(GetPublicNameofMasterVM -resourceGroup $AKS_PERS_RESOURCE_GROUP).Name
 $kubeconfigjsonfile = "$acsoutputfolder\kubeconfig\kubeconfig.$AKS_PERS_LOCATION.json"
 
-if($IS_CAFE_ENVIRONMENT){
+if ($IS_CAFE_ENVIRONMENT) {
     Write-Host "Replacing master vm name, [$publicNameOfMasterVM], with private ip, [$privateIpOfMasterVM], in kube config file"
     (Get-Content "$kubeconfigjsonfile").replace("$publicNameOfMasterVM", "$privateIpOfMasterVM") | Set-Content "$kubeconfigjsonfile"    
 }
