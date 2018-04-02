@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.01.02"
+$versioncommon = "2018.04.01.03"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -939,12 +939,14 @@ function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
             }
             elseif ($($loadbalancerForNic -is [array])){
                 foreach($lb in $loadbalancerForNic){
+                    Write-Host "Checking loadbalancerforNic: $lb to see if it matches $loadbalancer"
                     if($($lb -contains $loadbalancer)){
+                        Write-Host "Found loadbalancerforNic: $lb to match $loadbalancer"
                         $foundNicInLoadbalancer=$true
                     }
                 }
             }
-            elseif (!($($loadbalancerForNic -contains $loadbalancer))) {
+            elseif (($($loadbalancerForNic -contains $loadbalancer))) {
                 $foundNicInLoadbalancer=$true
             }
 
