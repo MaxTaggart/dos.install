@@ -629,7 +629,7 @@ function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()] $version) {
         $azCliInstallLog = ([System.IO.Path]::GetTempPath() + ('az-cli-latest.log'))
         # msiexec flags: https://msdn.microsoft.com/en-us/library/windows/desktop/aa367988(v=vs.85).aspx
         # Start-Process -Verb runAs msiexec.exe -Wait -ArgumentList "/i $azCliFile /qn /L*e $azCliInstallLog"
-        Start-Process -Verb runAs msiexec.exe -Wait -ArgumentList "/a $azCliFile"
+        Start-Process -Verb runAs msiexec.exe -Wait -ArgumentList "/i $azCliFile"
         Write-Host "Finished installing az-cli-latest.msi"
     }
     
