@@ -5,9 +5,17 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.04.02.05"
+version="2018.04.02.06"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+
+if [ ! -x "$(command -v yum)" ]; then
+    echo "yum command is not available"
+    exit
+fi
+
+echo "CentOS version: $(cat /etc/redhat-release | grep -o '[0-9]\.[0-9]')"
+echo "$(cat /etc/redhat-release)"
 
 source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 # source ./common/common.sh
@@ -28,14 +36,6 @@ if [[ ! -f "$installscript" ]]; then
     # from http://web.archive.org/web/20120621035133/http://www.ibb.net/~anne/keyboard/keyboard.html
     # curl -o ~/.inputrc "$GITHUB_URL/kubernetes/inputrc"
 fi
-
-if [ ! -x "$(command -v yum)" ]; then
-    echo "yum command is not available"
-    exit
-fi
-
-echo "CentOS version: $(cat /etc/redhat-release | grep -o '[0-9]\.[0-9]')"
-echo "$(cat /etc/redhat-release)"
 
 input=""
 while [[ "$input" != "q" ]]; do
