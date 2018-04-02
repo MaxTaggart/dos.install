@@ -86,7 +86,8 @@ while [[ "$input" != "q" ]]; do
         ;;
     5)  mountAzureFile true
         ;;
-    6)  curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash 2>&1 | tee setup-loadbalancer.log
+    6)  # cannot use tee here because it calls a ps1 file
+        curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
         ;;
     7)  InstallStack $GITHUB_URL "kube-system" "dashboard"
         ;;
