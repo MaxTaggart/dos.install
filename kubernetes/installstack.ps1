@@ -15,11 +15,11 @@ $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/mast
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
 
-$ckscript=Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring
+$ckscript=$(Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring)
 Invoke-Expression $($ckscript);
 # Get-Content ./common/common-kube.ps1 -Raw | Invoke-Expression;
 
-$cmscript=Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring
+$cmscript=$(Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring)
 Invoke-Expression $($cmscript);
 # Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
 

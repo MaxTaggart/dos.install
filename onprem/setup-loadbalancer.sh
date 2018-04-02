@@ -9,7 +9,7 @@ GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 # source ./common/common.sh
 
-version="2018.03.28.01"
+version="2018.04.02.01"
 
 echo "---- setup-loadbalancer.sh version $version ------"
 
@@ -27,6 +27,7 @@ publicip=""
 AskForSecretValue "customerid" "Customer ID "
 customerid=$(ReadSecret "customerid")
 
+echo "Full host name of current machine: $(hostname --fqdn)"
 AskForSecretValue "dnshostname" "DNS name used to connect to the master VM "
 dnsrecordname=$(ReadSecret "dnshostname")
 
