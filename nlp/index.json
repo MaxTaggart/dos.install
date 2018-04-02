@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/templates/schema.json",
     "name": "Fabric NLP",
-    "version": "4.0.0.2",
+    "version": "4.0.0.3",
     "secrets": {
         "password": [
             "mysqlrootpassword",
@@ -59,7 +59,8 @@
             "http": [
                 "web.yaml",
                 "solr.yaml",
-                "web.internal.yaml"
+                "web.internal.yaml",
+                "web.onprem.yaml"
             ],
             "tcp": [
                 "mysqlserver.internal.yaml"
