@@ -1,4 +1,4 @@
-Write-Host "--- create-acs-cluster Version 2018.04.01.01 ----"
+Write-Host "--- create-acs-cluster Version 2018.04.02.01 ----"
 
 #
 # This script is meant for quick & easy install via:
@@ -138,7 +138,7 @@ if ("$AKS_SERVICE_PRINCIPAL_CLIENTID") {
     if ([string]::IsNullOrWhiteSpace($AKS_SERVICE_PRINCIPAL_CLIENTSECRET)) {
 
         if($($config.service_principal.delete_if_exists)) {
-            Write-Host "Deleting service principal:$AKS_SERVICE_PRINCIPAL_CLIENTID ..."
+            Write-Host "Could not read client secret from kub secrets so deleting service principal:$AKS_SERVICE_PRINCIPAL_CLIENTID ..."
             az ad sp delete --id "$AKS_SERVICE_PRINCIPAL_CLIENTID" --verbose
             # https://github.com/Azure/azure-cli/issues/1332
             Write-Host "Sleeping to wait for Service Principal to propagate"
@@ -155,6 +155,19 @@ if ("$AKS_SERVICE_PRINCIPAL_CLIENTID") {
     }
     else {
         Write-Host "Found past servicePrincipal client secret: $AKS_SERVICE_PRINCIPAL_CLIENTSECRET"
+        if($($config.service_principal.delete_if_exists)) {
+            Write-Host "Since delete_if_exists is set in config, deleting service principal:$AKS_SERVICE_PRINCIPAL_CLIENTID ..."
+            az ad sp delete --id "$AKS_SERVICE_PRINCIPAL_CLIENTID" --verbose
+            # https://github.com/Azure/azure-cli/issues/1332
+            Write-Host "Sleeping to wait for Service Principal to propagate"
+            Start-Sleep -Seconds 30;
+    
+            Write-Host "Creating Service Principal: [$AKS_SERVICE_PRINCIPAL_NAME]"
+            $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = az ad sp create-for-rbac --role="Owner" --scopes="$myscope" --name ${AKS_SERVICE_PRINCIPAL_NAME} --query "password" --output tsv
+            # the above command changes the color because it retries role assignment creation
+            [Console]::ResetColor()
+        }
+        
     }
 
     # https://github.com/Azure/azure-cli/issues/1332
