@@ -1,4 +1,4 @@
-$version = "2018.04.01.01"
+$version = "2018.04.01.02"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -136,9 +136,13 @@ while ($userinput -ne "q") {
             WriteDNSCommands
         } 
         '11' {
-            CreateNamespaceIfNotExists "fabricnlp"
-            AskForSecretValue "smtprelaypassword" "Please enter SMTP relay password" "fabricnlp"
-            InstallStack -namespace "fabricnlp" -baseUrl $GITHUB_URL -appfolder "nlp" -isAzure 1
+            $namespace="fabricnlp"
+            CreateNamespaceIfNotExists $namespace
+            AskForPasswordAnyCharacters -secretname "smtprelaypassword" -prompt "Please enter SMTP relay password" -namespace $namespace
+            $dnshostname=$(ReadSecret -secretname "dnshostname" -namespace "default")
+            SaveSecretValue -secretname "nlpweb-external-url" -valueName "url" -value "http://$dnshostname/nlpweb" -namespace $namespace
+            SaveSecretValue -secretname "jobserver-external-url" -valueName "url" -value "http://$dnshostname/nlp" -namespace $namespace
+            InstallStack -namespace $namespace -baseUrl $GITHUB_URL -appfolder "nlp" -isAzure 1
         } 
         '12' {
             CreateNamespaceIfNotExists "fabricrealtime"

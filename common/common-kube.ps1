@@ -65,12 +65,9 @@ function global:AskForPassword ([ValidateNotNullOrEmpty()] $secretname, $prompt,
         # MySQL password requirements: https://dev.mysql.com/doc/refman/5.6/en/validate-password-plugin.html
         # we also use sed to replace configs: https://unix.stackexchange.com/questions/32907/what-characters-do-i-need-to-escape-when-using-sed-in-a-sh-script
         Do {
-            $mysqlrootpasswordsecure = Read-host "$prompt (leave empty for auto-generated)" -AsSecureString 
-            if ($mysqlrootpasswordsecure.Length -lt 1) {
+            $mysqlrootpassword = Read-Host "$prompt (leave empty for auto-generated)"
+            if ($mysqlrootpassword.Length -lt 1) {
                 $mysqlrootpassword = GeneratePassword
-            }
-            else {
-                $mysqlrootpassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($mysqlrootpasswordsecure))                
             }
         }
         while (($mysqlrootpassword -notmatch "^[a-z0-9!.*@\s]+$") -or ($mysqlrootpassword.Length -lt 8 ))
@@ -107,12 +104,9 @@ function global:AskForPasswordAnyCharacters ([ValidateNotNullOrEmpty()] $secretn
         # MySQL password requirements: https://dev.mysql.com/doc/refman/5.6/en/validate-password-plugin.html
         # we also use sed to replace configs: https://unix.stackexchange.com/questions/32907/what-characters-do-i-need-to-escape-when-using-sed-in-a-sh-script
         Do {
-            $mysqlrootpasswordsecure = Read-host "$prompt (leave empty for default)" -AsSecureString 
-            if ($mysqlrootpasswordsecure.Length -lt 1) {
+            $mysqlrootpassword = Read-host "$prompt (leave empty for default)"
+            if ($mysqlrootpassword.Length -lt 1) {
                 $mysqlrootpassword = $defaultvalue
-            }
-            else {
-                $mysqlrootpassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($mysqlrootpasswordsecure))                
             }
         }
         while (($mysqlrootpassword.Length -lt 8 ) -and (!("$mysqlrootpassword" -eq "$defaultvalue")))
