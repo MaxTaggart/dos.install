@@ -376,4 +376,18 @@ function JoinNodeToCluster(){
     eval $joincommand
     echo "--- finished running command to join cluster ----"
 }
+
+function SetupMaster(){
+    local baseUrl=$1
+    
+    curl -sSL $baseUrl/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
+    curl -sSL $baseUrl/onprem/setupmasternode.sh?p=$RANDOM | bash 2>&1 | tee setupmaster.log
+    mountSharedFolder true 2>&1 | tee mountsharedfolder.log
+    # cannot use tee here because it calls a ps1 file
+    curl -sSL $baseUrl/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
+    InstallStack $baseUrl "kube-system" "dashboard"
+    clear
+    ShowCommandToJoinCluster $baseUrl    
+}
+
 echo "--- Finished including common.sh version $versioncommon ---"

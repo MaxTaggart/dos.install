@@ -76,14 +76,7 @@ while [[ "$input" != "q" ]]; do
     read -p "Please make a selection:" -e input  < /dev/tty 
 
     case "$input" in
-    1)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
-        curl -sSL $GITHUB_URL/onprem/setupmaster.sh?p=$RANDOM | bash 2>&1 | tee setupmaster.log
-        mountSharedFolder true 2>&1 | tee mountsharedfolder.log
-        # cannot use tee here because it calls a ps1 file
-        curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
-        InstallStack $GITHUB_URL "kube-system" "dashboard"
-        clear
-        ShowCommandToJoinCluster $GITHUB_URL
+    1)  SetupMaster $GITHUB_URL
         ;;
     2)  echo "Current cluster: $(kubectl config current-context)"
         kubectl version --short
