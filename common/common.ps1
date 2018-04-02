@@ -580,7 +580,7 @@ function global:AddFolderToPathEnvironmentVariable([ValidateNotNullOrEmpty()] $f
         if ( ($oldpath).split(";") -notcontains "$folder") {
             $newpath = "$folder;$oldpath"
             Read-Host "Script needs elevated privileges to set PATH.  Hit ENTER to launch script to set PATH"
-            Start-Process powershell -verb RunAs -ArgumentList "Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value '$newPath'; Read-Host 'Press ENTER'"
+            Start-Process powershell -verb RunAs -Wait -ArgumentList "Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value '$newPath'; Read-Host 'Press ENTER'"
             Write-Host "New PATH:"
             $newpath = (Get-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment" -Name PATH).path
             Write-Host "$newpath".split(";")

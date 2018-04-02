@@ -177,7 +177,7 @@ function global:Stop-ProcessByPort( [ValidateNotNullOrEmpty()] [int] $Port ) {
     
     Read-Host "There is another process running on this port.  Click ENTER to open an elevated prompt to stop that process."
 
-    Start-Process powershell -verb RunAs -ArgumentList "Stop-Process $p_id -Force"
+    Start-Process powershell -verb RunAs -Wait -ArgumentList "Stop-Process $p_id -Force"
 }
 
 
