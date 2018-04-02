@@ -203,6 +203,7 @@ function global:CleanOutNamespace([ValidateNotNullOrEmpty()] $namespace) {
     # can't delete persistent volume claims since they are not scoped to namespace
     kubectl delete 'pv' -l namespace=$namespace --ignore-not-found=true
 
+    Write-Host "Waiting for resources to be deleted"
     $CLEANUP_DONE = "n"
     $counter = 0
     Do {
@@ -218,6 +219,7 @@ function global:CleanOutNamespace([ValidateNotNullOrEmpty()] $namespace) {
     if (![string]::IsNullOrEmpty($CLEANUP_DONE)) {
         Write-Host "Deleting pods didn't work so deleting with force"
         kubectl delete --all 'pods' --grace-period=0 --force --namespace=$namespace --ignore-not-found=true
+        Write-Host "Waiting for resources to be deleted"
         $CLEANUP_DONE = "n"
         $counter = 0
         Do {

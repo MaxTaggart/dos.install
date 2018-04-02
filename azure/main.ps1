@@ -16,8 +16,6 @@ Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring | Invoke-E
 # Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
 
 
-# Get-Content -Path "./common/common.ps1" | Invoke-Expression;
-
 $userinput = ""
 while ($userinput -ne "q") {
     Write-Host "================ Health Catalyst version $version, common functions $(GetCommonVersion) ================"
