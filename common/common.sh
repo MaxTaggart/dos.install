@@ -274,9 +274,11 @@ function mountSMBWithParams(){
     # remove previous entry for this drive
     grep -v "/mnt/data" /etc/fstab | sudo tee /etc/fstab > /dev/null
 
+    echo "mounting path: $pathToShare using username: $username"
+
     echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null
 
-    sudo mount -a
+    sudo mount -a --verbose
 
     if [[ $saveIntoSecret == true ]]; then
         echo "saving mount information into a secret"
