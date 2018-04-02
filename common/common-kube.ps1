@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.03.27.05"
+$versionkubecommon = "2018.04.01.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -186,6 +186,15 @@ function global:Stop-ProcessByPort( [ValidateNotNullOrEmpty()] [int] $Port ) {
     Start-Process powershell -verb RunAs -ArgumentList "Stop-Process $p_id -Force"
 }
 
+
+function global:CreateNamespaceIfNotExists([ValidateNotNullOrEmpty()] $namespace) {
+    [hashtable]$Return = @{} 
+
+    if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
+        kubectl create namespace $namespace
+    }
+    return $Return
+}
 
 
 function global:CleanOutNamespace([ValidateNotNullOrEmpty()] $namespace) {

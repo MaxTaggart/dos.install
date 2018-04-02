@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.03.28.02"
+$versioncommon = "2018.04.01.01"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -610,8 +610,11 @@ function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()] $version) {
 
         DownloadFile -url $url -targetFile $azCliFile
 
+        # for some reason the download is not completely done by the time we get here
+        Write-Host "Waiting for 10 seconds"
+        Start-Sleep -Seconds 10
         # https://kevinmarquette.github.io/2016-10-21-powershell-installing-msi-files/
-        Write-Host "Running MSI to install az"
+        Write-Host "Running MSI to install az cli: $azCliFile"
         $azCliInstallLog = ([System.IO.Path]::GetTempPath() + ('az-cli-latest.log'))
         # msiexec flags: https://msdn.microsoft.com/en-us/library/windows/desktop/aa367988(v=vs.85).aspx
         # Start-Process -Verb runAs msiexec.exe -Wait -ArgumentList "/i $azCliFile /qn /L*e $azCliInstallLog"
@@ -843,6 +846,8 @@ function global:DownloadFile([ValidateNotNullOrEmpty()] $url, [ValidateNotNullOr
 
     Unregister-Event -SourceIdentifier Web.DownloadFileCompleted
     Unregister-Event -SourceIdentifier Web.DownloadProgressChanged
+
+    Write-Host "Finished downloading $url"
     #endregion Download file from website    
 }
 function global:DownloadFileOld([ValidateNotNullOrEmpty()] $url, [ValidateNotNullOrEmpty()] $targetFile) {

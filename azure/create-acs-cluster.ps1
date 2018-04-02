@@ -1,4 +1,4 @@
-Write-output "--- create-acs-cluster Version 2018.03.27.01 ----"
+Write-output "--- create-acs-cluster Version 2018.04.01.01 ----"
 
 #
 # This script is meant for quick & easy install via:
@@ -88,10 +88,14 @@ else {
 if ($downloadACSEngine -eq "y") {
     $url = "https://github.com/Azure/acs-engine/releases/download/${DESIRED_ACS_ENGINE_VERSION}/acs-engine-${DESIRED_ACS_ENGINE_VERSION}-windows-amd64.zip"
     Write-Output "Downloading acs-engine.exe from $url to $ACS_ENGINE_FILE"
-    Remove-Item -Path "$ACS_ENGINE_FILE"
+    Remove-Item -Path "$ACS_ENGINE_FILE" -Force
 
     DownloadFile -url $url -targetFile "$AKS_LOCAL_FOLDER\acs-engine.zip"
 
+    # for some reason the download is not completely done by the time we get here
+    Write-Host "Waiting for 10 seconds"
+    Start-Sleep -Seconds 10
+    
     Expand-Archive -Path "$AKS_LOCAL_FOLDER\acs-engine.zip" -DestinationPath "$AKS_LOCAL_FOLDER" -Force
     Copy-Item -Path "$AKS_LOCAL_FOLDER\acs-engine-${DESIRED_ACS_ENGINE_VERSION}-windows-amd64\acs-engine.exe" -Destination $ACS_ENGINE_FILE
 }

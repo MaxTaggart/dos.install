@@ -1,4 +1,4 @@
-$version = "2018.03.27.01"
+$version = "2018.04.01.01"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -136,9 +136,12 @@ while ($userinput -ne "q") {
             WriteDNSCommands
         } 
         '11' {
+            CreateNamespaceIfNotExists "fabricnlp"
+            AskForSecretValue "smtprelaypassword", "Please enter SMTP relay password" "fabricnlp"
             InstallStack -namespace "fabricnlp" -baseUrl $GITHUB_URL -appfolder "nlp" -isAzure 1
         } 
         '12' {
+            CreateNamespaceIfNotExists "fabricrealtime"
             InstallStack -namespace "fabricrealtime" -baseUrl $GITHUB_URL -appfolder "realtime" -isAzure 1
         } 
         '20' {
@@ -277,7 +280,7 @@ while ($userinput -ne "q") {
             # Invoke-WebRequest -useb -Headers @{"Host" = "nlp.$customerid.healthcatalyst.net"} -Uri http://$loadBalancerIP/nlpweb | Select-Object -Expand Content
     
             Write-Output "To test out the load balancer, open Git Bash and run:"
-            Write-Output "curl --header 'Host: $url' 'http://$ip/' -k" 
+            Write-Output "curl --header 'Host: $url' 'http://$ip/dashboard' -k" 
             } 
         '31' {
             $DEFAULT_RESOURCE_GROUP = ReadSecretValue -secretname azure-secret -valueName resourcegroup
