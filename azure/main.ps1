@@ -32,6 +32,7 @@ while ($userinput -ne "q") {
     Write-Host "6: Show NameServers to add in GoDaddy"
     Write-Host "7: Setup Azure DNS entries"
     Write-Host "8: Show DNS entries to make in CAFE DNS"
+    Write-Host "9: Show nodes"
     Write-Host "------ Install -------"
     Write-Host "11: Install NLP"
     Write-Host "12: Install Realtime"
@@ -135,6 +136,11 @@ while ($userinput -ne "q") {
         }
         '8' {
             WriteDNSCommands
+        } 
+        '9' {
+            Write-Host "Current cluster: $(kubectl config current-context)"
+            kubectl version --short
+            kubectl get "nodes"
         } 
         '11' {
             $namespace="fabricnlp"

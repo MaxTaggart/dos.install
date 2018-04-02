@@ -1614,7 +1614,7 @@ function global:WaitForLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) 
     if ([string]::IsNullOrWhiteSpace($loadBalancerIP)) {
         $loadBalancerIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}'
     }
-    $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}'
+    $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
     
     Write-Host "Sleeping for 10 seconds so kube services get IPs assigned"
     Start-Sleep -Seconds 10
