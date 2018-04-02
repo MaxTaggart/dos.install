@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.01.04"
+$versioncommon = "2018.04.01.05"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -1501,7 +1501,7 @@ function global:GetConfigFile() {
 
     $folder = $ENV:CatalystConfigPath
     if ([string]::IsNullOrEmpty("$folder")) {
-        $folder = "c:\kubernetes\configs"
+        $folder = "c:\kubernetes\deployments"
     }
     if (Test-Path -Path $folder -PathType Container) {
         Write-Host "Looking in $folder for *.json files"
