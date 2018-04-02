@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.03.28.05"
+version="2018.04.02.01"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -70,43 +70,47 @@ while [[ "$input" != "q" ]]; do
     case "$input" in
     1)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
         curl -sSL $GITHUB_URL/onprem/setupmaster.sh?p=$RANDOM | bash 2>&1 | tee setupmaster.log
-        mountSharedFolder
+        mountSharedFolder true
         curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash 2>&1 | tee setup-loadbalancer.log
         InstallStack $GITHUB_URL "kube-system" "dashboard"
-        ShowCommandToJoinCluster
+        ShowCommandToJoinCluster $GITHUB_URL
         ;;
     2)  echo "Current cluster: $(kubectl config current-context)"
         kubectl version --short
         kubectl get "nodes"
         ;;
-    3)  ShowCommandToJoinCluster
+    3)  ShowCommandToJoinCluster $GITHUB_URL
         ;;
-    4)  mountSMB
+    4)  mountSMB true
         ;;
-    5)  mountAzureFile
+    5)  mountAzureFile true
         ;;
     6)  curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash 2>&1 | tee setup-loadbalancer.log
         ;;
     7)  InstallStack $GITHUB_URL "kube-system" "dashboard"
         ;;
-    8)  sudo kubeadm reset 2>/dev/null
-        sudo docker system prune -f 2>/dev/null
+    8)  if [ -x "$(command -v kubeadm)" ]; then
+            sudo kubeadm reset
+        fi    
         sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
-        sudo docker volume rm etcd 2>/dev/null
+        if [ -x "$(command -v docker)" ]; then
+            sudo docker system prune -f
+            sudo docker volume rm etcd
+        fi
         sudo rm -rf /var/etcd/backups/*
         sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
         sudo yum -y remove docker docker-common docker-selinux docker-engine    
         echo "Please restart this computer"
         ;;
     12)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
-        mountSharedFolder
+        mountSharedFolder false
         JoinNodeToCluster
         ;;
     13) JoinNodeToCluster
         ;;
-    14)  mountSMB
+    14)  mountSMB false
         ;;
-    15)  mountAzureFile
+    15)  mountAzureFile false
         ;;
     16) sudo kubeadm reset 2>/dev/null
         sudo docker system prune -f 2>/dev/null

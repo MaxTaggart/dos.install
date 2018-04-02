@@ -1,5 +1,5 @@
 
-versioncommon="2018.03.28.02"
+versioncommon="2018.04.02.01"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -202,18 +202,22 @@ function WaitForPodsInNamespace(){
 }
 
 function mountSharedFolder(){
+    local saveIntoSecret=$1
+
     while [[ -z "$mountAzure" ]]; do
         read -p "Do you want to mount an Azure file share? (y/n)" mountAzure < /dev/tty    
     done      
     if [[ $mountAzure =~ ^[Yy]$ ]]
     then
-        mountAzureFile
+        mountAzureFile $saveIntoSecret
     else
-        mountSMB
+        mountSMB $saveIntoSecret
     fi
 }
 
 function mountSMB(){
+    local saveIntoSecret=$1
+
     while [[ -z "$pathToShare" ]]; do
         read -p "path to SMB share (e.g., //myserver.mydomain/myshare): " pathToShare < /dev/tty    
     done  
@@ -224,10 +228,12 @@ function mountSMB(){
         read -p "password: " password < /dev/tty
     done  
 
-    mountSMBWithParams $pathToShare $username $password
+    mountSMBWithParams $pathToShare $username $password $saveIntoSecret
 }
 
 function mountAzureFile(){
+    local saveIntoSecret=$1
+    
     while [[ -z "$storageAccountName" ]]; do
         read -p "Storage Account Name: " storageAccountName < /dev/tty  
     done  
@@ -240,7 +246,7 @@ function mountAzureFile(){
         read -p "storage account key: " storageAccountKey < /dev/tty
     done
 
-    mountSMBWithParams $pathToShare $username $storageAccountKey
+    mountSMBWithParams $pathToShare $username $storageAccountKey $saveIntoSecret
 }
 
 
@@ -248,7 +254,7 @@ function mountSMBWithParams(){
     local pathToShare=$1
     local username=$2 #<storage-account-name>
     local password=$3
-    
+    local saveIntoSecret=$4
     # save as secret
     # secretname="sharedfolder"
     # namespace="default"
@@ -272,10 +278,21 @@ function mountSMBWithParams(){
 
     sudo mount -a
 
+    if [[ "saveIntoSecret" == true ]]; then
+        echo "saving mount information into a secret"
+        secretname="mountsharedfolder"
+        namespace="default"
+        if [[ ! -z "$(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true)" ]]; then
+            kubectl delete secret $secretname --namespace=$namespace
+        fi
+        kubectl create secret generic $secretname --namespace=$namespace --from-literal=path=$pathToShare --from-literal=username=$username --from-literal=password=$password
+    fi
+
     touch "/mnt/data/$(hostname).txt"
 
     echo "Listing files in shared folder"
     ls -al /mnt/data
+
 }
 
 function CleanOutNamespace(){
@@ -325,15 +342,29 @@ function InstallLoadBalancerStack(){
 }
 
 function ShowCommandToJoinCluster(){
+    local baseUrl=$1
+
+    secretname="mountsharedfolder"
+    namespace="default"
+
+    local pathToShare=$(ReadSecretValue $secretname "path" $namespace)
+    local username=$(ReadSecretValue $secretname "username" $namespace)
+    local password=$(ReadSecretValue $secretname "password" $namespace)
+    
     echo "Run this command on any new node to join this cluster (this command expires in 24 hours):"
     echo "---- COPY BELOW THIS LINE ----"
+    echo "curl -sSL $baseUrl/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log"
+    echo "curl -sSL $baseUrl/onprem/mountfolder.sh | bash -s $pathToShare $username $password 2>&1 | tee mountfolder.log"
     echo "sudo $(sudo kubeadm token create --print-join-command)"
     echo "---- COPY ABOVE THIS LINE ----"
 }
 
 function JoinNodeToCluster(){
     echo "--- resetting kubeadm ---"
-    sudo kubeadm reset 2>/dev/null
+    if [ -x "$(command -v kubeadm)" ]; then
+        sudo kubeadm reset
+    fi    
+
     echo "-----------------------"
     while [[ -z "$joincommand" ]]; do
         read -p "Paste kubeadm join command here: " joincommand < /dev/tty    
