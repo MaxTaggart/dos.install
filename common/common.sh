@@ -358,6 +358,7 @@ function ShowCommandToJoinCluster(){
     echo "curl -sSL $baseUrl/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log"
     echo "curl -sSL $baseUrl/onprem/mountfolder.sh | bash -s $pathToShare $username $password 2>&1 | tee mountfolder.log"
     echo "sudo $(sudo kubeadm token create --print-join-command)"
+    echo ""
     echo "---- COPY ABOVE THIS LINE ----"
 }
 
