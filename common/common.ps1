@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.01.03"
+$versioncommon = "2018.04.01.04"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -892,25 +892,8 @@ function global:DownloadFileOld([ValidateNotNullOrEmpty()] $url, [ValidateNotNul
     $responseStream.Dispose()
 }
 
-function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
-    # hacks here to get around bugs in the acs-engine loadbalancer code
-    Write-Host "Checking if load balancers are setup correctly for resourceGroup: $resourceGroup"
-    # 1. assign the nics to the loadbalancer
+function global:FixLoadBalancerBackendPools([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $loadbalancer){
 
-    # find loadbalancer with name 
-    $loadbalancer = "${resourceGroup}-internal"
-
-    $loadbalancerExists = $(az network lb show --name $loadbalancer --resource-group $resourceGroup --query "name" -o tsv)
-
-    # if internal load balancer exists then fix it
-    if ([string]::IsNullOrWhiteSpace($loadbalancerExists)) {
-        Write-Host "Loadbalancer $loadbalancer does not exist so no need to fix it"
-        return
-    }
-    else {
-        Write-Host "loadbalancer $loadbalancer exists with $loadbalancerExists"
-    }
-    
     $loadbalancerBackendPoolName = $resourceGroup # the name may change in the future so we should look it up
     # for each worker VM
     $virtualmachines = az vm list -g $resourceGroup --query "[].name" -o tsv
@@ -940,7 +923,7 @@ function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
             elseif ($($loadbalancerForNic -is [array])){
                 foreach($lb in $loadbalancerForNic){
                     Write-Host "Checking loadbalancerforNic: $lb to see if it matches $loadbalancer"
-                    if($($lb -contains $loadbalancer)){
+                    if($($lb -match $loadbalancer)){
                         Write-Host "Found loadbalancerforNic: $lb to match $loadbalancer"
                         $foundNicInLoadbalancer=$true
                     }
@@ -971,7 +954,9 @@ function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
         }
     }
     
+}
 
+function global:FixLoadBalancerBackendPorts([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $loadbalancer){
     # 2. fix the ports in load balancing rules
     Write-Host "Checking if the correct ports are setup in the load balancer"
 
@@ -1038,6 +1023,32 @@ function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
         }
         Write-Host ""
     }
+    
+}
+function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
+    # hacks here to get around bugs in the acs-engine loadbalancer code
+    Write-Host "Checking if load balancers are setup correctly for resourceGroup: $resourceGroup"
+    # 1. assign the nics to the loadbalancer
+
+    # find loadbalancer with name 
+    $loadbalancer = "${resourceGroup}-internal"
+
+    $loadbalancerExists = $(az network lb show --name $loadbalancer --resource-group $resourceGroup --query "name" -o tsv)
+
+    # if internal load balancer exists then fix it
+    if ([string]::IsNullOrWhiteSpace($loadbalancerExists)) {
+        Write-Host "Loadbalancer $loadbalancer does not exist so no need to fix it"
+        return
+    }
+    else {
+        Write-Host "loadbalancer $loadbalancer exists with name: $loadbalancerExists"
+    }
+    
+    # this is not needed anymore since acs-engine fixed the bug 
+    FixLoadBalancerBackendPools -resourceGroup $resourceGroup -loadbalancer $loadbalancer
+
+    FixLoadBalancerBackendPorts -resourceGroup $resourceGroup -loadbalancer $loadbalancer
+
     # end hacks
 }
 

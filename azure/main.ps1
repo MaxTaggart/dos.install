@@ -1,4 +1,4 @@
-$version = "2018.04.01.02"
+$version = "2018.04.01.03"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
