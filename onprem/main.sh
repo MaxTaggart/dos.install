@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.04.02.03"
+version="2018.04.02.04"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -73,7 +73,7 @@ while [[ "$input" != "q" ]]; do
         mountSharedFolder true 2>&1 | tee mountsharedfolder.log
         # cannot use tee here because it calls a ps1 file
         curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
-        InstallStack $GITHUB_URL "kube-system" "dashboard" 2>&1 | tee setup-dashboard.log
+        InstallStack $GITHUB_URL "kube-system" "dashboard"
         ShowCommandToJoinCluster $GITHUB_URL
         ;;
     2)  echo "Current cluster: $(kubectl config current-context)"
