@@ -6,7 +6,7 @@ set -e
 #
 #
 
-version="2018.03.27.01"
+version="2018.04.01.01"
 echo "---- setupnode version $version ----"
 
 u="$(whoami)"
@@ -26,7 +26,10 @@ fi
 # remove older versions
 # sudo systemctl stop docker 2>/dev/null
 echo "--- Removing previous versions of kubernetes and docker --"
-sudo kubeadm reset 2>/dev/null
+if [ -x "$(command -v kubeadm)" ]; then
+  sudo kubeadm reset
+fi
+
 sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
 sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
 sudo yum -y remove docker docker-common docker-selinux docker-engine
