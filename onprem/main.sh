@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.04.02.02"
+version="2018.04.02.03"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -71,7 +71,8 @@ while [[ "$input" != "q" ]]; do
     1)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
         curl -sSL $GITHUB_URL/onprem/setupmaster.sh?p=$RANDOM | bash 2>&1 | tee setupmaster.log
         mountSharedFolder true 2>&1 | tee mountsharedfolder.log
-        curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash 2>&1 | tee setup-loadbalancer.log
+        # cannot use tee here because it calls a ps1 file
+        curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
         InstallStack $GITHUB_URL "kube-system" "dashboard" 2>&1 | tee setup-dashboard.log
         ShowCommandToJoinCluster $GITHUB_URL
         ;;

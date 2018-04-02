@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.02.02"
+versioncommon="2018.04.02.03"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -205,9 +205,9 @@ function mountSharedFolder(){
     local saveIntoSecret=$1
 
     while [[ -z "$mountAzure" ]]; do
-        read -p "Do you want to mount an Azure file share? (y/n)" mountAzure < /dev/tty    
+        read -p "Do you want to mount an Azure file share or normal file share? (a/n)" mountAzure < /dev/tty    
     done      
-    if [[ $mountAzure =~ ^[Yy]$ ]]
+    if [[ $mountAzure =~ ^[Aa]$ ]]
     then
         mountAzureFile $saveIntoSecret
     else
