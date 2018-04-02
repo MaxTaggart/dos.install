@@ -1,4 +1,4 @@
-$version = "2018.04.01.03"
+$version = "2018.04.01.04"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -145,8 +145,8 @@ while ($userinput -ne "q") {
             CreateNamespaceIfNotExists $namespace
             AskForPasswordAnyCharacters -secretname "smtprelaypassword" -prompt "Please enter SMTP relay password" -namespace $namespace
             $dnshostname=$(ReadSecret -secretname "dnshostname" -namespace "default")
-            SaveSecretValue -secretname "nlpweb-external-url" -valueName "url" -value "http://$dnshostname/nlpweb" -namespace $namespace
-            SaveSecretValue -secretname "jobserver-external-url" -valueName "url" -value "http://$dnshostname/nlp" -namespace $namespace
+            SaveSecretValue -secretname "nlpweb-external-url" -valueName "url" -value "nlp.$dnshostname" -namespace $namespace
+            SaveSecretValue -secretname "jobserver-external-url" -valueName "url" -value "nlpjobs.$dnshostname" -namespace $namespace
             InstallStack -namespace $namespace -baseUrl $GITHUB_URL -appfolder "nlp" -isAzure 1
         } 
         '12' {
