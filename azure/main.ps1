@@ -1,4 +1,4 @@
-$version = "2018.04.02.01"
+$version = "2018.04.02.02"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -335,7 +335,7 @@ while ($userinput -ne "q") {
         } 
         '42' {
             $loadBalancerIP = kubectl get svc traefik-ingress-service-public -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
-            $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}'
+            $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
             if ([string]::IsNullOrWhiteSpace($loadBalancerIP)) {
                 $loadBalancerIP = $loadBalancerInternalIP
             }
@@ -346,6 +346,7 @@ while ($userinput -ne "q") {
 
             Write-Host "To test out the NLP services, open Git Bash and run:"
             Write-Host "curl -L --verbose --header 'Host: solr.$customerid.healthcatalyst.net' 'http://$loadBalancerInternalIP/solr' -k" 
+            Write-Host "curl -L --verbose --header 'Host: $customerid.healthcatalyst.net' 'http://$loadBalancerInternalIP/dashboard' -k" 
             Write-Host "curl -L --verbose --header 'Host: nlp.$customerid.healthcatalyst.net' 'http://$loadBalancerIP/nlpweb' -k" 
             Write-Host "curl -L --verbose --header 'Host: nlpjobs.$customerid.healthcatalyst.net' 'http://$loadBalancerIP/nlp' -k"
 
@@ -353,8 +354,11 @@ while ($userinput -ne "q") {
             Write-Host "$loadBalancerInternalIP solr.$customerid.healthcatalyst.net"            
             Write-Host "$loadBalancerIP nlp.$customerid.healthcatalyst.net"            
             Write-Host "$loadBalancerIP nlpjobs.$customerid.healthcatalyst.net"
+            Write-Host "$loadBalancerInternalIP $customerid.healthcatalyst.net"            
             
             # clear Google DNS cache: http://www.redsome.com/flush-clear-dns-cache-google-chrome-browser/
+            Write-Host "Launching http://$loadBalancerInternalIP/dashboard in the web browser"
+            Start-Process -FilePath "http://$loadBalancerInternalIP/dashboard";
             Write-Host "Launching http://solr.$customerid.healthcatalyst.net/solr in the web browser"
             Start-Process -FilePath "http://solr.$customerid.healthcatalyst.net/solr";
             Write-Host "Launching http://nlp.$customerid.healthcatalyst.net/nlpweb in the web browser"
