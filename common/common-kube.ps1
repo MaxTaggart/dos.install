@@ -204,14 +204,45 @@ function global:CleanOutNamespace([ValidateNotNullOrEmpty()] $namespace) {
     kubectl delete 'pv' -l namespace=$namespace --ignore-not-found=true
 
     $CLEANUP_DONE = "n"
+    $counter = 0
     Do {
         $CLEANUP_DONE = $(kubectl get 'deployments,pods,services,ingress,persistentvolumeclaims,jobs,cronjobs' --namespace=$namespace -o jsonpath="{.items[*].metadata.name}")
         if (![string]::IsNullOrEmpty($CLEANUP_DONE)) {
-            Write-Host "Remaining items: $CLEANUP_DONE"
+            $counter++
+            Write-Host "[$counter] Remaining items: $CLEANUP_DONE"
             Start-Sleep 5
         }
     }
-    while (![string]::IsNullOrEmpty($CLEANUP_DONE))
+    while ((![string]::IsNullOrEmpty($CLEANUP_DONE)) -and ($counter -lt 12))
+
+    if (![string]::IsNullOrEmpty($CLEANUP_DONE)) {
+        Write-Host "Deleting pods didn't work so deleting with force"
+        kubectl delete --all 'pods' --grace-period=0 --force --namespace=$namespace --ignore-not-found=true
+        $CLEANUP_DONE = "n"
+        $counter = 0
+        Do {
+            $CLEANUP_DONE = $(kubectl get 'deployments,pods,services,ingress,persistentvolumeclaims,jobs,cronjobs' --namespace=$namespace -o jsonpath="{.items[*].metadata.name}")
+            if (![string]::IsNullOrEmpty($CLEANUP_DONE)) {
+                $counter++
+                Write-Host "[$counter] Remaining items: $CLEANUP_DONE"
+                Start-Sleep 5
+            }
+        }
+        while ((![string]::IsNullOrEmpty($CLEANUP_DONE)) -and ($counter -lt 12))
+    }
+    
+    return $Return
+}
+
+function global:DeleteAllSecrets([ValidateNotNullOrEmpty()] $namespace) {
+    [hashtable]$Return = @{} 
+
+    Write-Host "--- Deleting all secrets in $namespace ---"
+    $secrets = $(kubectl get secrets -n $namespace -o jsonpath="{.items[?(@.type=='Opaque')].metadata.name}")
+    foreach ($secret in $secrets.Split(" ")) {
+        Write-Output "deleting secret: $secret"
+        kubectl delete secret $secret -n $namespace
+    }
 
     return $Return
 }

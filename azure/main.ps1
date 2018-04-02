@@ -55,6 +55,7 @@ while ($userinput -ne "q") {
     Write-Host "44: Show NLP logs"
     Write-Host "45: Restart NLP"
     Write-Host "46: Show commands to SSH to NLP containers"
+    Write-Host "47: Delete everything in fabricnlp"
     Write-Host "------ Realtime -----"
     Write-Host "51: Show status of realtime"
     Write-Host "-----------"
@@ -369,6 +370,15 @@ while ($userinput -ne "q") {
             $pods = $(kubectl get pods -n fabricnlp -o jsonpath='{.items[*].metadata.name}')
             foreach ($pod in $pods.Split(" ")) {
                 Write-Output "kubectl exec -it $pod -n fabricnlp -- sh"
+            }
+        } 
+        '47' {
+            Write-Warning "This will delete all data in this namespace and clear out any secrets"
+            Do { $confirmation = Read-Host "Do you want to continue? (y/n)"}
+            while ([string]::IsNullOrWhiteSpace($confirmation))
+        
+            if ($confirmation -eq "y") {
+                DeleteNamespaceAndData -namespace "fabricnlp" -isAzure 1
             }
         } 
         '51' {

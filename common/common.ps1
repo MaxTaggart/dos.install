@@ -7,30 +7,41 @@ function global:GetCommonVersion() {
     return $versioncommon
 }
 
+function global:DeleteAzureFileShare([ValidateNotNullOrEmpty()] $sharename, [ValidateNotNullOrEmpty()] $storageAccountConnectionString) {
+    if ($(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv)) {
+        Write-Host "Deleting the file share: $sharename"
+        az storage share delete -n $sharename --connection-string $storageAccountConnectionString
+    
+        
+        Write-Host "Waiting for completion of delete for the file share: $sharename"        
+        Do {
+            Start-Sleep -Seconds 5 
+            $shareExists = $(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv)
+            Write-Host "."
+        }
+        while ($shareExists -ne "false")    
+    }
+}
 function global:CreateShareInStorageAccount([ValidateNotNullOrEmpty()] $storageAccountName, [ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $sharename, $deleteExisting) { 
     $storageAccountConnectionString = az storage account show-connection-string -n $storageAccountName -g $resourceGroup -o tsv
     
     # Write-Host "Storage connection string: $storageAccountConnectionString"
 
     if ($deleteExisting) {
-        if ($(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv)) {
-            Write-Host "Deleting the file share: $sharename"
-            az storage share delete -n $sharename --connection-string $storageAccountConnectionString
-        
-            
-            Write-Host "Waiting for completion of delete for the file share: $sharename"        
-            Do {
-                Start-Sleep -Seconds 5 
-                $SHARE_EXISTS = $(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv)
-                Write-Host "."
-            }
-            while ($SHARE_EXISTS -ne "false")
-        }
+        DeleteAzureFileShare -sharename $sharename -storageAccountConnectionString $storageAccountConnectionString
     }
 
     if ($(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv) -eq "false") {
         Write-Host "Creating the file share: $sharename"        
         az storage share create -n $sharename --connection-string $storageAccountConnectionString --quota 512       
+
+        Write-Host "Waiting for completion of create for the file share: $sharename"        
+        Do {
+            $shareExists = $(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv)
+            Write-Host "."
+            Start-Sleep -Seconds 5 
+        }
+        while ($shareExists -eq "false")    
     }
     else {
         Write-Host "File share already exists: $sharename"         
@@ -782,7 +793,7 @@ function global:DeleteNetworkSecurityGroupRule([ValidateNotNullOrEmpty()] $resou
     }    
 }
 
-function global:DownloadKubectl([ValidateNotNullOrEmpty()] $localFolder,[ValidateNotNullOrEmpty()] $version) {
+function global:DownloadKubectl([ValidateNotNullOrEmpty()] $localFolder, [ValidateNotNullOrEmpty()] $version) {
     # download kubectl
     $kubeCtlFile = "$localFolder\kubectl.exe"
     $desiredKubeCtlVersion = "v${version}"
@@ -1534,12 +1545,30 @@ function global:CreateAzureStorage([ValidateNotNullOrEmpty()] $namespace) {
     }
     
     $shareName = "$namespace"
+
+    CreateShare -resourceGroup $resourceGroup -sharename $shareName -deleteExisting $false
+
+    return $Return
+}
+function global:DeleteAzureStorage([ValidateNotNullOrEmpty()] $namespace) {
+    [hashtable]$Return = @{} 
+
+    if ([string]::IsNullOrWhiteSpace($namespace)) {
+        Write-Error "no parameter passed to DeleteAzureStorage"
+        exit
+    }
+    
+    $resourceGroup = $(GetResourceGroup).ResourceGroup
+
+    Write-Output "Using resource group: $resourceGroup"        
+    
+    $shareName = "$namespace"
     $storageAccountName = ReadSecretValue -secretname azure-secret -valueName "azurestorageaccountname" 
     
     $storageAccountConnectionString = az storage account show-connection-string -n $storageAccountName -g $resourceGroup -o tsv
     
-    Write-Output "Create the file share: $shareName"
-    az storage share create -n $shareName --connection-string $storageAccountConnectionString --quota 512
+    Write-Output "deleting the file share: $shareName"
+    DeleteAzureFileShare -sharename $sharename -storageAccountConnectionString $storageAccountConnectionString
     return $Return
 }
 
@@ -1561,6 +1590,25 @@ function global:CreateOnPremStorage([ValidateNotNullOrEmpty()] $namespace) {
     
     return $Return
 }
+function global:DeleteOnPremStorage([ValidateNotNullOrEmpty()] $namespace) {
+    [hashtable]$Return = @{} 
+
+    if ([string]::IsNullOrWhiteSpace($namespace)) {
+        Write-Error "no parameter passed to DeleteOnPremStorage"
+        exit
+    }
+    
+   
+    $shareName = "$namespace"
+    $sharePath = "/mnt/data/$shareName"
+
+    Write-Output "Deleting the file share: $sharePath"
+
+    Remove-Item -Recurse -Force $sharePath 
+    
+    return $Return
+}
+
 function global:WaitForLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
     $loadBalancerIP = kubectl get svc traefik-ingress-service-public -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
     if ([string]::IsNullOrWhiteSpace($loadBalancerIP)) {
@@ -1595,6 +1643,18 @@ function global:InstallStack([ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNu
     if ($isAzure) {
         WaitForLoadBalancers -resourceGroup $(GetResourceGroup).ResourceGroup
     }    
+}
+
+function global:DeleteNamespaceAndData([ValidateNotNullOrEmpty()] $namespace, $isAzure) {
+    if ($isAzure) {
+        DeleteAzureStorage -namespace $namespace
+    }
+    else {
+        DeleteOnPremStorage -namespace $namespace
+    }
+
+    CleanOutNamespace -namespace $namespace
+    DeleteAllSecrets -namespace $namespace
 }
 #-------------------
 Write-Host "end common.ps1 version $versioncommon"
