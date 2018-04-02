@@ -1,4 +1,4 @@
-$version = "2018.04.01.04"
+$version = "2018.04.02.01"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -18,8 +18,13 @@ Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring | Invoke-E
 
 $userinput = ""
 while ($userinput -ne "q") {
+    $currentcluster=""
+    if (Test-CommandExists kubectl) {
+        $currentcluster=$(kubectl config current-context 2> $null)
+    }
+    
     Write-Host "================ Health Catalyst version $version, common functions $(GetCommonVersion) ================"
-    Write-Warning "CURRENT CLUSTER: $(kubectl config current-context 2> $null)"
+    Write-Warning "CURRENT CLUSTER: $currentcluster"
     Write-Host "0: Change kube to point to another cluster"
     Write-Host "------ Infrastructure -------"
     Write-Host "1: Create a new Azure Container Service"
