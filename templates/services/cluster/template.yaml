@@ -1,0 +1,16 @@
+kind: Service
+apiVersion: v1
+metadata:
+# name of this service.  other
+  name: "{{name}}-external"
+  namespace: {{namespace}}
+  labels:
+    app: {{name}}
+spec:
+  ports:
+  - port: {{port}}
+    targetPort: {{port}}
+    protocol: TCP
+  selector:
+    app: {{name}}
+---

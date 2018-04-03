@@ -1,0 +1,90 @@
+{
+    "$schema": "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/templates/schema.json",
+    "name": "Name os stack",
+    "version": "4.0.0.2",
+    "secrets": {
+        "password": [],
+        "value": []
+    },
+    "resources": {
+        "simpleservices": [{
+            "image": "healthcatalyst/fabric.nlp.docker.web:latest",
+            "env": [{
+                    "name": "NLPWEB_EXTERNAL_URL",
+                    "valueFrom": {
+                        "secretKeyRef": {
+                            "name": "nlpweb-external-url",
+                            "key": "url"
+                        }
+                    }
+                },
+                {
+                    "name": "JOBSERVER_EXTERNAL_URL",
+                    "valueFrom": {
+                        "secretKeyRef": {
+                            "name": "jobserver-external-url",
+                            "key": "url"
+                        }
+                    }
+                },
+                {
+                    "name": "MYSQL_PASSWORD",
+                    "valueFrom": {
+                        "secretKeyRef": {
+                            "name": "mysqlpassword",
+                            "key": "password"
+                        }
+                    }
+                }
+            ],
+            "ports": [{
+                    "containerPort": 8083,
+                    "name": "nlpwebserver",
+                    "http": {
+                        "host": "nlp.CUSTOMERID.healthcatalyst.net",
+                        "path": "/solr",
+                        "public": true
+                    }
+                },
+                {
+                    "containerPort": 8443,
+                    "name": "https",
+                    "tcp": {
+                        "public": true
+                    }
+                }
+
+            ],
+            "volumes": [{
+                "name": "solr-persistent-storage",
+                "mountPath": "/var/lib/solr",
+                "subPath": "solr",
+                "accessMode": "ReadWriteMany",
+                "size": "32Gi",
+                "mountOptions": [
+                    "dir_mode=0731",
+                    "file_mode=0724",
+                    "uid=1000",
+                    "gid=1000"
+                ]
+            }]
+        }],
+        "dns": [],
+        "configmaps": [],
+        "roles": [],
+        "volumes": {
+            "onprem": [],
+            "azure": []
+        },
+        "volumeclaims": [],
+        "pods": [],
+        "services": {
+            "cluster": [],
+            "external": []
+        },
+        "ingress": {
+            "http": [],
+            "tcp": []
+        }
+    }
+}
