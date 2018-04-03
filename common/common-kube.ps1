@@ -379,6 +379,49 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
 
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -customerid $customerid -resources $($config.resources.ingress.jobs)
     
+    DeploySimpleServices -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -customerid $customerid -resources $($config.resources.ingress.simpleservices)
+
+    return $Return
+}
+
+function global:DeploySimpleService([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $appfolder, [ValidateNotNullOrEmpty()] $customerid, $service) {
+    [hashtable]$Return = @{} 
+
+    $tokens=@{
+            name = $service.name
+            namespace = "$namespace"
+            image = "$($service.image)"
+        }
+
+    Write-Host "Creating pods for simpleservice"
+    # replace env section
+    # populate ports
+
+    $templatefile=".\templates\pods\template.yaml"
+    $template=$(Get-Content -Raw -Path $templatefile)
+    $yaml=Merge-Tokens $template $tokens
+    $json   
+
+    Write-Host "Creating services for simpleservice"
+
+    Write-Host "Creating ingress for simpleservice"
+
+    Write-Host "Creating Persistent Volumes for simple service"
+
+    Write-Host "Creating Volume Claims for simple service"
+
+    return $Return
+}
+
+function global:DeploySimpleServices([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $appfolder, [ValidateNotNullOrEmpty()] $customerid, $resources) {
+    [hashtable]$Return = @{} 
+
+    if ($resources) {
+        Write-Host "-- Deploying simpleservices --"
+        foreach ($service in $resources) {
+            DeploySimpleServices -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -customerid $customerid -service $service
+        }
+    }
     return $Return
 }
 
@@ -497,6 +540,10 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
 }
 # from http://www.bricelam.net/2012/09/simple-template-engine-for-powershell.html
+# Merge-Tokens 'Hello, $target$! My name is $self$.' @{
+#    Target = 'World'
+#    Self = 'Brice'
+#}
 function Merge-Tokens($template, $tokens) {
     return [regex]::Replace(
         $template,

@@ -8,6 +8,7 @@
     },
     "resources": {
         "simpleservices": [{
+            "name": "solrserver",
             "image": "healthcatalyst/fabric.nlp.docker.web:latest",
             "env": [{
                     "name": "NLPWEB_EXTERNAL_URL",

@@ -1,0 +1,27 @@
+{
+    "apiVersion": "extensions/v1beta1",
+    "kind": "Ingress",
+    "metadata": {
+        "name": "$name$-$type$",
+        "namespace": "$namespace$",
+        "labels": {
+            "expose": "$type$"
+        },
+        "annotations": {
+            "kubernetes.io/ingress.class": "traefik"
+        }
+    },
+    "spec": {
+        "rules": [{
+            "host": "$host$",
+            "http": {
+                "paths": [{
+                    "backend": {
+                        "serviceName": "$servicepublic$",
+                        "servicePort": 80
+                    }
+                }]
+            }
+        }]
+    }
+}

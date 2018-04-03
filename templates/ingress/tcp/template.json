@@ -1,0 +1,23 @@
+{
+    "kind": "Service",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "$name$-direct-port",
+        "namespace": "$namespace$",
+        "annotations": {
+            "service.beta.kubernetes.io/azure-load-balancer-internal": "$isInternal$"
+        }
+    },
+    "spec": {
+        "selector": {
+            "app": "$name$"
+        },
+        "ports": [{
+            "name": "$name$port",
+            "protocol": "TCP",
+            "port": "$port$",
+            "targetPort": "$port$"
+        }],
+        "type": "LoadBalancer"
+    }
+}

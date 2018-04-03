@@ -1,0 +1,28 @@
+{
+    "apiVersion": "v1",
+    "kind": "PersistentVolume",
+    "metadata": {
+        "name": "$name$.onprem",
+        "namespace": "$namespace$",
+        "labels": {
+            "type": "local",
+            "namespace": "$namespace$"
+        }
+    },
+    "spec": {
+        "storageClassName": "default",
+        "capacity": {
+            "storage": "$size$"
+        },
+        "accessModes": [
+            "ReadWriteMany"
+        ],
+        "hostPath": {
+            "path": "/mnt/data/$namespace$"
+        },
+        "claimRef": {
+            "namespace": "$namespace$",
+            "name": "$name$"
+        }
+    }
+}

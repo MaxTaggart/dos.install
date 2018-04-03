@@ -1,0 +1,21 @@
+{
+    "kind": "Service",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "$name$-external",
+        "namespace": "$namespace$",
+        "labels": {
+            "app": "$name$"
+        }
+    },
+    "spec": {
+        "ports": [{
+            "port": "$port$",
+            "targetPort": "$port$",
+            "protocol": "TCP"
+        }],
+        "selector": {
+            "app": "$name$"
+        }
+    }
+}
