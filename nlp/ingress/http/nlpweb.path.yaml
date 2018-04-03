@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-    name: nlp-ingress-internal-path
+    name: nlp-ingress-path
     namespace: fabricnlp
     labels:  
         expose: external    
