@@ -204,14 +204,20 @@ function WaitForPodsInNamespace(){
 function mountSharedFolder(){
     local saveIntoSecret=$1
 
-    while [[ -z "$mountAzure" ]]; do
-        read -p "Do you want to mount an Azure file share or normal file share? (a/n)" mountAzure < /dev/tty    
+    echo "DOS requires a network folder that can be accessed from all the worker VMs"
+    echo "1. Mount an existing Azure file share"
+    echo "2. Mount an existing UNC network file share"
+    echo "3. I've already mounted a shared folder at /mnt/data/"
+
+    while [[ -z "$mountChoice" ]]; do
+        read -p "Choose a number: " mountChoice < /dev/tty    
     done      
-    if [[ $mountAzure =~ ^[Aa]$ ]]
-    then
+    if [[ $mountChoice == 1 ]]; then
         mountAzureFile $saveIntoSecret
-    else
+    elif [[ $mountChoice == 2 ]] 
         mountSMB $saveIntoSecret
+    else
+        echo "User will mount a shared folder manually"
     fi
 }
 
@@ -356,7 +362,10 @@ function ShowCommandToJoinCluster(){
     echo "Run this command on any new node to join this cluster (this command expires in 24 hours):"
     echo "---- COPY BELOW THIS LINE ----"
     echo "curl -sSL $baseUrl/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log"
-    echo "curl -sSL $baseUrl/onprem/mountfolder.sh | bash -s $pathToShare $username $password 2>&1 | tee mountfolder.log"
+    
+    if [[ ! -z "$pathToShare" ]]; then
+        echo "curl -sSL $baseUrl/onprem/mountfolder.sh | bash -s $pathToShare $username $password 2>&1 | tee mountfolder.log"
+    fi
     echo "sudo $(sudo kubeadm token create --print-join-command)"
     echo ""
     echo "---- COPY ABOVE THIS LINE ----"

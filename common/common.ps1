@@ -1685,6 +1685,7 @@ function global:InstallStack([ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNu
     }    
 }
 
+
 function global:DeleteNamespaceAndData([ValidateNotNullOrEmpty()] $namespace, $isAzure) {
     if ($isAzure) {
         DeleteAzureStorage -namespace $namespace
