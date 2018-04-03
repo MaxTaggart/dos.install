@@ -320,8 +320,8 @@ while ($userinput -ne "q") {
         '33' {
             $customerid = ReadSecret -secretname customerid
             $customerid = $customerid.ToLower().Trim()
-            Write-Host "Launching http://dashboard.$customerid.healthcatalyst.net in the web browser"
-            Start-Process -FilePath "http://dashboard.$customerid.healthcatalyst.net";
+            Write-Host "Launching http://$customerid.healthcatalyst.net/dashboard in the web browser"
+            Start-Process -FilePath "http://$customerid.healthcatalyst.net/dashboard";
         }         
         '40' {
             kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=fabricnlp -o wide

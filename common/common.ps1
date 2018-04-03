@@ -1175,7 +1175,7 @@ function global:GetDNSCommands() {
 function global:WriteDNSCommands() {
     $myCommands = $(GetDNSCommands).Commands
     Write-Host "To setup DNS entries in CAFE environment, remote desktop to CAFE DNS server: 10.5.2.4"
-    Write-Host "Open Powershell window and paste the following:"
+    Write-Host "Open Powershell window As Administrator and paste the following:"
     ForEach ($myCommand in $myCommands) {
         Write-Host $myCommand
     }
