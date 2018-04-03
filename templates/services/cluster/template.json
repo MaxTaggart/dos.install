@@ -2,7 +2,7 @@
     "kind": "Service",
     "apiVersion": "v1",
     "metadata": {
-        "name": "$name$-external",
+        "name": "$name$-cluster",
         "namespace": "$namespace$",
         "labels": {
             "app": "$name$"

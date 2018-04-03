@@ -379,7 +379,7 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
 
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -customerid $customerid -resources $($config.resources.ingress.jobs)
     
-    DeploySimpleServices -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -customerid $customerid -resources $($config.resources.ingress.simpleservices)
+    # DeploySimpleServices -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -customerid $customerid -resources $($config.resources.ingress.simpleservices)
 
     return $Return
 }
@@ -387,24 +387,75 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
 function global:DeploySimpleService([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $appfolder, [ValidateNotNullOrEmpty()] $customerid, $service) {
     [hashtable]$Return = @{} 
 
-    $tokens=@{
-            name = $service.name
-            namespace = "$namespace"
-            image = "$($service.image)"
-        }
+    Write-Host "Deploying simpleservice: $($service.name)"
+
+    $servicepublic = "$($service.name)-service"
+
+    $tokens = @{
+        name          = $service.name
+        namespace     = "$namespace"
+        image         = "$($service.image)"
+        servicepublic = "$servicepublic"
+    }
 
     Write-Host "Creating pods for simpleservice"
     # replace env section
     # populate ports
 
-    $templatefile=".\templates\pods\template.yaml"
-    $template=$(Get-Content -Raw -Path $templatefile)
-    $yaml=Merge-Tokens $template $tokens
-    $json   
+    $templatefile = "$baseUrl\templates\pods\template.json"
+    $template = $(Get-Content -Raw -Path $templatefile)
+    $jsontext = $(Merge-Tokens $template $tokens)
+    $json = $jsontext | ConvertFrom-Json
+
+    $container = $json.spec.template.spec.containers[0]
+    # replace env section
+    $container.env = $service.env
+    # populate ports
+    foreach ($port in $($service.ports)) {
+        $properties = @{
+            'containerPort' = $port.containerPort;
+            'name'          = $port.name
+        }
+        $object = New-Object –TypeNamePSObject –Prop $properties
+        $container.ports += $object
+    }
+    Write-Host "--- deployment ---"
+    Write-Host $json            
 
     Write-Host "Creating services for simpleservice"
+    $templatefile = "$baseUrl\templates\services\cluster\template.json"
+    $template = $(Get-Content -Raw -Path $templatefile)
+    $jsontext = $(Merge-Tokens $template $tokens)
+    $json = $jsontext | ConvertFrom-Json
+
+    foreach ($port in $($service.ports)) {
+        $portspec = @{
+            port       = $port.port
+            targetPort = $port.targetPort
+            protocol   = "TCP"
+        }
+        $json.ports += $portspec
+    }
+    Write-Host "--- cluster service ---"
+    Write-Host $json            
 
     Write-Host "Creating ingress for simpleservice"
+    $templatefile = "$baseUrl\templates\ingress\http\template.path.json"
+    $template = $(Get-Content -Raw -Path $templatefile)
+    $jsontext = $(Merge-Tokens $template $tokens)
+    $json = $jsontext | ConvertFrom-Json
+
+    foreach ($port in $($service.ports)) {
+        $pathspec = @{
+            path    = $($port.http.path)
+            backend = @{
+                serviceName = "$servicepublic"
+            }
+        }
+        $json.spec.rules[0].http.paths += $pathspec
+
+        # $json.ports.add $portspec
+    }
 
     Write-Host "Creating Persistent Volumes for simple service"
 
@@ -413,13 +464,13 @@ function global:DeploySimpleService([ValidateNotNullOrEmpty()] $namespace, [Vali
     return $Return
 }
 
-function global:DeploySimpleServices([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $appfolder, [ValidateNotNullOrEmpty()] $customerid, $resources) {
+function global:DeploySimpleServices([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $appfolder, [ValidateNotNullOrEmpty()] $customerid, $services) {
     [hashtable]$Return = @{} 
 
-    if ($resources) {
+    if ($services) {
         Write-Host "-- Deploying simpleservices --"
-        foreach ($service in $resources) {
-            DeploySimpleServices -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -customerid $customerid -service $service
+        foreach ($service in $services) {
+            DeploySimpleService -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -customerid $customerid -service $service
         }
     }
     return $Return
