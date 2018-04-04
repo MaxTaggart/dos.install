@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.02.03"
+versioncommon="2018.04.03.01"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -214,7 +214,7 @@ function mountSharedFolder(){
     done      
     if [[ $mountChoice == 1 ]]; then
         mountAzureFile $saveIntoSecret
-    elif [[ $mountChoice == 2 ]] 
+    elif [[ $mountChoice == 2 ]]; then
         mountSMB $saveIntoSecret
     else
         echo "User will mount a shared folder manually"
