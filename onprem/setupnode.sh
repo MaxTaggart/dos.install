@@ -12,15 +12,20 @@ echo "---- setupnode version $version ----"
 u="$(whoami)"
 echo "User name: $u"
 
-sudo yum -y install yum-versionlock
+echo "installing yum-utils"
+sudo yum -y install yum-versionlock yum-utils
 
+echo "updating yum packages"
 sudo yum update -y
+
+echo "turning off swap"
+sudo swapoff -a
 
 echo "--- stopping docker and kubectl ---"
 servicestatus=$(systemctl show -p SubState kubelet)
 if [[ $servicestatus = *"running"* ]]; then
   echo "stopping kubelet"
-  sudo systemctl stop kubelet 2>/dev/null
+  sudo systemctl stop kubelet
 fi
 
 # remove older versions
