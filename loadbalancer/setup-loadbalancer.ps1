@@ -1,4 +1,4 @@
-Write-Host "Version 2018.04.09.03"
+Write-Host "setup-loadbalancer version 2018.04.09.04"
 
 #
 # This script is meant for quick & easy install via:
@@ -72,7 +72,7 @@ else {
 if ($($config.network_security_group.create_nsg_rules)) {
     Write-Host "Adding or updating rules to Network Security Group for the subnet"
     $sourceTagForAdminAccess = "VirtualNetwork"
-    if($($config.allow_kubectl_from_outside_vnet)){
+    if ($($config.allow_kubectl_from_outside_vnet)) {
         $sourceTagForAdminAccess = "Internet"
         Write-Host "Enabling admin access to cluster from Internet"
     }
@@ -110,7 +110,7 @@ if ($($config.network_security_group.create_nsg_rules)) {
         Write-Host "Since we already have rules open port 80 and 443 to the Internet, we do not need to create separate ones for the Internet"
     }
     else {
-        if($($config.ingress.external) -ne "vnetonly"){
+        if ($($config.ingress.external) -ne "vnetonly") {
             SetNetworkSecurityGroupRule -resourceGroup $AKS_PERS_RESOURCE_GROUP -networkSecurityGroup $AKS_PERS_NETWORK_SECURITY_GROUP `
                 -rulename "HttpPort" `
                 -ruledescription "allow HTTP access from ${sourceTagForHttpAccess}." `
@@ -145,20 +145,18 @@ kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-
 
 if ($($config.ssl) ) {
     # if the SSL cert is not set in kube secrets then ask for the files
-    if ([string]::IsNullOrWhiteSpace($(kubectl get secret traefik-cert-ahmn -o jsonpath='{.data}' -n kube-system --ignore-not-found=true))) {
-        # ask for tls cert files
-        $AKS_SSL_CERT_FOLDER = $($config.ssl_folder)
-        if((!(Test-Path -Path "$AKS_SSL_CERT_FOLDER"))){
-            Write-Error "SSL Folder does not exist: $AKS_SSL_CERT_FOLDER"
-        }     
+    # ask for tls cert files
+    $AKS_SSL_CERT_FOLDER = $($config.ssl_folder)
+    if ((!(Test-Path -Path "$AKS_SSL_CERT_FOLDER"))) {
+        Write-Error "SSL Folder does not exist: $AKS_SSL_CERT_FOLDER"
+    }     
 
-        $AKS_SSL_CERT_FOLDER_UNIX_PATH = (($AKS_SSL_CERT_FOLDER -replace "\\", "/")).ToLower().Trim("/")    
+    $AKS_SSL_CERT_FOLDER_UNIX_PATH = (($AKS_SSL_CERT_FOLDER -replace "\\", "/")).ToLower().Trim("/")    
 
-        kubectl delete secret traefik-cert-ahmn -n kube-system --ignore-not-found=true
+    kubectl delete secret traefik-cert-ahmn -n kube-system --ignore-not-found=true
 
-        Write-Host "Storing TLS certs from $AKS_SSL_CERT_FOLDER_UNIX_PATH as kubernetes secret"
-        kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.crt" --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.key"
-    }
+    Write-Host "Storing TLS certs from $AKS_SSL_CERT_FOLDER_UNIX_PATH as kubernetes secret"
+    kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.crt" --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.key"
 }
 else {
     Write-Host "SSL option was not specified in the deployment config: $($config.ssl)"
