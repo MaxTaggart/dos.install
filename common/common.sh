@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.09.02"
+versioncommon="2018.04.09.03"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -195,6 +195,12 @@ function WaitForPodsInNamespace(){
             if [[ $podstatus != "Running" ]]; then
                 echo "$pod: $podstatus"
                 waitingonPod=$pod
+            else
+                containerReady=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].ready}")
+                if [[ $containerReady != "true" ]]; then
+                    waitingonPod=$pod
+                    echo "container in $pod is not ready yet: $containerReady"
+                fi
             fi
         done
         sleep $interval
