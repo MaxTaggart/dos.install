@@ -388,15 +388,25 @@ function JoinNodeToCluster(){
 
 function SetupMaster(){
     local baseUrl=$1
+    local singlenode=$2
     
     curl -sSL $baseUrl/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
     curl -sSL $baseUrl/onprem/setupmasternode.sh?p=$RANDOM | bash 2>&1 | tee setupmaster.log
-    mountSharedFolder true 2>&1 | tee mountsharedfolder.log
+    if [[ $singlenode == true ]]; then
+        echo "enabling master node to run containers"
+        # enable master to run containers
+        kubectl taint nodes --all node-role.kubernetes.io/master-        
+    else
+        mountSharedFolder true 2>&1 | tee mountsharedfolder.log
+    fi
     # cannot use tee here because it calls a ps1 file
     curl -sSL $baseUrl/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
     InstallStack $baseUrl "kube-system" "dashboard"
     clear
-    ShowCommandToJoinCluster $baseUrl    
+    if [[ $singlenode == true ]]; then
+    else
+        ShowCommandToJoinCluster $baseUrl    
+    fi
 }
 
 echo "--- Finished including common.sh version $versioncommon ---"

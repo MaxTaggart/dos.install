@@ -66,7 +66,6 @@ if [[ ! -d "/mnt/data" ]]; then
     sudo chmod -R 777 /mnt/data
 fi
 
-
 # testing
 # kubectl run nginx --image=nginx --port=80
 

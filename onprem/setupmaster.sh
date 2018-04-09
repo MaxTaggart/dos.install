@@ -19,6 +19,6 @@ echo "$(cat /etc/redhat-release)"
 
 source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 
-SetupMaster $GITHUB_URL
+SetupMaster $GITHUB_URL false
 
 curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash

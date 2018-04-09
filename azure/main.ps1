@@ -15,6 +15,11 @@ Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring | I
 Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring | Invoke-Expression;
 # Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
 
+# if(!(Test-Path .\Fabric-Install-Utilities.psm1)){
+#     Invoke-WebRequest -Uri https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/common/Fabric-Install-Utilities.psm1 -Headers @{"Cache-Control"="no-cache"} -OutFile Fabric-Install-Utilities.psm1
+# }
+# Import-Module -Name .\Fabric-Install-Utilities.psm1 -Force
+
 
 $userinput = ""
 while ($userinput -ne "q") {

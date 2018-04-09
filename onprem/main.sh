@@ -53,6 +53,7 @@ while [[ "$input" != "q" ]]; do
     echo "6: Setup Load Balancer"
     echo "7: Setup Kubernetes Dashboard"
     echo "8: Uninstall Docker & Kubernetes"
+    echo "9: Create a single node cluster"
     echo "------ Worker Node Tasks-------"
     echo "12: Add this VM as Worker"
     echo "13: Join this VM to an existing cluster"
@@ -76,7 +77,7 @@ while [[ "$input" != "q" ]]; do
     read -p "Please make a selection:" -e input  < /dev/tty 
 
     case "$input" in
-    1)  SetupMaster $GITHUB_URL
+    1)  SetupMaster $GITHUB_URL false
         ;;
     2)  echo "Current cluster: $(kubectl config current-context)"
         kubectl version --short
@@ -105,6 +106,8 @@ while [[ "$input" != "q" ]]; do
         sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
         sudo yum -y remove docker docker-common docker-selinux docker-engine    
         echo "Please restart this computer"
+        ;;
+    1)  SetupMaster $GITHUB_URL true
         ;;
     12)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
         mountSharedFolder false
