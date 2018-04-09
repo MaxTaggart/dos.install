@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.09.01"
+versioncommon="2018.04.09.02"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -402,7 +402,7 @@ function SetupMaster(){
     # cannot use tee here because it calls a ps1 file
     curl -sSL $baseUrl/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
     InstallStack $baseUrl "kube-system" "dashboard"
-    clear
+    # clear
     if [[ $singlenode == true ]]; then
         echo "setting up single-node cluster"
     else

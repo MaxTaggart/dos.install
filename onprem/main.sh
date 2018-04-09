@@ -25,6 +25,9 @@ source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 echo "running stty sane to fix terminal keyboard mappings"
 stty sane < /dev/tty
 
+echo "setting TERM to xterm"
+export TERM=xterm
+
 mkdir -p $HOME/bin
 installscript="$HOME/bin/dos"
 if [[ ! -f "$installscript" ]]; then
