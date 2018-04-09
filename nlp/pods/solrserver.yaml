@@ -28,6 +28,9 @@ spec:
             - name: solr-persistent-storage
               mountPath: /var/lib/solr
               subPath: solr
+            - name: solr-backup-storage
+              mountPath: /var/lib/solr_backup
+              subPath: solr
           ports:
             - containerPort: 8085
               name: solr
@@ -43,3 +46,6 @@ spec:
       - name: solr-persistent-storage
         persistentVolumeClaim:
           claimName: nlp.solrserver            
+      - name: solr-backup-storage
+        persistentVolumeClaim:
+          claimName: nlp.solrserver.backup          

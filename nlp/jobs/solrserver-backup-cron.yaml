@@ -1,0 +1,24 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: solr-cron-backup
+  namespace: fabricnlp
+spec:
+  #crontab schedule: https://crontab.guru
+  # run every day at 1am
+  schedule: "0 1 * * *"
+  # run every 5 minutes
+  # schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: solr-cron-backup
+            image: busybox
+            imagePullPolicy: IfNotPresent
+            command:
+              - sleep
+              - "3600"
+            # environment variables
+          restartPolicy: OnFailure

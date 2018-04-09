@@ -1,20 +1,20 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: nlp.mysqlbackup
-  namespace: fabricnlp    
+  name: nlp.solrserver.backup
+  namespace: fabricnlp
   labels:
     type: local  
-    namespace: fabricnlp  
+    namespace: fabricnlp
 spec:
+  #persistentVolumeReclaimPolicy: Delete
   storageClassName: default
   capacity:
-    storage: 16Gi
-  # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
+    storage: 32Gi
   accessModes:
     - ReadWriteMany
   hostPath:
     path: "/mnt/data/fabricnlp_backups"
   claimRef:
     namespace: fabricnlp
-    name: nlp.mysqlbackup
+    name: nlp.solrserver.backup

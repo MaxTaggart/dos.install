@@ -18,20 +18,23 @@
                 "mysqlserver.yaml",
                 "solrserver.yaml",
                 "jobserver.yaml",
-                "mysqlbackup.yaml"
+                "mysqlbackup.yaml",
+                "solrserver.backup.yaml"
             ],
             "azure": [
                 "mysqlserver.yaml",
                 "solrserver.yaml",
                 "jobserver.yaml",
-                "mysqlbackup.yaml"
+                "mysqlbackup.yaml",
+                "solrserver.backup.yaml"
             ]
         },
         "volumeclaims": [
             "mysqlserver.yaml",
             "solrserver.yaml",
             "jobserver.yaml",
-            "mysqlbackup.yaml"
+            "mysqlbackup.yaml",
+            "solrserver.backup.yaml"
         ],
         "pods": [
             "mysqlserver.yaml",
