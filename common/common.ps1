@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.02.02"
+$versioncommon = "2018.04.09.01"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -575,19 +575,12 @@ function global:AddFolderToPathEnvironmentVariable([ValidateNotNullOrEmpty()] $f
     $pathItems = ($env:path).split(";")
     if ( $pathItems -notcontains "$folder") {
         Write-Host "Adding $folder to system path"
-        $oldpath = (Get-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment" -Name PATH).path
-        # see if the registry value is wrong too
-        if ( ($oldpath).split(";") -notcontains "$folder") {
-            $newpath = "$folder;$oldpath"
-            Read-Host "Script needs elevated privileges to set PATH.  Hit ENTER to launch script to set PATH"
-            Start-Process powershell -verb RunAs -Wait -ArgumentList "Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value '$newPath'; Read-Host 'Press ENTER'"
-            Write-Host "New PATH:"
-            $newpath = (Get-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment" -Name PATH).path
-            Write-Host "$newpath".split(";")
-        }
+        $newpath = "$folder;$oldpath"
+        [Environment]::SetEnvironmentVariable( "PATH", $newpath, [System.EnvironmentVariableTarget]::User )
+        # [Environment]::SetEnvironmentVariable( "Path", $newpath, [System.EnvironmentVariableTarget]::Machine )
         # for current session set the PATH too.  the above only takes effect if powershell is reopened
         $ENV:PATH = "$folder;$ENV:PATH"
-        Write-Host "Set path for current powershell session"
+        Write-Host "PATH for current powershell session"
         Write-Host ($env:path).split(";")
     }
     else {
