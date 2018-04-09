@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.04.02.06"
+version="2018.04.09.01"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -107,7 +107,7 @@ while [[ "$input" != "q" ]]; do
         sudo yum -y remove docker docker-common docker-selinux docker-engine    
         echo "Please restart this computer"
         ;;
-    1)  SetupMaster $GITHUB_URL true
+    9)  SetupMaster $GITHUB_URL true
         ;;
     12)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
         mountSharedFolder false
