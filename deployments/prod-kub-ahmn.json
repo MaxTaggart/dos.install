@@ -25,6 +25,7 @@
     "local_folder": "c:\\kubernetes",
     "customerid": "ahmn",
     "ssl": true,
+    "ssl_folder": "c:\\kubernetes\\certs\\ahmn",            
     "allow_kubectl_from_outside_vnet": false,
     "ingress": {
         "external": "whitelist",

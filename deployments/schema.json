@@ -157,6 +157,15 @@
                 false
             ]
         },
+        "ssl_folder": {
+            "$id": "/properties/ssl_folder",
+            "type": "string",
+            "title": "Read SSL keys from this folder",
+            "default": "",
+            "examples": [
+                "c:\\kubernetes"
+            ]
+        },
         "allow_kubectl_from_outside_vnet": {
             "$id": "/properties/allow_kubectl_from_outside_vnet",
             "type": "boolean",

@@ -25,11 +25,12 @@
     "local_folder": "c:\\kubernetes",
     "customerid": "sjtn",
     "ssl": true,
+    "ssl_folder": "c:\\kubernetes\\certs\\sjtn",        
     "allow_kubectl_from_outside_vnet": false,
     "ingress": {
-        "external": "public",
+        "external": "whitelist",
         "internal": "vnetonly",
-        "external_ip_whitelist": ""
+        "external_ip_whitelist": "40.70.58.54"
     },
     "networking": {
         "vnet": "CAPVnet",

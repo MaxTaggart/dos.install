@@ -1,4 +1,4 @@
-Write-Host "Version 2018.03.27.01"
+Write-Host "Version 2018.04.09.01"
 
 #
 # This script is meant for quick & easy install via:
@@ -147,9 +147,10 @@ if ($($config.ssl) ) {
     # if the SSL cert is not set in kube secrets then ask for the files
     if ([string]::IsNullOrWhiteSpace($(kubectl get secret traefik-cert-ahmn -o jsonpath='{.data}' -n kube-system --ignore-not-found=true))) {
         # ask for tls cert files
-        Do { $AKS_SSL_CERT_FOLDER = Read-Host "What folder has the tls.crt and tls.key files? (absolute path e.g., c:\temp\certs)"}
-        while ([string]::IsNullOrWhiteSpace($AKS_SSL_CERT_FOLDER) -or (!(Test-Path -Path "$AKS_SSL_CERT_FOLDER")))
-      
+        $AKS_SSL_CERT_FOLDER = $($config.ssl_folder)
+        if((!(Test-Path -Path "$AKS_SSL_CERT_FOLDER"))){
+            Write-Error "SSL Folder does not exist: $AKS_SSL_CERT_FOLDER"
+        }     
         $AKS_SSL_CERT_FOLDER_UNIX_PATH = (($AKS_SSL_CERT_FOLDER -replace "\\", "/")).ToLower().Trim("/")    
 
         kubectl delete secret traefik-cert-ahmn -n kube-system --ignore-not-found=true
