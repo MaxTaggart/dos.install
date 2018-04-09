@@ -20,4 +20,6 @@ AddFolderToPathEnvironmentVariable -folder $AKS_LOCAL_FOLDER
 $AKS_LOCAL_FOLDER = "c:\kubernetes\azcli\CLI2\wbin"
 AddFolderToPathEnvironmentVariable -folder $AKS_LOCAL_FOLDER
 
+Write-Host -NoNewLine 'Press any key to continue...';
+$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 

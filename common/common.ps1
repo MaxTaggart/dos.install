@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.09.02"
+$versioncommon = "2018.04.09.03"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -572,10 +572,11 @@ function global:FindOpenPort($portArray) {
 function global:AddFolderToPathEnvironmentVariable([ValidateNotNullOrEmpty()] $folder) {
     # add the c:\kubernetes folder to system PATH
     Write-Host "Checking if $folder is in PATH"
-    $pathItems = ($env:path).split(";")
+    $current_path=[Environment]::GetEnvironmentVariable("PATH",[System.EnvironmentVariableTarget]::User)
+    $pathItems = ($current_path).split(";")
     if ( $pathItems -notcontains "$folder") {
         Write-Host "Adding $folder to system path"
-        $newpath = "$folder;$env:path"
+        $newpath = "$folder;$current_path"
         [Environment]::SetEnvironmentVariable( "PATH", $newpath, [System.EnvironmentVariableTarget]::User )
         # [Environment]::SetEnvironmentVariable( "Path", $newpath, [System.EnvironmentVariableTarget]::Machine )
         # for current session set the PATH too.  the above only takes effect if powershell is reopened
