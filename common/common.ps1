@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.09.01"
+$versioncommon = "2018.04.09.02"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -575,7 +575,7 @@ function global:AddFolderToPathEnvironmentVariable([ValidateNotNullOrEmpty()] $f
     $pathItems = ($env:path).split(";")
     if ( $pathItems -notcontains "$folder") {
         Write-Host "Adding $folder to system path"
-        $newpath = "$folder;$oldpath"
+        $newpath = "$folder;$env:path"
         [Environment]::SetEnvironmentVariable( "PATH", $newpath, [System.EnvironmentVariableTarget]::User )
         # [Environment]::SetEnvironmentVariable( "Path", $newpath, [System.EnvironmentVariableTarget]::Machine )
         # for current session set the PATH too.  the above only takes effect if powershell is reopened
