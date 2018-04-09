@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.04.09.01"
+version="2018.04.09.02"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -16,6 +16,11 @@ fi
 
 echo "CentOS version: $(cat /etc/redhat-release | grep -o '[0-9]\.[0-9]')"
 echo "$(cat /etc/redhat-release)"
+
+declare -i freememInBytes=10
+freememInBytes=$(free|awk '/^Mem:/{print $2}')
+freememInGB=$(($freememInBytes/1000000))
+echo "Free Memory: $freememInGB GB"
 
 source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 # source ./common/common.sh
