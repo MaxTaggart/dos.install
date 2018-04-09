@@ -1,4 +1,4 @@
-Write-Host "Version 2018.04.09.01"
+Write-Host "Version 2018.04.09.03"
 
 #
 # This script is meant for quick & easy install via:
@@ -151,13 +151,17 @@ if ($($config.ssl) ) {
         if((!(Test-Path -Path "$AKS_SSL_CERT_FOLDER"))){
             Write-Error "SSL Folder does not exist: $AKS_SSL_CERT_FOLDER"
         }     
+
         $AKS_SSL_CERT_FOLDER_UNIX_PATH = (($AKS_SSL_CERT_FOLDER -replace "\\", "/")).ToLower().Trim("/")    
 
         kubectl delete secret traefik-cert-ahmn -n kube-system --ignore-not-found=true
 
-        Write-Host "Storing TLS certs as kubernetes secret"
+        Write-Host "Storing TLS certs from $AKS_SSL_CERT_FOLDER_UNIX_PATH as kubernetes secret"
         kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.crt" --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.key"
     }
+}
+else {
+    Write-Host "SSL option was not specified in the deployment config: $($config.ssl)"
 }
 
 Write-Host "GITHUB_URL: $GITHUB_URL"
