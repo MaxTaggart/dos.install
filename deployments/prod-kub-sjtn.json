@@ -1,0 +1,48 @@
+{
+    "$schema": "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/deployments/schema.json",
+    "kubectl": {
+        "version": "1.10.0"
+    },
+    "azcli": {
+        "version": "2.0.27"
+    },
+    "azure": {
+        "resourceGroup": "Prod-Kub-SJTN-RG",
+        "location": "westus",
+        "create_windows_containers": false,
+        "use_azure_networking": true,
+        "acs_engine": {
+            "version": "0.14.6"
+        }
+    },
+    "service_principal": {
+        "name": "",
+        "delete_if_exists": false
+    },
+    "storage_account": {
+        "delete_if_exists": false
+    },
+    "local_folder": "c:\\kubernetes",
+    "customerid": "sjtn",
+    "ssl": true,
+    "allow_kubectl_from_outside_vnet": false,
+    "ingress": {
+        "external": "public",
+        "internal": "vnetonly",
+        "external_ip_whitelist": ""
+    },
+    "networking": {
+        "vnet": "CAPVnet",
+        "subnet": "SJTN",
+        "subnet_resource_group": "capresourcegroup"
+    },
+    "network_security_group": {
+        "name": "",
+        "create_nsg_rules": true
+    },
+    "dns": {
+        "name": "sjtn.healthcatalyst.net",
+        "create_dns_entries": false,
+        "dns_resource_group": "dns"
+    }
+}
