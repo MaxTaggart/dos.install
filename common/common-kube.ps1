@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.10.04"
+$versionkubecommon = "2018.04.10.05"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -160,7 +160,7 @@ function global:AskForSecretValue ([ValidateNotNullOrEmpty()] $secretname, $prom
 function global:ReadYamlAndReplaceCustomer([ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $templateFile, $customerid ) {
     [hashtable]$Return = @{} 
     
-    Write-Information "Reading from url: ${baseUrl}/${templateFile}"
+    Write-Information -MessageData "Reading from url: ${baseUrl}/${templateFile}"
 
     if ($baseUrl.StartsWith("http")) { 
         $response = $(Invoke-WebRequest -Uri "${baseUrl}/${templateFile}?f=${randomstring}" -UseBasicParsing -ErrorAction:Stop -ContentType "text/plain; charset=utf-8")
