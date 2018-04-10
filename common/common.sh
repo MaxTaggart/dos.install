@@ -16,27 +16,18 @@ function Write-Host()
     echo $1
 }
 
-function ReplaceText(){
-    local currentText=$1
-    local replacementText=$2
+# function ReplaceText(){
+#     local currentText=$1
+#     local replacementText=$2
 
-# have to do this to preserve the tabs in the file per https://askubuntu.com/questions/267384/using-read-without-losing-the-tab
-    old_IFS=$IFS      # save the field separator           
-    IFS=$'\n'     # new field separator, the end of line
+# # have to do this to preserve the tabs in the file per https://askubuntu.com/questions/267384/using-read-without-losing-the-tab
+#     old_IFS=$IFS      # save the field separator           
+#     IFS=$'\n'     # new field separator, the end of line
 
-    while read -r line || [[ -n $line ]]; do echo "${line//$1/$2}"; done
+#     while read -r line || [[ -n $line ]]; do echo "${line//$1/$2}"; done
 
-    IFS=$old_IFS     # restore default field separator
-}
-
-function ReadYamlAndReplaceCustomer () {
-    local baseUrl=$1
-    local templateFile=$2
-    local customerid=$3
-
-    curl -sSL "$baseUrl/$templateFile?p=$RANDOM" \
-        | ReplaceText CUSTOMERID $customerid
-}
+#     IFS=$old_IFS     # restore default field separator
+# }
 
 function ReadSecretValue() {
     local secretname=$1

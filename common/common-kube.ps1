@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.10.02"
+$versionkubecommon = "2018.04.10.03"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -163,16 +163,15 @@ function global:ReadYamlAndReplaceCustomer([ValidateNotNullOrEmpty()] $baseUrl, 
     Write-Output "Reading from url: ${baseUrl}/${templateFile}"
 
     if ($baseUrl.StartsWith("http")) { 
-        Invoke-WebRequest -Uri "${baseUrl}/${templateFile}?f=${randomstring}" -UseBasicParsing -ContentType "text/plain; charset=utf-8" `
-            | Select-Object -Expand Content `
-            | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"}
+        $response = $(Invoke-WebRequest -Uri "${baseUrl}/${templateFile}?f=${randomstring}" -UseBasicParsing -ErrorAction:Stop -ContentType "text/plain; charset=utf-8")
+        $content = $response | Select-Object -Expand Content | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"}
     }
     else {
-        #        Write-Output "Reading from local file: $GITHUB_URL/$templateFile"
-        Get-Content -Path "$baseUrl/$templateFile" `
-            | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"} 
+        $content=$(Get-Content -Path "$baseUrl/$templateFile" `
+            | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"})
     }
 
+    $Return.Content = $content
     return $Return
 }
 
@@ -182,10 +181,11 @@ function global:DownloadAndDeployYamlFiles([ValidateNotNullOrEmpty()] $folder, [
 
     foreach ($file in $files.Split(" ")) { 
         if ([string]::IsNullOrEmpty($public_ip)) {
-            ReadYamlAndReplaceCustomer -baseUrl $baseUrl -templateFile "${folder}/${file}" -customerid $customerid | kubectl apply -f -
+            $(ReadYamlAndReplaceCustomer -baseUrl $baseUrl -templateFile "${folder}/${file}" -customerid $customerid).Content `
+                | kubectl apply -f -
         }
         else {
-            ReadYamlAndReplaceCustomer -baseUrl $baseUrl -templateFile "${folder}/${file}" -customerid $customerid `
+            $(ReadYamlAndReplaceCustomer -baseUrl $baseUrl -templateFile "${folder}/${file}" -customerid $customerid).Content `
                 | Foreach-Object {$_ -replace 'PUBLICIP', "$publicip"} `
                 | kubectl apply -f -
         }
@@ -341,7 +341,7 @@ function global:DeployYamlFiles([ValidateNotNullOrEmpty()] $namespace, [Validate
     if ($resources) {
         Write-Output "-- Deploying $folder --"
         foreach ($file in $resources) {
-            ReadYamlAndReplaceCustomer -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -customerid $customerid | kubectl apply -f -
+            $(ReadYamlAndReplaceCustomer -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -customerid $customerid).Content | kubectl apply -f -
         }
     }
     return $Return
