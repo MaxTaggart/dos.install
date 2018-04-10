@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.10.01"
+versioncommon="2018.04.10.02"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -326,6 +326,7 @@ function InstallStack(){
     local namespace=$2
     local appfolder=$3
     
+    echo "downloading: $baseUrl/kubernetes/installstack.ps1?p=$RANDOM"
     curl -sSL -o installstack.ps1 "$baseUrl/kubernetes/installstack.ps1?p=$RANDOM"
     # clear
     # can't put tee on the next line or pwsh has issues including common files

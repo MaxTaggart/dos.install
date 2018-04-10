@@ -9,6 +9,8 @@ $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/mast
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
 
+Write-Host "Powershell version: $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor).$($PSVersionTable.PSVersion.Build)"
+
 Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring | Invoke-Expression;
 # Get-Content ./common/common-kube.ps1 -Raw | Invoke-Expression;
 
@@ -20,6 +22,8 @@ Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring | Invoke-E
 # }
 # Import-Module -Name .\Fabric-Install-Utilities.psm1 -Force
 
+# show Information messages
+$InformationPreference = "Continue"
 
 $userinput = ""
 while ($userinput -ne "q") {
