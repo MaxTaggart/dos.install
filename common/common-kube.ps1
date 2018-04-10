@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.01.01"
+$versionkubecommon = "2018.04.10.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -47,6 +47,8 @@ function global:GeneratePassword() {
 }
 
 function global:SaveSecretValue([ValidateNotNullOrEmpty()] $secretname, [ValidateNotNullOrEmpty()] $valueName, $value, $namespace) {
+    [hashtable]$Return = @{} 
+
     # secretname must be lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
 
@@ -55,9 +57,13 @@ function global:SaveSecretValue([ValidateNotNullOrEmpty()] $secretname, [Validat
     }
 
     kubectl create secret generic $secretname --namespace=$namespace --from-literal=${valueName}=$value
+
+    return $Return
 }
 
 function global:AskForPassword ([ValidateNotNullOrEmpty()] $secretname, $prompt, $namespace) {
+    [hashtable]$Return = @{} 
+
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
     if ([string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
 
@@ -76,9 +82,13 @@ function global:AskForPassword ([ValidateNotNullOrEmpty()] $secretname, $prompt,
     else {
         Write-Host "$secretname secret already set so will reuse it"
     }
+
+    return $Return
 }
 
 function global:GenerateSecretPassword ([ValidateNotNullOrEmpty()] $secretname, $namespace) {
+    [hashtable]$Return = @{} 
+
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
     if ([string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
 
@@ -94,9 +104,13 @@ function global:GenerateSecretPassword ([ValidateNotNullOrEmpty()] $secretname, 
     else {
         Write-Host "$secretname secret already set so will reuse it"
     }
+
+    return $Return
 }
 
 function global:AskForPasswordAnyCharacters ([ValidateNotNullOrEmpty()] $secretname, $prompt, $namespace, $defaultvalue) {
+    [hashtable]$Return = @{} 
+
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
     if ([string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
 
@@ -119,9 +133,13 @@ function global:AskForPasswordAnyCharacters ([ValidateNotNullOrEmpty()] $secretn
     else {
         Write-Host "$secretname secret already set so will reuse it"
     }
+
+    return $Return
 }
 
 function global:AskForSecretValue ([ValidateNotNullOrEmpty()] $secretname, $prompt, $namespace) {
+    [hashtable]$Return = @{} 
+
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
     if ([string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
 
@@ -136,9 +154,12 @@ function global:AskForSecretValue ([ValidateNotNullOrEmpty()] $secretname, $prom
     else {
         Write-Host "$secretname secret already set so will reuse it"
     }    
+    return $Return
 }
 
 function global:ReadYamlAndReplaceCustomer([ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $templateFile, $customerid ) {
+    [hashtable]$Return = @{} 
+    
     Write-Host "Reading from url: ${baseUrl}/${templateFile}"
 
     if ($baseUrl.StartsWith("http")) { 
@@ -151,6 +172,8 @@ function global:ReadYamlAndReplaceCustomer([ValidateNotNullOrEmpty()] $baseUrl, 
         Get-Content -Path "$baseUrl/$templateFile" `
             | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"} 
     }
+
+    return $Return
 }
 
 # $files is a list of files separated by spaces
@@ -173,6 +196,8 @@ function global:DownloadAndDeployYamlFiles([ValidateNotNullOrEmpty()] $folder, [
 
 # from https://github.com/majkinetor/posh/blob/master/MM_Network/Stop-ProcessByPort.ps1
 function global:Stop-ProcessByPort( [ValidateNotNullOrEmpty()] [int] $Port ) {    
+    [hashtable]$Return = @{} 
+
     $netstat = netstat.exe -ano | Select-Object -Skip 4
     $p_line = $netstat | Where-Object { $p = ( -split $_ | Select-Object -Index 1) -split ':' | Select-Object -Last 1; $p -eq $Port } | Select-Object -First 1
     if (!$p_line) { Write-Host "No process found using port" $Port; return }    
@@ -182,6 +207,8 @@ function global:Stop-ProcessByPort( [ValidateNotNullOrEmpty()] [int] $Port ) {
     Read-Host "There is another process running on this port.  Click ENTER to open an elevated prompt to stop that process."
 
     Start-Process powershell -verb RunAs -Wait -ArgumentList "Stop-Process $p_id -Force"
+
+    return $Return
 }
 
 
@@ -283,6 +310,8 @@ function global:SwitchToKubCluster([ValidateNotNullOrEmpty()] $folderToUse) {
     return $Return
 }
 function global:CleanKubConfig() {
+    [hashtable]$Return = @{} 
+
     Write-Host "Clearing out kube config"
     $userKubeConfigFolder = "$env:userprofile\.kube"
     $destinationFile = "${userKubeConfigFolder}\config"
@@ -290,14 +319,20 @@ function global:CleanKubConfig() {
     # set environment variable KUBECONFIG to point to this location
     $env:KUBECONFIG = ""
     [Environment]::SetEnvironmentVariable("KUBECONFIG", "", [EnvironmentVariableTarget]::User)
+
+    return $Return
 }
 
 function global:CleanSecrets([ValidateNotNullOrEmpty()] $namespace) {
+    [hashtable]$Return = @{} 
+
     kubectl delete secret mysqlrootpassword -n $namespace --ignore-not-found=true
     kubectl delete secret mysqlpassword -n $namespace --ignore-not-found=true
     kubectl delete secret certhostname -n $namespace --ignore-not-found=true
     kubectl delete secret certpassword -n $namespace --ignore-not-found=true
     kubectl delete secret rabbitmqmgmtuipassword -n $namespace --ignore-not-found=true    
+
+    return $Return
 }
 
 function global:DeployYamlFiles([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $appfolder, [ValidateNotNullOrEmpty()] $folder, [ValidateNotNullOrEmpty()] $customerid, $resources) {
@@ -477,6 +512,8 @@ function global:DeploySimpleServices([ValidateNotNullOrEmpty()] $namespace, [Val
 }
 
 function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, [ValidateNotNullOrEmpty()] [string]$ingressInternal, [ValidateNotNullOrEmpty()] [string]$ingressExternal, [ValidateNotNullOrEmpty()] [string]$customerid, [string]$publicIp) {
+    [hashtable]$Return = @{} 
+
     # delete existing containers
     kubectl delete 'pods,services,configMaps,deployments,ingress' -l k8s-traefik=traefik -n kube-system --ignore-not-found=true
 
@@ -589,6 +626,8 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
         $files = "loadbalancer.internal.yaml"
     }
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
+
+    return $Return
 }
 # from http://www.bricelam.net/2012/09/simple-template-engine-for-powershell.html
 # Merge-Tokens 'Hello, $target$! My name is $self$.' @{

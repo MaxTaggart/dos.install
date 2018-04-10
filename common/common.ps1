@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.09.03"
+$versioncommon = "2018.04.10.01"
 
 Write-Host "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -8,6 +8,8 @@ function global:GetCommonVersion() {
 }
 
 function global:DeleteAzureFileShare([ValidateNotNullOrEmpty()] $sharename, [ValidateNotNullOrEmpty()] $storageAccountConnectionString) {
+    [hashtable]$Return = @{} 
+
     if ($(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv)) {
         Write-Host "Deleting the file share: $sharename"
         az storage share delete -n $sharename --connection-string $storageAccountConnectionString
@@ -21,8 +23,12 @@ function global:DeleteAzureFileShare([ValidateNotNullOrEmpty()] $sharename, [Val
         }
         while ($shareExists -ne "false")    
     }
+
+    return $Return
 }
 function global:CreateShareInStorageAccount([ValidateNotNullOrEmpty()] $storageAccountName, [ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $sharename, $deleteExisting) { 
+    [hashtable]$Return = @{} 
+
     $storageAccountConnectionString = az storage account show-connection-string -n $storageAccountName -g $resourceGroup -o tsv
     
     # Write-Host "Storage connection string: $storageAccountConnectionString"
@@ -46,11 +52,16 @@ function global:CreateShareInStorageAccount([ValidateNotNullOrEmpty()] $storageA
     else {
         Write-Host "File share already exists: $sharename"         
     }
+    return $Return
+
 }
 function global:CreateShare([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $sharename, $deleteExisting) {
+    [hashtable]$Return = @{} 
+
     $storageAccountName = ReadSecretValue -secretname azure-secret -valueName azurestorageaccountname 
     
     CreateShareInStorageAccount -storageAccountName $storageAccountName -resourceGroup $resourceGroup -sharename $sharename -deleteExisting $deleteExisting
+    return $Return
 }
 
 
@@ -117,6 +128,8 @@ function global:Get-FirstIP {
 }
 
 function global:SetupCronTab([ValidateNotNullOrEmpty()] $resourceGroup) {
+    [hashtable]$Return = @{} 
+
     $virtualmachines = az vm list -g $resourceGroup --query "[?storageProfile.osDisk.osType != 'Windows'].name" -o tsv
     ForEach ($vm in $virtualmachines) {
         if ($vm -match "master" ) {
@@ -124,19 +137,25 @@ function global:SetupCronTab([ValidateNotNullOrEmpty()] $resourceGroup) {
             az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "$cmd"
         }
     }
+    return $Return
 }
 
 function global:UpdateOSInVMs([ValidateNotNullOrEmpty()] $resourceGroup) {
+    [hashtable]$Return = @{} 
+
     $virtualmachines = az vm list -g $resourceGroup --query "[?storageProfile.osDisk.osType != 'Windows'].name" -o tsv
     ForEach ($vm in $virtualmachines) {
         Write-Host "Updating OS in vm: $vm"
         $cmd = "apt-get update && apt-get -y upgrade"
         az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "$cmd"
     }
+    return $Return
 }
 
 
 function global:RestartVMsInResourceGroup([ValidateNotNullOrEmpty()] $resourceGroup) {
+    [hashtable]$Return = @{} 
+
     # az vm run-command invoke -g Prod-Kub-AHMN-RG -n k8s-master-37819884-0 --command-id RunShellScript --scripts "apt-get update && sudo apt-get upgrade"
     Write-Host "Restarting VMs in resource group: ${resourceGroup}: $(az vm list -g $resourceGroup --query "[].name" -o tsv)"
     az vm restart --ids $(az vm list -g $resourceGroup --query "[].id" -o tsv)
@@ -164,10 +183,12 @@ function global:RestartVMsInResourceGroup([ValidateNotNullOrEmpty()] $resourceGr
 
     # systemctl enable etcd.service
     
-
+    return $Return
 }
 
 function global:FixEtcdRestartIssueOnMaster([ValidateNotNullOrEmpty()] $resourceGroup) {
+
+    [hashtable]$Return = @{} 
 
     $virtualmachines = az vm list -g $resourceGroup --query "[].name" -o tsv
     ForEach ($vm in $virtualmachines) {
@@ -177,10 +198,13 @@ function global:FixEtcdRestartIssueOnMaster([ValidateNotNullOrEmpty()] $resource
             az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "systemctl enable etcd.service"
         }
     }
+    return $Return
 }
 
 
 function global:SetHostFileInVms( [ValidateNotNullOrEmpty()] $resourceGroup) {
+    [hashtable]$Return = @{} 
+
     $AKS_PERS_LOCATION = az group show --name $resourceGroup --query "location" -o tsv
 
     $MASTER_VM_NAME = "${resourceGroup}.${AKS_PERS_LOCATION}.cloudapp.azure.com"
@@ -214,10 +238,13 @@ function global:SetHostFileInVms( [ValidateNotNullOrEmpty()] $resourceGroup) {
         Write-Host "Sending command to $vm"
         az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "$fullCmdToUpdateHostsFiles"
     }
+    return $Return
 }
 
 
 function global:CleanResourceGroup([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $location, $vnet, $subnet, $subnetResourceGroup, $storageAccount) {
+    [hashtable]$Return = @{} 
+
     Write-Host "checking if resource group already exists"
     $resourceGroupExists = az group exists --name ${resourceGroup}
     if ($resourceGroupExists -eq "true") {
@@ -338,7 +365,7 @@ function global:CleanResourceGroup([ValidateNotNullOrEmpty()] $resourceGroup, [V
         Write-Host "Create the Resource Group"
         az group create --name $resourceGroup --location $location --verbose
     }
-
+    return $Return
 }
 
 function global:CreateStorageIfNotExists([ValidateNotNullOrEmpty()] $resourceGroup, $deleteStorageAccountIfExists) {
@@ -538,6 +565,7 @@ function global:GetVnetInfo([ValidateNotNullOrEmpty()] $subscriptionId, [Validat
 }
 function global:Test-CommandExists {
     Param ($command)
+
     # from https://blogs.technet.microsoft.com/heyscriptingguy/2013/02/19/use-a-powershell-function-to-see-if-a-command-exists/
     $oldPreference = $ErrorActionPreference
     $ErrorActionPreference = 'stop'
@@ -570,6 +598,8 @@ function global:FindOpenPort($portArray) {
 }
 
 function global:AddFolderToPathEnvironmentVariable([ValidateNotNullOrEmpty()] $folder) {
+    [hashtable]$Return = @{} 
+
     # add the c:\kubernetes folder to system PATH
     Write-Host "Checking if $folder is in PATH"
     $current_path=[Environment]::GetEnvironmentVariable("PATH",[System.EnvironmentVariableTarget]::User)
@@ -587,8 +617,11 @@ function global:AddFolderToPathEnvironmentVariable([ValidateNotNullOrEmpty()] $f
     else {
         Write-Host "$folder is already in PATH"
     }
+    return $Return
 }
 function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()] $version) {
+    [hashtable]$Return = @{} 
+
     # install az cli from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
     $desiredAzClVersion = $version
     $downloadazcli = $False
@@ -627,7 +660,7 @@ function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()] $version) {
         Start-Process -Verb runAs msiexec.exe -Wait -ArgumentList "/i $azCliFile"
         Write-Host "Finished installing az-cli-latest.msi"
     }
-    
+    return $Return
 }
 
 function global:CreateSSHKey([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $localFolder) {
@@ -762,6 +795,8 @@ function global:CreateResourceGroupIfNotExists([ValidateNotNullOrEmpty()] $resou
 }
 
 function global:SetNetworkSecurityGroupRule([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $networkSecurityGroup, [ValidateNotNullOrEmpty()] $rulename, [ValidateNotNullOrEmpty()] $ruledescription, [ValidateNotNullOrEmpty()] $sourceTag, [ValidateNotNullOrEmpty()] $port, [ValidateNotNullOrEmpty()] $priority ) {
+    [hashtable]$Return = @{} 
+
     if ([string]::IsNullOrWhiteSpace($(az network nsg rule show --name "$rulename" --nsg-name $networkSecurityGroup --resource-group $resourceGroup))) {
         Write-Host "Creating rule: $rulename"
         az network nsg rule create -g $resourceGroup --nsg-name $networkSecurityGroup -n "$rulename" --priority $priority `
@@ -779,16 +814,21 @@ function global:SetNetworkSecurityGroupRule([ValidateNotNullOrEmpty()] $resource
             --protocol Tcp --description "$ruledescription" `
             --query "provisioningState" -o tsv
     }
-    
+    return $Return
 }
 function global:DeleteNetworkSecurityGroupRule([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $networkSecurityGroup, [ValidateNotNullOrEmpty()] $rulename ) {
+    [hashtable]$Return = @{} 
+
     if (![string]::IsNullOrWhiteSpace($(az network nsg rule show --name "$rulename" --nsg-name $networkSecurityGroup --resource-group $resourceGroup))) {
         Write-Host "Deleting $rulename rule"
         az network nsg rule delete -g $resourceGroup --nsg-name $networkSecurityGroup -n $rulename
-    }    
+    }   
+    return $Return 
 }
 
 function global:DownloadKubectl([ValidateNotNullOrEmpty()] $localFolder, [ValidateNotNullOrEmpty()] $version) {
+    [hashtable]$Return = @{} 
+    
     # download kubectl
     $kubeCtlFile = "$localFolder\kubectl.exe"
     $desiredKubeCtlVersion = "v${version}"
@@ -817,10 +857,12 @@ function global:DownloadKubectl([ValidateNotNullOrEmpty()] $localFolder, [Valida
     else {
         Write-Host "kubectl already exists at $kubeCtlFile"    
     }
-    
+    return $Return
 }
 
 function global:DownloadFile([ValidateNotNullOrEmpty()] $url, [ValidateNotNullOrEmpty()] $targetFile) {
+    [hashtable]$Return = @{} 
+
     # https://learn-powershell.net/2013/02/08/powershell-and-events-object-events/
     $web = New-Object System.Net.WebClient
     $web.UseDefaultCredentials = $True
@@ -854,9 +896,12 @@ function global:DownloadFile([ValidateNotNullOrEmpty()] $url, [ValidateNotNullOr
     Unregister-Event -SourceIdentifier Web.DownloadProgressChanged
 
     Write-Host "Finished downloading $url"
+    return $Return
     #endregion Download file from website    
 }
 function global:DownloadFileOld([ValidateNotNullOrEmpty()] $url, [ValidateNotNullOrEmpty()] $targetFile) {
+    [hashtable]$Return = @{} 
+
     # from https://stackoverflow.com/questions/21422364/is-there-any-way-to-monitor-the-progress-of-a-download-using-a-webclient-object
     $uri = New-Object "System.Uri" "$url"
     $request = [System.Net.HttpWebRequest]::Create($uri)
@@ -885,9 +930,12 @@ function global:DownloadFileOld([ValidateNotNullOrEmpty()] $url, [ValidateNotNul
     $targetStream.Close()
     $targetStream.Dispose()
     $responseStream.Dispose()
+
+    return $Return
 }
 
 function global:FixLoadBalancerBackendPools([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $loadbalancer){
+    [hashtable]$Return = @{} 
 
     $loadbalancerBackendPoolName = $resourceGroup # the name may change in the future so we should look it up
     # for each worker VM
@@ -948,10 +996,12 @@ function global:FixLoadBalancerBackendPools([ValidateNotNullOrEmpty()] $resource
             }
         }
     }
-    
+    return $Return
 }
 
 function global:FixLoadBalancerBackendPorts([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $loadbalancer){
+    [hashtable]$Return = @{} 
+
     # 2. fix the ports in load balancing rules
     Write-Host "Checking if the correct ports are setup in the load balancer"
 
@@ -1018,9 +1068,11 @@ function global:FixLoadBalancerBackendPorts([ValidateNotNullOrEmpty()] $resource
         }
         Write-Host ""
     }
-    
+    return $Return
 }
 function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
+    [hashtable]$Return = @{} 
+
     # hacks here to get around bugs in the acs-engine loadbalancer code
     Write-Host "Checking if load balancers are setup correctly for resourceGroup: $resourceGroup"
     # 1. assign the nics to the loadbalancer
@@ -1044,10 +1096,13 @@ function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
 
     FixLoadBalancerBackendPorts -resourceGroup $resourceGroup -loadbalancer $loadbalancer
 
+    return $Return
     # end hacks
 }
 
 function global:SetupDNS([ValidateNotNullOrEmpty()] $dnsResourceGroup, [ValidateNotNullOrEmpty()] $dnsrecordname, [ValidateNotNullOrEmpty()] $externalIP) {
+    [hashtable]$Return = @{} 
+
     Write-Host "Setting DNS zones"
 
     if ([string]::IsNullOrWhiteSpace($(az network dns zone show --name "$dnsrecordname" -g $dnsResourceGroup))) {
@@ -1059,12 +1114,18 @@ function global:SetupDNS([ValidateNotNullOrEmpty()] $dnsResourceGroup, [Validate
     az network dns record-set a add-record --ipv4-address $externalIP --record-set-name "*" --resource-group $dnsResourceGroup --zone-name "$dnsrecordname"
 
     ShowNameServerEntries -dnsResourceGroup $dnsResourceGroup -dnsrecordname $dnsrecordname
+
+    return $Return
 }
 
 function global:ShowNameServerEntries([ValidateNotNullOrEmpty()] $dnsResourceGroup, [ValidateNotNullOrEmpty()] $dnsrecordname) {
+    [hashtable]$Return = @{} 
+
     # list out the name servers
     Write-Host "Name servers to set in GoDaddy for *.$dnsrecordname"
     az network dns zone show -g $dnsResourceGroup -n "$dnsrecordname" --query "nameServers" -o tsv
+
+    return $Return
 }
 
 function global:GetLoadBalancerIPs() {
@@ -1167,6 +1228,8 @@ function global:GetDNSCommands() {
     return $Return
 }
 function global:WriteDNSCommands() {
+    [hashtable]$Return = @{} 
+
     $myCommands = $(GetDNSCommands).Commands
     Write-Host "To setup DNS entries in CAFE environment, remote desktop to CAFE DNS server: 10.5.2.4"
     Write-Host "Open Powershell window As Administrator and paste the following:"
@@ -1174,6 +1237,7 @@ function global:WriteDNSCommands() {
         Write-Host $myCommand
     }
     Write-Host ""
+    return $Return
 }
 
 function global:GetPublicNameofMasterVM([ValidateNotNullOrEmpty()] $resourceGroup) {
@@ -1231,6 +1295,8 @@ function global:CreateVM([ValidateNotNullOrEmpty()] $vm, [ValidateNotNullOrEmpty
 }
 
 function global:TestConnection() {
+    [hashtable]$Return = @{} 
+
     Write-Host "Testing if we can connect to private IP Address: $privateIpOfMasterVM"
     # from https://stackoverflow.com/questions/11696944/powershell-v3-invoke-webrequest-https-error
     add-type 
@@ -1269,6 +1335,7 @@ function global:TestConnection() {
     [System.Net.ServicePointManager]::CertificatePolicy = $previousSecurityPolicy
     [System.Net.ServicePointManager]::SecurityProtocol = $previousSecurityProtocol
         
+    return $Return
 }
 
 
@@ -1302,6 +1369,8 @@ function global:GetUrlAndIPForLoadBalancer([ValidateNotNullOrEmpty()]  $resource
 }
 
 function global:SetupWAF() {
+    [hashtable]$Return = @{} 
+
     # not working yet
 
     # $nsgname = "IngressNSG"
@@ -1442,8 +1511,12 @@ function global:SetupWAF() {
 
     # set EXTERNAL_IP to be the IP of the Application Gateway
     $EXTERNAL_IP = az network public-ip show -g $AKS_PERS_RESOURCE_GROUP -n "$gatewayipName" --query "ipAddress" -o tsv;
+
+    return $Return
 }
 function global:ConfigureWAF() {
+    [hashtable]$Return = @{} 
+
     # not working yet
     $publicip = az network public-ip show -g $AKS_PERS_RESOURCE_GROUP -n IngressPublicIP --query "ipAddress" -o tsv;
     if ([string]::IsNullOrWhiteSpace($publicip)) {
@@ -1500,6 +1573,7 @@ function global:ConfigureWAF() {
 
         }
     }  
+    return $Return
 }
 
 function global:GetConfigFile() {
@@ -1644,6 +1718,8 @@ function global:DeleteOnPremStorage([ValidateNotNullOrEmpty()] $namespace) {
 }
 
 function global:WaitForLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
+    [hashtable]$Return = @{} 
+
     $loadBalancerIP = kubectl get svc traefik-ingress-service-public -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
     if ([string]::IsNullOrWhiteSpace($loadBalancerIP)) {
         $loadBalancerIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}'
@@ -1654,10 +1730,13 @@ function global:WaitForLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) 
     Start-Sleep -Seconds 10
     
     FixLoadBalancers -resourceGroup $resourceGroup
-        
+    
+    return $Return
 }
 
 function global:InstallStack([ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $namespace, [ValidateNotNullOrEmpty()] $appfolder, $isAzure ) {
+    [hashtable]$Return = @{} 
+
     if ($isAzure) {
         DownloadAzCliIfNeeded
         $userInfo = $(GetLoggedInUserInfo)
@@ -1677,10 +1756,13 @@ function global:InstallStack([ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNu
     if ($isAzure) {
         WaitForLoadBalancers -resourceGroup $(GetResourceGroup).ResourceGroup
     }    
+    return $Return
 }
 
 
 function global:DeleteNamespaceAndData([ValidateNotNullOrEmpty()] $namespace, $isAzure) {
+    [hashtable]$Return = @{} 
+
     CleanOutNamespace -namespace $namespace
     if ($isAzure) {
         DeleteAzureStorage -namespace $namespace
@@ -1690,6 +1772,8 @@ function global:DeleteNamespaceAndData([ValidateNotNullOrEmpty()] $namespace, $i
     }
 
     DeleteAllSecrets -namespace $namespace
+
+    return $Return
 }
 #-------------------
 Write-Host "end common.ps1 version $versioncommon"
