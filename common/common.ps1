@@ -1,8 +1,8 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.10.01"
+$versioncommon = "2018.04.10.02"
 
-Write-Host "---- Including common.ps1 version $versioncommon -----"
+Write-Output "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
     return $versioncommon
 }
@@ -11,15 +11,15 @@ function global:DeleteAzureFileShare([ValidateNotNullOrEmpty()] $sharename, [Val
     [hashtable]$Return = @{} 
 
     if ($(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv)) {
-        Write-Host "Deleting the file share: $sharename"
+        Write-Output "Deleting the file share: $sharename"
         az storage share delete -n $sharename --connection-string $storageAccountConnectionString
     
         
-        Write-Host "Waiting for completion of delete for the file share: $sharename"        
+        Write-Output "Waiting for completion of delete for the file share: $sharename"        
         Do {
             Start-Sleep -Seconds 5 
             $shareExists = $(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv)
-            Write-Host "."
+            Write-Output "."
         }
         while ($shareExists -ne "false")    
     }
@@ -31,26 +31,26 @@ function global:CreateShareInStorageAccount([ValidateNotNullOrEmpty()] $storageA
 
     $storageAccountConnectionString = az storage account show-connection-string -n $storageAccountName -g $resourceGroup -o tsv
     
-    # Write-Host "Storage connection string: $storageAccountConnectionString"
+    # Write-Output "Storage connection string: $storageAccountConnectionString"
 
     if ($deleteExisting) {
         DeleteAzureFileShare -sharename $sharename -storageAccountConnectionString $storageAccountConnectionString
     }
 
     if ($(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv) -eq "false") {
-        Write-Host "Creating the file share: $sharename"        
+        Write-Output "Creating the file share: $sharename"        
         az storage share create -n $sharename --connection-string $storageAccountConnectionString --quota 512       
 
-        Write-Host "Waiting for completion of create for the file share: $sharename"        
+        Write-Output "Waiting for completion of create for the file share: $sharename"        
         Do {
             $shareExists = $(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv)
-            Write-Host "."
+            Write-Output "."
             Start-Sleep -Seconds 5 
         }
         while ($shareExists -eq "false")    
     }
     else {
-        Write-Host "File share already exists: $sharename"         
+        Write-Output "File share already exists: $sharename"         
     }
     return $Return
 
@@ -145,7 +145,7 @@ function global:UpdateOSInVMs([ValidateNotNullOrEmpty()] $resourceGroup) {
 
     $virtualmachines = az vm list -g $resourceGroup --query "[?storageProfile.osDisk.osType != 'Windows'].name" -o tsv
     ForEach ($vm in $virtualmachines) {
-        Write-Host "Updating OS in vm: $vm"
+        Write-Output "Updating OS in vm: $vm"
         $cmd = "apt-get update && apt-get -y upgrade"
         az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "$cmd"
     }
@@ -157,18 +157,18 @@ function global:RestartVMsInResourceGroup([ValidateNotNullOrEmpty()] $resourceGr
     [hashtable]$Return = @{} 
 
     # az vm run-command invoke -g Prod-Kub-AHMN-RG -n k8s-master-37819884-0 --command-id RunShellScript --scripts "apt-get update && sudo apt-get upgrade"
-    Write-Host "Restarting VMs in resource group: ${resourceGroup}: $(az vm list -g $resourceGroup --query "[].name" -o tsv)"
+    Write-Output "Restarting VMs in resource group: ${resourceGroup}: $(az vm list -g $resourceGroup --query "[].name" -o tsv)"
     az vm restart --ids $(az vm list -g $resourceGroup --query "[].id" -o tsv)
 
-    Write-Host "Waiting for VMs to restart: $(az vm list -g $resourceGroup --query "[].name" -o tsv)"
+    Write-Output "Waiting for VMs to restart: $(az vm list -g $resourceGroup --query "[].name" -o tsv)"
     $virtualmachines = az vm list -g $resourceGroup --query "[].name" -o tsv
     ForEach ($vm in $virtualmachines) {
         
-        Write-Host "Waiting on $vm"
+        Write-Output "Waiting on $vm"
         Do { 
             Start-Sleep -Seconds 1
             $state = az vm show -g $resourceGroup -n $vm -d --query "powerState"; 
-            Write-Host "Status of ${vm}: ${state}"
+            Write-Output "Status of ${vm}: ${state}"
         }
         while (!($state = "VM running"))      
     }
@@ -176,7 +176,7 @@ function global:RestartVMsInResourceGroup([ValidateNotNullOrEmpty()] $resourceGr
     # sudo systemctl restart etcd 
     ForEach ($vm in $virtualmachines) {
         if ($vm -match "master" ) {
-            Write-Host "Sending command to master($vm) to restart etcd due to bug: https://github.com/Azure/acs-engine/issues/2282"
+            Write-Output "Sending command to master($vm) to restart etcd due to bug: https://github.com/Azure/acs-engine/issues/2282"
             az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "systemctl restart etcd"
         }
     }
@@ -193,7 +193,7 @@ function global:FixEtcdRestartIssueOnMaster([ValidateNotNullOrEmpty()] $resource
     $virtualmachines = az vm list -g $resourceGroup --query "[].name" -o tsv
     ForEach ($vm in $virtualmachines) {
         if ($vm -match "master" ) {
-            Write-Host "Sending command to master($vm) to enable etcd due to bug: https://github.com/Azure/acs-engine/issues/2282"
+            Write-Output "Sending command to master($vm) to enable etcd due to bug: https://github.com/Azure/acs-engine/issues/2282"
             # https://github.com/Azure/acs-engine/pull/2329/commits/e3ef0578f268bf00e6065414acffdfd7ebb4e90b
             az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "systemctl enable etcd.service"
         }
@@ -210,7 +210,7 @@ function global:SetHostFileInVms( [ValidateNotNullOrEmpty()] $resourceGroup) {
     $MASTER_VM_NAME = "${resourceGroup}.${AKS_PERS_LOCATION}.cloudapp.azure.com"
     $MASTER_VM_NAME = $MASTER_VM_NAME.ToLower()
 
-    Write-Host "Creating hosts entries"
+    Write-Output "Creating hosts entries"
     $fullCmdToUpdateHostsFiles = ""
     $cmdToRemovePreviousHostEntries = ""
     $cmdToAddNewHostEntries = ""
@@ -218,12 +218,12 @@ function global:SetHostFileInVms( [ValidateNotNullOrEmpty()] $resourceGroup) {
     ForEach ($vm in $virtualmachines) {
         $firstprivateip = az vm list-ip-addresses -g $resourceGroup -n $vm --query "[].virtualMachine.network.privateIpAddresses[0]" -o tsv
         # $privateiplist= az vm show -g $AKS_PERS_RESOURCE_GROUP -n $vm -d --query privateIps -otsv
-        Write-Host "$firstprivateip $vm"
+        Write-Output "$firstprivateip $vm"
 
         $cmdToRemovePreviousHostEntries = $cmdToRemovePreviousHostEntries + "grep -v '${vm}' - | "
         $cmdToAddNewHostEntries = $cmdToAddNewHostEntries + " && echo '$firstprivateip $vm'"
         if ($vm -match "master" ) {
-            Write-Host "$firstprivateip $MASTER_VM_NAME"
+            Write-Output "$firstprivateip $MASTER_VM_NAME"
             $cmdToRemovePreviousHostEntries = $cmdToRemovePreviousHostEntries + "grep -v '${MASTER_VM_NAME}' - | "
             $cmdToAddNewHostEntries = $cmdToAddNewHostEntries + " && echo '$firstprivateip ${MASTER_VM_NAME}'"
         }
@@ -231,11 +231,11 @@ function global:SetHostFileInVms( [ValidateNotNullOrEmpty()] $resourceGroup) {
 
     $fullCmdToUpdateHostsFiles = "cat /etc/hosts | $cmdToRemovePreviousHostEntries (cat $cmdToAddNewHostEntries ) | tee /etc/hosts; cat /etc/hosts"
 
-    Write-Host "Command to send to VM"
-    Write-Host "$fullCmdToUpdateHostsFiles"
+    Write-Output "Command to send to VM"
+    Write-Output "$fullCmdToUpdateHostsFiles"
 
     ForEach ($vm in $virtualmachines) {
-        Write-Host "Sending command to $vm"
+        Write-Output "Sending command to $vm"
         az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "$fullCmdToUpdateHostsFiles"
     }
     return $Return
@@ -245,7 +245,7 @@ function global:SetHostFileInVms( [ValidateNotNullOrEmpty()] $resourceGroup) {
 function global:CleanResourceGroup([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $location, $vnet, $subnet, $subnetResourceGroup, $storageAccount) {
     [hashtable]$Return = @{} 
 
-    Write-Host "checking if resource group already exists"
+    Write-Output "checking if resource group already exists"
     $resourceGroupExists = az group exists --name ${resourceGroup}
     if ($resourceGroupExists -eq "true") {
 
@@ -262,99 +262,99 @@ function global:CleanResourceGroup([ValidateNotNullOrEmpty()] $resourceGroup, [V
             # }    
         }
         else {
-            Write-Host "The resource group [${resourceGroup}] already exists but has no VMs"
+            Write-Output "The resource group [${resourceGroup}] already exists but has no VMs"
         }
 
         if ("$vnet") {
-            # Write-Host "removing route table"
+            # Write-Output "removing route table"
             # az network vnet subnet update -n "${subnet}" -g "${subnetResourceGroup}" --vnet-name "${vnet}" --route-table ""
         }
-        Write-Host "cleaning out the existing group: [$resourceGroup]"
+        Write-Output "cleaning out the existing group: [$resourceGroup]"
         #az group delete --name $resourceGroup --verbose
 
         if ($(az vm list -g $resourceGroup --query "[].id" -o tsv).length -ne 0) {
-            Write-Host "delete the VMs first"
+            Write-Output "delete the VMs first"
             az vm delete --ids $(az vm list -g $resourceGroup --query "[].id" -o tsv) --verbose --yes
         }
 
         if ($(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/networkInterfaces" --query "[].id" -o tsv ).length -ne 0) {
-            Write-Host "delete the nics"
+            Write-Output "delete the nics"
             az resource delete --ids $(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/networkInterfaces" --query "[].id" -o tsv )  --verbose
         }
 
         if ($(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Compute/disks" --query "[].id" -o tsv ).length -ne 0) {
-            Write-Host "delete the disks"
+            Write-Output "delete the disks"
             az resource delete --ids $(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Compute/disks" --query "[].id" -o tsv )
         }
 
         if ($(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Compute/availabilitySets" --query "[].id" -o tsv ).length -ne 0) {
-            Write-Host "delete the availabilitysets"
+            Write-Output "delete the availabilitysets"
             az resource delete --ids $(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Compute/availabilitySets" --query "[].id" -o tsv )
         }
 
         if ($(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/loadBalancers" --query "[].id" -o tsv ).length -ne 0) {
-            Write-Host "delete the load balancers"
+            Write-Output "delete the load balancers"
             az resource delete --ids $(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/loadBalancers" --query "[].id" -o tsv )
         }
 
         if ($(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/applicationGateways" --query "[].id" -o tsv ).length -ne 0) {
-            Write-Host "delete the application gateways"
+            Write-Output "delete the application gateways"
             az resource delete --ids $(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/applicationGateways" --query "[].id" -o tsv )
         }
     
         if ($(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Storage/storageAccounts" --query "[].id" -o tsv | Where-Object {!"$_".EndsWith("$storageAccount")}).length -ne 0) {
-            Write-Host "delete the storage accounts EXCEPT storage account we created in the past"
+            Write-Output "delete the storage accounts EXCEPT storage account we created in the past"
             az resource delete --ids $(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Storage/storageAccounts" --query "[].id" -o tsv | Where-Object {!"$_".EndsWith("${storageAccount}")} )
             # az resource list --resource-group fabricnlp3 --resource-type "Microsoft.Storage/storageAccounts" --query "[].id" -o tsv | ForEach-Object { if (!"$_".EndsWith("${resourceGroup}storage")) {  az resource delete --ids "$_" }}    
         }
         if ($(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/publicIPAddresses" --query "[].id" -o tsv | Where-Object {!"$_".EndsWith("PublicIP")}).length -ne 0) {
-            Write-Host "delete the public IPs EXCEPT Ingress IP we created in the past"
+            Write-Output "delete the public IPs EXCEPT Ingress IP we created in the past"
             az resource delete --ids $(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/publicIPAddresses" --query "[].id" -o tsv | Where-Object {!"$_".EndsWith("PublicIP")} )
         }
     
         if (("$vnet") ) {
             if (![string]::IsNullOrWhiteSpace($(az network vnet subnet show -n "${subnet}" -g "${subnetResourceGroup}" --vnet-name "${vnet}" --query "networkSecurityGroup.id"))) {
-                # Write-Host "Switching the subnet to a temp route table and tempnsg so we can delete the old route table and nsg"
+                # Write-Output "Switching the subnet to a temp route table and tempnsg so we can delete the old route table and nsg"
 
                 # $routeid = $(az network route-table show --name temproutetable --resource-group $resourceGroup --query "id" -o tsv)
                 # if ([string]::IsNullOrWhiteSpace($routeid)) {
-                #     Write-Host "create temproutetable"
+                #     Write-Output "create temproutetable"
                 #     $routeid = az network route-table create --name temproutetable --resource-group $resourceGroup --query "id" -o tsv   
                 # }
                 # $routeid = $(az network route-table show --name temproutetable --resource-group $resourceGroup --query "id" -o tsv)
-                # Write-Host "temproutetable: $routeid"
+                # Write-Output "temproutetable: $routeid"
 
                 # $nsg = $(az network nsg show --name tempnsg --resource-group $resourceGroup --query "id" -o tsv)
                 # if ([string]::IsNullOrWhiteSpace($nsg)) {
-                #     Write-Host "create tempnsg"
+                #     Write-Output "create tempnsg"
                 #     $nsg = az network nsg create --name tempnsg --resource-group $resourceGroup --query "id" -o tsv   
                 # }
                 # $nsg = $(az network nsg show --name tempnsg --resource-group $resourceGroup --query "id" -o tsv)
-                # Write-Host "tempnsg: $nsg"
+                # Write-Output "tempnsg: $nsg"
         
-                Write-Host "Updating the subnet"
+                Write-Output "Updating the subnet"
                 az network vnet subnet update -n "${subnet}" -g "${subnetResourceGroup}" --vnet-name "${vnet}" --route-table="" --network-security-group=""
 
                 #az network vnet subnet update -n "${subnet}" -g "${subnetResourceGroup}" --vnet-name "${vnet}" --route-table "$routeid" --network-security-group "$nsg"
             }
         
             if ($(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/routeTables" --query "[?name != 'temproutetable'].id" -o tsv ).length -ne 0) {
-                Write-Host "delete the routes EXCEPT the temproutetable we just created"
+                Write-Output "delete the routes EXCEPT the temproutetable we just created"
                 az resource delete --ids $(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/routeTables" --query "[?name != 'temproutetable'].id" -o tsv)
             }
             if ($(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/networkSecurityGroups" --query "[?name != 'tempnsg'].id" -o tsv).length -ne 0) {
-                Write-Host "delete the nsgs EXCEPT the tempnsg we just created"
+                Write-Output "delete the nsgs EXCEPT the tempnsg we just created"
                 az resource delete --ids $(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/networkSecurityGroups" --query "[?name != 'tempnsg'].id" -o tsv)
             }
         }
         else {
             if ($(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/routeTables" --query "[].id" -o tsv).length -ne 0) {
-                Write-Host "delete the routes EXCEPT the temproutetable we just created"
+                Write-Output "delete the routes EXCEPT the temproutetable we just created"
                 az resource delete --ids $(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/routeTables" --query "[].id" -o tsv)
             }
             $networkSecurityGroup = "$($resourceGroup.ToLower())-nsg"
             if ($(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/networkSecurityGroups" --query "[?name != '${$networkSecurityGroup}'].id" -o tsv ).length -ne 0) {
-                Write-Host "delete the network security groups"
+                Write-Output "delete the network security groups"
                 az resource delete --ids $(az resource list --resource-group $resourceGroup --resource-type "Microsoft.Network/networkSecurityGroups" --query "[?name != '${$networkSecurityGroup}'].id" -o tsv )
             }
     
@@ -362,7 +362,7 @@ function global:CleanResourceGroup([ValidateNotNullOrEmpty()] $resourceGroup, [V
         # note: do not delete the Microsoft.Network/publicIPAddresses otherwise the loadBalancer will get a new IP
     }
     else {
-        Write-Host "Create the Resource Group"
+        Write-Output "Create the Resource Group"
         az group create --name $resourceGroup --location $location --verbose
     }
     return $Return
@@ -382,9 +382,9 @@ function global:CreateStorageIfNotExists([ValidateNotNullOrEmpty()] $resourceGro
         if ($storageAccountName.Length -gt 24) {
             $storageAccountName = $storageAccountName.Substring(0, 24) # azure does not allow names longer than 24
         }
-        Write-Host "Using storage account: [$storageAccountName]"
+        Write-Output "Using storage account: [$storageAccountName]"
     }
-    Write-Host "Checking to see if storage account exists"
+    Write-Output "Checking to see if storage account exists"
 
     $storageAccountConnectionString = az storage account show-connection-string --name $storageAccountName --resource-group $resourceGroup --query "connectionString" --output tsv
     [Console]::ResetColor()
@@ -396,21 +396,21 @@ function global:CreateStorageIfNotExists([ValidateNotNullOrEmpty()] $resourceGro
     
             if ($confirmation -eq 'y') {
                 az storage account delete -n $storageAccountName -g $resourceGroup --yes
-                Write-Host "Creating storage account: [${storageAccountName}]"
+                Write-Output "Creating storage account: [${storageAccountName}]"
                 # https://docs.microsoft.com/en-us/azure/storage/common/storage-quickstart-create-account?tabs=azure-cli
                 az storage account create -n $storageAccountName -g $resourceGroup -l $location --kind StorageV2 --sku Standard_LRS                       
             }    
         }
     }
     else {
-        Write-Host "Checking if storage account name is valid"
+        Write-Output "Checking if storage account name is valid"
         $storageAccountCanBeCreated = az storage account check-name --name $storageAccountName --query "nameAvailable" --output tsv        
         if ($storageAccountCanBeCreated -ne "True" ) {
             Write-Warning "$(az storage account check-name --name $storageAccountName --query 'message' --output tsv)"
             Write-Error "$storageAccountName is not a valid storage account name"
         }
         else {
-            Write-Host "Creating storage account: [${storageAccountName}]"
+            Write-Output "Creating storage account: [${storageAccountName}]"
             az storage account create -n $storageAccountName -g $resourceGroup -l $location --kind StorageV2 --sku Standard_LRS                       
         }
     }
@@ -426,7 +426,7 @@ function global:GetVnet([ValidateNotNullOrEmpty()] $subscriptionId) {
     #Create an hashtable variable 
     [hashtable]$Return = @{} 
 
-    Write-Host "Subscription Id; $subscriptionId"
+    Write-Output "Subscription Id; $subscriptionId"
 
     $confirmation = 'y'
     # Do { $confirmation = Read-Host "Would you like to connect to an existing virtual network? (y/n)"}
@@ -454,17 +454,17 @@ function global:GetVnet([ValidateNotNullOrEmpty()] $subscriptionId) {
         }
 
         if ([string]::IsNullOrEmpty($vnetName)) {
-            Write-Host "Finding existing vnets..."
+            Write-Output "Finding existing vnets..."
             # az network vnet list --query "[].[name,resourceGroup ]" -o tsv    
     
             $vnets = az network vnet list --query "[].[name]" -o tsv
     
             Do { 
-                Write-Host "------  Existing vnets -------"
+                Write-Output "------  Existing vnets -------"
                 for ($i = 1; $i -le $vnets.count; $i++) {
-                    Write-Host "$i. $($vnets[$i-1])"
+                    Write-Output "$i. $($vnets[$i-1])"
                 }    
-                Write-Host "------  End vnets -------"
+                Write-Output "------  End vnets -------"
     
                 Do {
                     $index = Read-Host "Enter number of vnet to use (1 - $($vnets.count))"
@@ -475,26 +475,26 @@ function global:GetVnet([ValidateNotNullOrEmpty()] $subscriptionId) {
             }
             while ([string]::IsNullOrWhiteSpace($vnetName))    
     
-            Write-Host "Searching for vnet named $vnetName ..."
+            Write-Output "Searching for vnet named $vnetName ..."
             $subnetResourceGroup = az network vnet list --query "[?name == '$vnetName'].resourceGroup" -o tsv
-            Write-Host "Using subnet resource group: [$subnetResourceGroup]"
+            Write-Output "Using subnet resource group: [$subnetResourceGroup]"
     
-            Write-Host "Finding existing subnets in $vnetName ..."
+            Write-Output "Finding existing subnets in $vnetName ..."
             $subnets = az network vnet subnet list --resource-group $subnetResourceGroup --vnet-name $vnetName --query "[].name" -o tsv
             
             if ($subnets.count -eq 1) {
-                Write-Host "There is only one subnet called $subnets so choosing that"
+                Write-Output "There is only one subnet called $subnets so choosing that"
                 $subnetName = $subnets
             }
             else {
                 Do { 
-                    Write-Host "------  Subnets in $vnetName -------"
+                    Write-Output "------  Subnets in $vnetName -------"
                     for ($i = 1; $i -le $subnets.count; $i++) {
-                        Write-Host "$i. $($subnets[$i-1])"
+                        Write-Output "$i. $($subnets[$i-1])"
                     }    
-                    Write-Host "------  End Subnets -------"
+                    Write-Output "------  End Subnets -------"
         
-                    Write-Host "NOTE: Each customer should have their own subnet.  Do not put multiple customers in the same subnet"
+                    Write-Output "NOTE: Each customer should have their own subnet.  Do not put multiple customers in the same subnet"
                     $index = Read-Host "Enter number of subnet to use (1 - $($subnets.count))"
                     $subnetName = $($subnets[$index - 1])
                 }
@@ -532,18 +532,18 @@ function global:GetVnetInfo([ValidateNotNullOrEmpty()] $subscriptionId, [Validat
     
     $subnetexists = az resource show --ids $mysubnetid --query "id" -o tsv
     if (!"$subnetexists") {
-        Write-Host "The subnet was not found: $mysubnetid"
+        Write-Output "The subnet was not found: $mysubnetid"
         Read-Host "Hit ENTER to exit"
         exit 0        
     }
     else {
-        Write-Host "Found subnet: [$mysubnetid]"
+        Write-Output "Found subnet: [$mysubnetid]"
     }
         
-    Write-Host "Looking up CIDR for Subnet: [${subnetName}]"
+    Write-Output "Looking up CIDR for Subnet: [${subnetName}]"
     $subnetCidr = az network vnet subnet show --name ${subnetName} --resource-group ${subnetResourceGroup} --vnet-name ${vnetname} --query "addressPrefix" --output tsv
     
-    Write-Host "Subnet CIDR=[$subnetCidr]"
+    Write-Output "Subnet CIDR=[$subnetCidr]"
     # suggest and ask for the first static IP to use
     $firstStaticIP = ""
     $suggestedFirstStaticIP = Get-FirstIP -ip ${subnetCidr}
@@ -554,7 +554,7 @@ function global:GetVnetInfo([ValidateNotNullOrEmpty()] $subscriptionId, [Validat
         $firstStaticIP = "$suggestedFirstStaticIP"
     }
     
-    Write-Host "First static IP=[${firstStaticIP}]"
+    Write-Output "First static IP=[${firstStaticIP}]"
 
     $Return.AKS_FIRST_STATIC_IP = $firstStaticIP
     $Return.AKS_SUBNET_ID = $mysubnetid
@@ -570,7 +570,7 @@ function global:Test-CommandExists {
     $oldPreference = $ErrorActionPreference
     $ErrorActionPreference = 'stop'
     try {if (Get-Command $command) {RETURN $true}}
-    Catch {Write-Host "$command does not exist"; RETURN $false}
+    Catch {Write-Output "$command does not exist"; RETURN $false}
     Finally {$ErrorActionPreference = $oldPreference}
 } #end function test-CommandExists
 
@@ -601,21 +601,21 @@ function global:AddFolderToPathEnvironmentVariable([ValidateNotNullOrEmpty()] $f
     [hashtable]$Return = @{} 
 
     # add the c:\kubernetes folder to system PATH
-    Write-Host "Checking if $folder is in PATH"
+    Write-Output "Checking if $folder is in PATH"
     $current_path=[Environment]::GetEnvironmentVariable("PATH",[System.EnvironmentVariableTarget]::User)
     $pathItems = ($current_path).split(";")
     if ( $pathItems -notcontains "$folder") {
-        Write-Host "Adding $folder to system path"
+        Write-Output "Adding $folder to system path"
         $newpath = "$folder;$current_path"
         [Environment]::SetEnvironmentVariable( "PATH", $newpath, [System.EnvironmentVariableTarget]::User )
         # [Environment]::SetEnvironmentVariable( "Path", $newpath, [System.EnvironmentVariableTarget]::Machine )
         # for current session set the PATH too.  the above only takes effect if powershell is reopened
         $ENV:PATH = "$folder;$ENV:PATH"
-        Write-Host "PATH for current powershell session"
-        Write-Host ($env:path).split(";")
+        Write-Output "PATH for current powershell session"
+        Write-Output ($env:path).split(";")
     }
     else {
-        Write-Host "$folder is already in PATH"
+        Write-Output "$folder is already in PATH"
     }
     return $Return
 }
@@ -633,7 +633,7 @@ function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()] $version) {
         $justVersion = [System.Version] $azcurrentversion.Substring($azcurrentversion.IndexOf('(') + 1, $azcurrentversion.IndexOf(')') - $azcurrentversion.IndexOf('(') - 1)
         # we should get: azure-cli (2.0.22)
         if ($justVersion -lt $desiredAzClVersion) {
-            Write-Host "az version $azcurrentversion is not the same as desired version: $desiredAzClVersion"
+            Write-Output "az version $azcurrentversion is not the same as desired version: $desiredAzClVersion"
             $downloadazcli = $True
         }
     }
@@ -642,7 +642,7 @@ function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()] $version) {
         $azCliFile = ([System.IO.Path]::GetTempPath() + ("azure-cli-${desiredAzClVersion}.msi"))
         # $url = "https://azurecliprod.blob.core.windows.net/msi/azure-cli-latest.msi"
         $url = "https://azurecliprod.blob.core.windows.net/msi/azure-cli-${desiredAzClVersion}.msi"
-        Write-Host "Downloading azure-cli-${desiredAzClVersion}.msi from url $url to $azCliFile"
+        Write-Output "Downloading azure-cli-${desiredAzClVersion}.msi from url $url to $azCliFile"
         If (Test-Path $azCliFile) {
             Remove-Item $azCliFile -Force
         }
@@ -650,15 +650,15 @@ function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()] $version) {
         DownloadFile -url $url -targetFile $azCliFile
 
         # for some reason the download is not completely done by the time we get here
-        Write-Host "Waiting for 10 seconds"
+        Write-Output "Waiting for 10 seconds"
         Start-Sleep -Seconds 10
         # https://kevinmarquette.github.io/2016-10-21-powershell-installing-msi-files/
-        Write-Host "Running MSI to install az cli: $azCliFile.  This may take a few minutes."
+        Write-Output "Running MSI to install az cli: $azCliFile.  This may take a few minutes."
         $azCliInstallLog = ([System.IO.Path]::GetTempPath() + ('az-cli-latest.log'))
         # msiexec flags: https://msdn.microsoft.com/en-us/library/windows/desktop/aa367988(v=vs.85).aspx
         # Start-Process -Verb runAs msiexec.exe -Wait -ArgumentList "/i $azCliFile /qn /L*e $azCliInstallLog"
         Start-Process -Verb runAs msiexec.exe -Wait -ArgumentList "/i $azCliFile"
-        Write-Host "Finished installing az-cli-latest.msi"
+        Write-Output "Finished installing az-cli-latest.msi"
     }
     return $Return
 }
@@ -670,7 +670,7 @@ function global:CreateSSHKey([ValidateNotNullOrEmpty()] $resourceGroup, [Validat
     $folderForSSHKey = "$localFolder\ssh\$resourceGroup"
 
     if (!(Test-Path -Path "$folderForSSHKey")) {
-        Write-Host "$folderForSSHKey does not exist.  Creating it..."
+        Write-Output "$folderForSSHKey does not exist.  Creating it..."
         New-Item -ItemType directory -Path "$folderForSSHKey"
     }
     
@@ -679,18 +679,18 @@ function global:CreateSSHKey([ValidateNotNullOrEmpty()] $resourceGroup, [Validat
     $privateKeyFileUnixPath = "/" + (($privateKeyFile -replace "\\", "/") -replace ":", "").ToLower().Trim("/")    
     
     if (!(Test-Path "$privateKeyFile")) {
-        Write-Host "SSH key does not exist in $privateKeyFile."
-        Write-Host "Please open Git Bash and run:"
-        Write-Host "ssh-keygen -t rsa -b 2048 -q -N '' -C azureuser@linuxvm -f $privateKeyFileUnixPath"
+        Write-Output "SSH key does not exist in $privateKeyFile."
+        Write-Output "Please open Git Bash and run:"
+        Write-Output "ssh-keygen -t rsa -b 2048 -q -N '' -C azureuser@linuxvm -f $privateKeyFileUnixPath"
         Read-Host "Hit ENTER after you're done"
     }
     else {
-        Write-Host "SSH key already exists at $privateKeyFile so using it"
+        Write-Output "SSH key already exists at $privateKeyFile so using it"
     }
     
     $publicKeyFile = "$folderForSSHKey\id_rsa.pub"
     $sshKey = Get-Content "$publicKeyFile" -First 1
-    Write-Host "SSH Public Key=$sshKey"
+    Write-Output "SSH Public Key=$sshKey"
 
     
     $Return.AKS_SSH_KEY = $sshKey
@@ -707,17 +707,17 @@ function global:GetLoggedInUserInfo() {
     #Create an hashtable variable 
     [hashtable]$Return = @{} 
 
-    Write-Host "Checking if you're already logged into Azure..."
+    Write-Output "Checking if you're already logged into Azure..."
 
     # to print out the result to screen also use: <command> | Tee-Object -Variable cmdOutput
     $loggedInUser = $(az account show --query "user.name"  --output tsv)
     
     # get azure login and subscription
-    Write-Host "user ${loggedInUser}"
+    Write-Output "user ${loggedInUser}"
     
     if ( "$loggedInUser" ) {
         $subscriptionName = az account show --query "name"  --output tsv
-        # Write-Host "You are currently logged in as [$loggedInUser] into subscription [$subscriptionName]"
+        # Write-Output "You are currently logged in as [$loggedInUser] into subscription [$subscriptionName]"
         
         # Do { $confirmation = Read-Host "Do you want to use this account? (y/n)"}
         # while ([string]::IsNullOrWhiteSpace($confirmation))
@@ -734,7 +734,7 @@ function global:GetLoggedInUserInfo() {
     $subscriptionName = $(az account show --query "name"  --output tsv)
     $subscriptionId = $(az account show --query "id" --output tsv)
 
-    Write-Host "SubscriptionId: ${subscriptionId}"
+    Write-Output "SubscriptionId: ${subscriptionId}"
 
     az account get-access-token --subscription $subscriptionId
 
@@ -756,15 +756,15 @@ function global:GetResourceGroupAndLocation($defaultResourceGroup) {
     }
     while ([string]::IsNullOrWhiteSpace($resourceGroup))
     
-    Write-Host "Using resource group [$resourceGroup]"
+    Write-Output "Using resource group [$resourceGroup]"
     
-    Write-Host "checking if resource group already exists"
+    Write-Output "checking if resource group already exists"
     $resourceGroupExists = az group exists --name ${resourceGroup}
     if ($resourceGroupExists -ne "true") {
         Do { $location = Read-Host "Location: (e.g., eastus)"}
         while ([string]::IsNullOrWhiteSpace($location))    
 
-        Write-Host "Create the Resource Group"
+        Write-Output "Create the Resource Group"
         az group create --name $resourceGroup --location $location --verbose
     }
     else {
@@ -782,12 +782,12 @@ function global:GetResourceGroupAndLocation($defaultResourceGroup) {
 function global:CreateResourceGroupIfNotExists([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $location ) {
     [hashtable]$Return = @{} 
 
-    Write-Host "Using resource group [$resourceGroup]"
+    Write-Output "Using resource group [$resourceGroup]"
     
-    Write-Host "checking if resource group already exists"
+    Write-Output "checking if resource group already exists"
     $resourceGroupExists = az group exists --name ${resourceGroup}
     if ($resourceGroupExists -ne "true") {
-        Write-Host "Create the Resource Group"
+        Write-Output "Create the Resource Group"
         az group create --name $resourceGroup --location $location --verbose
     }
 
@@ -798,7 +798,7 @@ function global:SetNetworkSecurityGroupRule([ValidateNotNullOrEmpty()] $resource
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($(az network nsg rule show --name "$rulename" --nsg-name $networkSecurityGroup --resource-group $resourceGroup))) {
-        Write-Host "Creating rule: $rulename"
+        Write-Output "Creating rule: $rulename"
         az network nsg rule create -g $resourceGroup --nsg-name $networkSecurityGroup -n "$rulename" --priority $priority `
             --source-address-prefixes "${sourceTag}" --source-port-ranges '*' `
             --destination-address-prefixes '*' --destination-port-ranges $port --access Allow `
@@ -806,7 +806,7 @@ function global:SetNetworkSecurityGroupRule([ValidateNotNullOrEmpty()] $resource
             --query "provisioningState" -o tsv
     }
     else {
-        Write-Host "Updating rule: $rulename"
+        Write-Output "Updating rule: $rulename"
 
         az network nsg rule update -g $resourceGroup --nsg-name $networkSecurityGroup -n "$rulename" --priority $priority `
             --source-address-prefixes "${sourceTag}" --source-port-ranges '*' `
@@ -820,7 +820,7 @@ function global:DeleteNetworkSecurityGroupRule([ValidateNotNullOrEmpty()] $resou
     [hashtable]$Return = @{} 
 
     if (![string]::IsNullOrWhiteSpace($(az network nsg rule show --name "$rulename" --nsg-name $networkSecurityGroup --resource-group $resourceGroup))) {
-        Write-Host "Deleting $rulename rule"
+        Write-Output "Deleting $rulename rule"
         az network nsg rule delete -g $resourceGroup --nsg-name $networkSecurityGroup -n $rulename
     }   
     return $Return 
@@ -838,7 +838,7 @@ function global:DownloadKubectl([ValidateNotNullOrEmpty()] $localFolder, [Valida
     }
     else {
         $kubectlversion = kubectl version --client=true --short=true
-        Write-Host "kubectl version: $kubectlversion"
+        Write-Output "kubectl version: $kubectlversion"
         $kubectlversionMatches = $($kubectlversion -match "$desiredKubeCtlVersion")
         if (!$kubectlversionMatches) {
             $downloadkubectl = "y"
@@ -846,7 +846,7 @@ function global:DownloadKubectl([ValidateNotNullOrEmpty()] $localFolder, [Valida
     }
     if ( $downloadkubectl -eq "y") {
         $url = "https://storage.googleapis.com/kubernetes-release/release/${desiredKubeCtlVersion}/bin/windows/amd64/kubectl.exe"
-        Write-Host "Downloading kubectl.exe from url $url to $kubeCtlFile"
+        Write-Output "Downloading kubectl.exe from url $url to $kubeCtlFile"
 
         If (Test-Path -Path "$kubeCtlFile") {
             Remove-Item -Path "$kubeCtlFile" -Force
@@ -855,7 +855,7 @@ function global:DownloadKubectl([ValidateNotNullOrEmpty()] $localFolder, [Valida
         DownloadFile -url $url -targetFile $kubeCtlFile
     }
     else {
-        Write-Host "kubectl already exists at $kubeCtlFile"    
+        Write-Output "kubectl already exists at $kubeCtlFile"    
     }
     return $Return
 }
@@ -895,7 +895,7 @@ function global:DownloadFile([ValidateNotNullOrEmpty()] $url, [ValidateNotNullOr
     Unregister-Event -SourceIdentifier Web.DownloadFileCompleted
     Unregister-Event -SourceIdentifier Web.DownloadProgressChanged
 
-    Write-Host "Finished downloading $url"
+    Write-Output "Finished downloading $url"
     return $Return
     #endregion Download file from website    
 }
@@ -912,13 +912,13 @@ function global:DownloadFileOld([ValidateNotNullOrEmpty()] $url, [ValidateNotNul
     $responseStream = $response.GetResponseStream()
     $targetStream = New-Object -TypeName System.IO.FileStream -ArgumentList $targetFile, Create
     $buffer = new-object byte[] 4096KB
-    Write-Host "Buffer length: $($buffer.length)"
+    Write-Output "Buffer length: $($buffer.length)"
     $count = $responseStream.Read($buffer, 0, $buffer.length)
     $downloadedBytes = $count
     while ($count -gt 0) {
         $targetStream.Write($buffer, 0, $count)
         $count = $responseStream.Read($buffer, 0, $buffer.length)
-        # Write-Host "read: $count bytes"
+        # Write-Output "read: $count bytes"
         $downloadedBytes = $downloadedBytes + $count
         Write-Progress -activity "Downloading file '$($url.split('/') | Select-Object -Last 1)'" -status "Downloaded ($([System.Math]::Floor($downloadedBytes/1024))K of $($totalLength)K): " -PercentComplete ((([System.Math]::Floor($downloadedBytes / 1024)) / $totalLength) * 100)
         [System.Console]::CursorLeft = 0 
@@ -944,7 +944,7 @@ function global:FixLoadBalancerBackendPools([ValidateNotNullOrEmpty()] $resource
         if ($vm -match "master" ) {}
         else {
             # for each worker VM
-            Write-Host "Checking VM: $vm"
+            Write-Output "Checking VM: $vm"
             # get first nic
             # $nic = "k8s-linuxagent-14964077-nic-0"
             $nicId = $(az vm nic list -g $resourceGroup --vm-name $vm --query "[].id" -o tsv)
@@ -965,9 +965,9 @@ function global:FixLoadBalancerBackendPools([ValidateNotNullOrEmpty()] $resource
             }
             elseif ($($loadbalancerForNic -is [array])){
                 foreach($lb in $loadbalancerForNic){
-                    Write-Host "Checking loadbalancerforNic: $lb to see if it matches $loadbalancer"
+                    Write-Output "Checking loadbalancerforNic: $lb to see if it matches $loadbalancer"
                     if($($lb -match $loadbalancer)){
-                        Write-Host "Found loadbalancerforNic: $lb to match $loadbalancer"
+                        Write-Output "Found loadbalancerforNic: $lb to match $loadbalancer"
                         $foundNicInLoadbalancer=$true
                     }
                 }
@@ -977,8 +977,8 @@ function global:FixLoadBalancerBackendPools([ValidateNotNullOrEmpty()] $resource
             }
 
             if(!$foundNicInLoadbalancer){
-                Write-Host "nic is already bound to load balancer $loadbalancerForNic with ip-config $ipconfig"
-                Write-Host "adding internal load balancer to secondary ip-config"
+                Write-Output "nic is already bound to load balancer $loadbalancerForNic with ip-config $ipconfig"
+                Write-Output "adding internal load balancer to secondary ip-config"
                 # get the first secondary ipconfig
                 $ipconfig = $(az network nic ip-config list --resource-group $resourceGroup --nic-name $nic --query "[?!primary].name" -o tsv)[0]
                 $loadbalancerForNic = $(az network nic ip-config show --resource-group $resourceGroup --nic-name $nic --name $ipconfig --query "loadBalancerBackendAddressPools[].id" -o tsv)
@@ -988,11 +988,11 @@ function global:FixLoadBalancerBackendPools([ValidateNotNullOrEmpty()] $resource
                     az network nic ip-config update --resource-group $resourceGroup --nic-name $nic --name $ipconfig --lb-name $loadbalancer --lb-address-pools $loadbalancerBackendPoolName
                 }
                 else {
-                    Write-Host "Load Balancer with ip-config $ipconfig is already setup properly for vm: $vm"
+                    Write-Output "Load Balancer with ip-config $ipconfig is already setup properly for vm: $vm"
                 }
             }
             else {
-                Write-Host "Load Balancer with ip-config $ipconfig is already setup properly for vm: $vm"
+                Write-Output "Load Balancer with ip-config $ipconfig is already setup properly for vm: $vm"
             }
         }
     }
@@ -1003,7 +1003,7 @@ function global:FixLoadBalancerBackendPorts([ValidateNotNullOrEmpty()] $resource
     [hashtable]$Return = @{} 
 
     # 2. fix the ports in load balancing rules
-    Write-Host "Checking if the correct ports are setup in the load balancer"
+    Write-Output "Checking if the correct ports are setup in the load balancer"
 
     # get frontendip configs for this IP
     # $idToIPTuplesJson=$(az network lb frontend-ip list --resource-group=$AKS_PERS_RESOURCE_GROUP --lb-name $loadbalancer --query "[*].[id,privateIpAddress]")
@@ -1011,40 +1011,40 @@ function global:FixLoadBalancerBackendPorts([ValidateNotNullOrEmpty()] $resource
     $idToIPTuples = $(az network lb frontend-ip list --resource-group=$resourceGroup --lb-name $loadbalancer --query "[*].{id:id,ip:privateIpAddress}") | ConvertFrom-Json
     $services = $($(kubectl get services --all-namespaces -o json) | ConvertFrom-Json).items
     $loadBalancerServices = @()
-    Write-Host "---- Searching for kub services of type LoadBalancer"
+    Write-Output "---- Searching for kub services of type LoadBalancer"
     foreach ($service in $services) {
         if ($($service.spec.type -eq "LoadBalancer")) {
             if ($service.status.loadBalancer.ingress.Count -gt 0) {
-                Write-Host "Found kub services $($service.metadata.name) with $($service.status.loadBalancer.ingress[0].ip)"
+                Write-Output "Found kub services $($service.metadata.name) with $($service.status.loadBalancer.ingress[0].ip)"
                 $loadBalancerServices += $service
             }
             else {
-                Write-Host "Found kub services $($service.metadata.name) but it has no ingress IP so skipping it"
+                Write-Output "Found kub services $($service.metadata.name) but it has no ingress IP so skipping it"
             }
         }
     }
-    Write-Host "---- Finished searching for kub services of type LoadBalancer"
+    Write-Output "---- Finished searching for kub services of type LoadBalancer"
 
     ForEach ($tuple in $idToIPTuples) {
-        Write-Host "---------- tuple: $($tuple.ip)  $($tuple.id) ------------------"
+        Write-Output "---------- tuple: $($tuple.ip)  $($tuple.id) ------------------"
         $rulesForIp = $(az network lb rule list --resource-group $resourceGroup --lb-name $loadbalancer --query "[?frontendIpConfiguration.id == '$($tuple.id)'].{frontid:frontendIpConfiguration.id,name:name,backendPort:backendPort,frontendPort: frontendPort}") | ConvertFrom-Json
 
         ForEach ($service in $loadBalancerServices) {
-            Write-Host "-------- Checking kub service: $($service.metadata.name) ----"
+            Write-Output "-------- Checking kub service: $($service.metadata.name) ----"
             # first check ports for internal loadbalancer
             $loadBalancerIp = $($service.status.loadBalancer.ingress[0].ip)
-            # Write-Host "Checking tuple ip $($tuple.ip) with loadBalancer Ip $loadBalancerIp"
+            # Write-Output "Checking tuple ip $($tuple.ip) with loadBalancer Ip $loadBalancerIp"
             if ($tuple.ip -eq $loadBalancerIp) {
                 #this is the right load balancer
                 ForEach ($rule in $rulesForIp) {
-                    Write-Host "----- Checking rule $($rule.name) ----"
-                    # Write-Host "tuple $($tuple.ip) matches loadBalancerIP: $loadBalancerIp"
+                    Write-Output "----- Checking rule $($rule.name) ----"
+                    # Write-Output "tuple $($tuple.ip) matches loadBalancerIP: $loadBalancerIp"
                     # match rule.backendPort to $loadbalancerInfo.spec.ports
                     ForEach ( $loadbalancerPortInfo in $($service.spec.ports)) {
-                        # Write-Host "Rule: $rule "
-                        # Write-Host "LoadBalancer:$loadbalancerPortInfo"
+                        # Write-Output "Rule: $rule "
+                        # Write-Output "LoadBalancer:$loadbalancerPortInfo"
                         if ($($rule.frontendPort) -eq $($loadbalancerPortInfo.port)) {
-                            Write-Host "Found matching frontend ports: rule: $($rule.frontendPort) of rule $($rule.name) and loadbalancer: $($loadbalancerPortInfo.port) from $($loadbalancerPortInfo.name)"
+                            Write-Output "Found matching frontend ports: rule: $($rule.frontendPort) of rule $($rule.name) and loadbalancer: $($loadbalancerPortInfo.port) from $($loadbalancerPortInfo.name)"
                             if ($($rule.backendPort) -ne $($loadbalancerPortInfo.nodePort)) {
                                 Write-Warning "Backend ports don't match.  Will change $($rule.backendPort) to $($loadbalancerPortInfo.nodePort)"
                                 # set the rule backendPort to nodePort instead
@@ -1052,21 +1052,21 @@ function global:FixLoadBalancerBackendPorts([ValidateNotNullOrEmpty()] $resource
                                 az network lb rule update --lb-name $loadbalancer --name $($rule.name) --resource-group $resourceGroup --backend-port $loadbalancerPortInfo.nodePort
                             }
                             else {
-                                Write-Host "Skipping changing backend port since it already matches $($rule.backendPort) vs $($loadbalancerPortInfo.nodePort)"
+                                Write-Output "Skipping changing backend port since it already matches $($rule.backendPort) vs $($loadbalancerPortInfo.nodePort)"
                             }
                         }
                         else {
-                            Write-Host "Skipping rule $($rule.name): Rule port: $($rule.backendPort) is not a match for loadbalancerPort $($loadbalancerPortInfo.port) from $($loadbalancerPortInfo.name)"                    
+                            Write-Output "Skipping rule $($rule.name): Rule port: $($rule.backendPort) is not a match for loadbalancerPort $($loadbalancerPortInfo.port) from $($loadbalancerPortInfo.name)"                    
                         }
                     }
                 }
                 # get port from kubernetes service
             }
             else {
-                Write-Host "Skipping tuple since tuple ip $($tuple.ip) does not match loadBalancerIP: $loadBalancerIp"
+                Write-Output "Skipping tuple since tuple ip $($tuple.ip) does not match loadBalancerIP: $loadBalancerIp"
             }
         }
-        Write-Host ""
+        Write-Output ""
     }
     return $Return
 }
@@ -1074,7 +1074,7 @@ function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
     [hashtable]$Return = @{} 
 
     # hacks here to get around bugs in the acs-engine loadbalancer code
-    Write-Host "Checking if load balancers are setup correctly for resourceGroup: $resourceGroup"
+    Write-Output "Checking if load balancers are setup correctly for resourceGroup: $resourceGroup"
     # 1. assign the nics to the loadbalancer
 
     # find loadbalancer with name 
@@ -1084,11 +1084,11 @@ function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
 
     # if internal load balancer exists then fix it
     if ([string]::IsNullOrWhiteSpace($loadbalancerExists)) {
-        Write-Host "Loadbalancer $loadbalancer does not exist so no need to fix it"
+        Write-Output "Loadbalancer $loadbalancer does not exist so no need to fix it"
         return
     }
     else {
-        Write-Host "loadbalancer $loadbalancer exists with name: $loadbalancerExists"
+        Write-Output "loadbalancer $loadbalancer exists with name: $loadbalancerExists"
     }
     
     # this is not needed anymore since acs-engine fixed the bug 
@@ -1103,14 +1103,14 @@ function global:FixLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) {
 function global:SetupDNS([ValidateNotNullOrEmpty()] $dnsResourceGroup, [ValidateNotNullOrEmpty()] $dnsrecordname, [ValidateNotNullOrEmpty()] $externalIP) {
     [hashtable]$Return = @{} 
 
-    Write-Host "Setting DNS zones"
+    Write-Output "Setting DNS zones"
 
     if ([string]::IsNullOrWhiteSpace($(az network dns zone show --name "$dnsrecordname" -g $dnsResourceGroup))) {
-        Write-Host "Creating DNS zone: $dnsrecordname"
+        Write-Output "Creating DNS zone: $dnsrecordname"
         az network dns zone create --name "$dnsrecordname" -g $dnsResourceGroup
     }
 
-    Write-Host "Create A record for * in zone: $dnsrecordname"
+    Write-Output "Create A record for * in zone: $dnsrecordname"
     az network dns record-set a add-record --ipv4-address $externalIP --record-set-name "*" --resource-group $dnsResourceGroup --zone-name "$dnsrecordname"
 
     ShowNameServerEntries -dnsResourceGroup $dnsResourceGroup -dnsrecordname $dnsrecordname
@@ -1122,7 +1122,7 @@ function global:ShowNameServerEntries([ValidateNotNullOrEmpty()] $dnsResourceGro
     [hashtable]$Return = @{} 
 
     # list out the name servers
-    Write-Host "Name servers to set in GoDaddy for *.$dnsrecordname"
+    Write-Output "Name servers to set in GoDaddy for *.$dnsrecordname"
     az network dns zone show -g $dnsResourceGroup -n "$dnsrecordname" --query "nameServers" -o tsv
 
     return $Return
@@ -1136,24 +1136,24 @@ function global:GetLoadBalancerIPs() {
     $loadbalancer = "traefik-ingress-service-public"
     $loadbalancerInternal = "traefik-ingress-service-internal" 
 
-    Write-Host "Waiting for IP to get assigned to the load balancer (Note: It can take upto 5 minutes for Azure to finish creating the load balancer)"
+    Write-Output "Waiting for IP to get assigned to the load balancer (Note: It can take upto 5 minutes for Azure to finish creating the load balancer)"
     Do { 
         Start-Sleep -Seconds 10
-        Write-Host "."
+        Write-Output "."
         $externalIP = $(kubectl get svc $loadbalancer -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}')
     }
     while ([string]::IsNullOrWhiteSpace($externalIP) -and ($startDate.AddMinutes($timeoutInMinutes) -gt (Get-Date)))
-    Write-Host "External IP: $externalIP"
+    Write-Output "External IP: $externalIP"
     
     if ($AKS_CLUSTER_ACCESS_TYPE -eq "2") {
-        Write-Host "Waiting for IP to get assigned to the internal load balancer (Note: It can take upto 5 minutes for Azure to finish creating the load balancer)"
+        Write-Output "Waiting for IP to get assigned to the internal load balancer (Note: It can take upto 5 minutes for Azure to finish creating the load balancer)"
         Do { 
             Start-Sleep -Seconds 10
-            Write-Host "."
+            Write-Output "."
             $internalIP = $(kubectl get svc $loadbalancerInternal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}')
         }
         while ([string]::IsNullOrWhiteSpace($internalIP) -and ($startDate.AddMinutes($timeoutInMinutes) -gt (Get-Date)))
-        Write-Host "Internal IP: $internalIP"
+        Write-Output "Internal IP: $internalIP"
     }
 
     $Return.ExternalIP = $externalIP
@@ -1172,7 +1172,7 @@ function global:CheckUrl([ValidateNotNullOrEmpty()] $url, [ValidateNotNullOrEmpt
     $respstream = $Response.GetResponseStream(); 
     $sr = new-object System.IO.StreamReader $respstream; 
     $result = $sr.ReadToEnd(); 
-    write-host "$result"
+    Write-Output "$result"
 
     $Return.Response = $result
     $Return.StatusCode = $Response.StatusCode
@@ -1231,12 +1231,12 @@ function global:WriteDNSCommands() {
     [hashtable]$Return = @{} 
 
     $myCommands = $(GetDNSCommands).Commands
-    Write-Host "To setup DNS entries in CAFE environment, remote desktop to CAFE DNS server: 10.5.2.4"
-    Write-Host "Open Powershell window As Administrator and paste the following:"
+    Write-Output "To setup DNS entries in CAFE environment, remote desktop to CAFE DNS server: 10.5.2.4"
+    Write-Output "Open Powershell window As Administrator and paste the following:"
     ForEach ($myCommand in $myCommands) {
-        Write-Host $myCommand
+        Write-Output $myCommand
     }
-    Write-Host ""
+    Write-Output ""
     return $Return
 }
 
@@ -1269,12 +1269,12 @@ function global:CreateVM([ValidateNotNullOrEmpty()] $vm, [ValidateNotNullOrEmpty
     [hashtable]$Return = @{} 
 
     $publicIP = "${vm}PublicIP"
-    Write-Host "Creating public IP: $publicIP"
+    Write-Output "Creating public IP: $publicIP"
     $ip = az network public-ip create --name $publicIP `
         --resource-group $resourceGroup `
         --allocation-method Static --query "publicIp.ipAddress" -o tsv
     
-    Write-Host "Creating NIC: ${vm}-nic"
+    Write-Output "Creating NIC: ${vm}-nic"
     az network nic create `
         --resource-group $resourceGroup `
         --name "${vm}-nic" `
@@ -1283,7 +1283,7 @@ function global:CreateVM([ValidateNotNullOrEmpty()] $vm, [ValidateNotNullOrEmpty
         --public-ip-address $publicIP `
         --query "provisioningState" -o tsv
     
-    Write-Host "Creating VM: ${vm} from image: $urn"
+    Write-Output "Creating VM: ${vm} from image: $urn"
     az vm create --resource-group $resourceGroup --name $vm `
         --image "$image" `
         --size Standard_DS2_v2 `
@@ -1297,7 +1297,7 @@ function global:CreateVM([ValidateNotNullOrEmpty()] $vm, [ValidateNotNullOrEmpty
 function global:TestConnection() {
     [hashtable]$Return = @{} 
 
-    Write-Host "Testing if we can connect to private IP Address: $privateIpOfMasterVM"
+    Write-Output "Testing if we can connect to private IP Address: $privateIpOfMasterVM"
     # from https://stackoverflow.com/questions/11696944/powershell-v3-invoke-webrequest-https-error
     add-type 
     @"
@@ -1320,11 +1320,11 @@ function global:TestConnection() {
     $canConnectToPrivateIP = $(Test-NetConnection $privateIpOfMasterVM -Port 443 -InformationLevel Quiet)
     
     if ($canConnectToPrivateIP -eq "True") {
-        Write-Host "Replacing master vm name, [$publicNameOfMasterVM], with private ip, [$privateIpOfMasterVM], in kube config file"
+        Write-Output "Replacing master vm name, [$publicNameOfMasterVM], with private ip, [$privateIpOfMasterVM], in kube config file"
         (Get-Content "$kubeconfigjsonfile").replace("$publicNameOfMasterVM", "$privateIpOfMasterVM") | Set-Content "$kubeconfigjsonfile"
     }
     else {
-        Write-Host "Could not connect to private IP, [$privateIpOfMasterVM], so leaving the master VM name [$publicNameOfMasterVM] in the kubeconfig"
+        Write-Output "Could not connect to private IP, [$privateIpOfMasterVM], so leaving the master VM name [$publicNameOfMasterVM] in the kubeconfig"
         $canConnectToMasterVM = $(Test-NetConnection $publicNameOfMasterVM -Port 443 -InformationLevel Quiet)
         if ($canConnectToMasterVM -ne "True") {
             Write-Error "Cannot connect to master VM: $publicNameOfMasterVM"
@@ -1391,16 +1391,16 @@ function global:SetupWAF() {
     #         --source-address-prefixes "$iprangetoallow"
     # }
 
-    # Write-Host "Creating network security group to restrict IP address"
+    # Write-Output "Creating network security group to restrict IP address"
 
-    Write-Host "Setting up Azure Application Gateway"
+    Write-Output "Setting up Azure Application Gateway"
 
     $gatewayName = "${customerid}Gateway"
 
     az network application-gateway show --name "$gatewayName" --resource-group "$AKS_PERS_RESOURCE_GROUP"
     $gatewayipName = "${gatewayName}PublicIP"
 
-    Write-Host "Checking if Application Gateway already exists"
+    Write-Output "Checking if Application Gateway already exists"
     if ([string]::IsNullOrEmpty($(az network application-gateway show --name "$gatewayName" --resource-group "$AKS_PERS_RESOURCE_GROUP" ))) {
 
         # note application gateway provides no way to specify the resourceGroup of the vnet so we HAVE to create the App Gateway in the same resourceGroup
@@ -1409,22 +1409,22 @@ function global:SetupWAF() {
         if ([string]::IsNullOrWhiteSpace($gatewayip)) {
             az network public-ip create -g $AKS_PERS_RESOURCE_GROUP -n "$gatewayipName" --location $AKS_PERS_LOCATION --allocation-method Dynamic
 
-            # Write-Host "Waiting for IP address to get assigned to $gatewayipName"
+            # Write-Output "Waiting for IP address to get assigned to $gatewayipName"
             # Do { 
             #     Start-Sleep -Seconds 10
-            #     Write-Host "."                
+            #     Write-Output "."                
             #     $gatewayip = az network public-ip show -g $AKS_PERS_RESOURCE_GROUP -n "$gatewayipName" --query "ipAddress" -o tsv; 
             # }
             # while ([string]::IsNullOrWhiteSpace($gatewayip))
         }  
     
-        # Write-Host "Using Gateway IP: [$gatewayip]"
+        # Write-Output "Using Gateway IP: [$gatewayip]"
 
         $mysubnetid = "/subscriptions/${AKS_SUBSCRIPTION_ID}/resourceGroups/${AKS_SUBNET_RESOURCE_GROUP}/providers/Microsoft.Network/virtualNetworks/${AKS_VNET_NAME}/subnets/${AKS_SUBNET_NAME}"
             
-        Write-Host "Using subnet id: $mysubnetid"
+        Write-Output "Using subnet id: $mysubnetid"
 
-        Write-Host "Creating new application gateway with WAF (This can take 10-15 minutes)"
+        Write-Output "Creating new application gateway with WAF (This can take 10-15 minutes)"
         # https://docs.microsoft.com/en-us/cli/azure/network/application-gateway?view=azure-cli-latest#az_network_application_gateway_create
 
         az network application-gateway create `
@@ -1439,7 +1439,7 @@ function global:SetupWAF() {
     
         # https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-faq
 
-        Write-Host "Waiting for Azure Application Gateway to be created."
+        Write-Output "Waiting for Azure Application Gateway to be created."
         az network application-gateway wait `
             --name "$gatewayName" `
             --resource-group "$AKS_PERS_RESOURCE_GROUP" `
@@ -1449,7 +1449,7 @@ function global:SetupWAF() {
 
         # # set public IP
         $frontendPoolName = az network application-gateway show --name "$gatewayName" --resource-group "$AKS_SUBNET_RESOURCE_GROUP" --query "frontendIpConfigurations[0].name" -o tsv
-        Write-Host "Setting $gatewayipName as IP for frontend pool $frontendPoolName"
+        Write-Output "Setting $gatewayipName as IP for frontend pool $frontendPoolName"
         az network application-gateway frontend-ip update `
             --gateway-name "$gatewayName" `
             --resource-group "$AKS_PERS_RESOURCE_GROUP" `
@@ -1457,7 +1457,7 @@ function global:SetupWAF() {
             --public-ip-address "$gatewayipName"
 
         $backendPoolName = az network application-gateway show --name "$gatewayName" --resource-group "$AKS_SUBNET_RESOURCE_GROUP" --query "backendAddressPools[0].name" -o tsv
-        Write-Host "Setting $EXTERNAL_IP as IP for backend pool $backendPoolName"
+        Write-Output "Setting $EXTERNAL_IP as IP for backend pool $backendPoolName"
         # set backend private IP
         az network application-gateway address-pool update  `
             --gateway-name "$gatewayName" `
@@ -1474,7 +1474,7 @@ function global:SetupWAF() {
     if ($(az network application-gateway waf-config show --gateway-name "$gatewayName" --resource-group "$AKS_PERS_RESOURCE_GROUP" --query "firewallMode" -o tsv) -eq "Prevention") {
     }
     else {
-        Write-Host "Enabling Prevention mode of firewall"
+        Write-Output "Enabling Prevention mode of firewall"
         az network application-gateway waf-config set `
             --enabled true `
             --firewall-mode Prevention `
@@ -1503,7 +1503,7 @@ function global:SetupWAF() {
     # }
 
 
-    Write-Host "Checking for health of backend pool"
+    Write-Output "Checking for health of backend pool"
     az network application-gateway show-backend-health `
         --name "$gatewayName" `
         --resource-group "$AKS_PERS_RESOURCE_GROUP" `
@@ -1524,23 +1524,23 @@ function global:ConfigureWAF() {
         $publicip = az network public-ip show -g $AKS_PERS_RESOURCE_GROUP -n IngressPublicIP --query "ipAddress" -o tsv;
     }  
 
-    Write-Host "Using Public IP: [$publicip]"
+    Write-Output "Using Public IP: [$publicip]"
     # get vnet and subnet name
     Do { $confirmation = Read-Host "Would you like to connect the Azure WAF to an existing virtual network? (y/n)"}
     while ([string]::IsNullOrWhiteSpace($confirmation))
 
     if ($confirmation -eq 'y') {
-        Write-Host "Finding existing vnets..."
+        Write-Output "Finding existing vnets..."
         # az network vnet list --query "[].[name,resourceGroup ]" -o tsv    
 
         $vnets = az network vnet list --query "[].[name]" -o tsv
 
         Do { 
-            Write-Host "------  Existing vnets -------"
+            Write-Output "------  Existing vnets -------"
             for ($i = 1; $i -le $vnets.count; $i++) {
-                Write-Host "$i. $($vnets[$i-1])"
+                Write-Output "$i. $($vnets[$i-1])"
             }    
-            Write-Host "------  End vnets -------"
+            Write-Output "------  End vnets -------"
 
             $index = Read-Host "Enter number of vnet to use (1 - $($vnets.count))"
             $AKS_VNET_NAME = $($vnets[$index - 1])
@@ -1553,19 +1553,19 @@ function global:ConfigureWAF() {
             # while ([string]::IsNullOrWhiteSpace($AKS_SUBNET_RESOURCE_GROUP)) 
 
             $AKS_SUBNET_RESOURCE_GROUP = az network vnet list --query "[?name == '$AKS_VNET_NAME'].resourceGroup" -o tsv
-            Write-Host "Using subnet resource group: [$AKS_SUBNET_RESOURCE_GROUP]"
+            Write-Output "Using subnet resource group: [$AKS_SUBNET_RESOURCE_GROUP]"
 
-            Write-Host "Finding existing subnets in $AKS_VNET_NAME ..."
+            Write-Output "Finding existing subnets in $AKS_VNET_NAME ..."
             $subnets = az network vnet subnet list --resource-group $AKS_SUBNET_RESOURCE_GROUP --vnet-name $AKS_VNET_NAME --query "[].name" -o tsv
         
             Do { 
-                Write-Host "------  Subnets in $AKS_VNET_NAME -------"
+                Write-Output "------  Subnets in $AKS_VNET_NAME -------"
                 for ($i = 1; $i -le $subnets.count; $i++) {
-                    Write-Host "$i. $($subnets[$i-1])"
+                    Write-Output "$i. $($subnets[$i-1])"
                 }    
-                Write-Host "------  End Subnets -------"
+                Write-Output "------  End Subnets -------"
 
-                Write-Host "NOTE: Each customer should have their own gateway subnet.  This subnet should be different than the cluster subnet"
+                Write-Output "NOTE: Each customer should have their own gateway subnet.  This subnet should be different than the cluster subnet"
                 $index = Read-Host "Enter number of subnet to use (1 - $($subnets.count))"
                 $AKS_SUBNET_NAME = $($subnets[$index - 1])
             }
@@ -1585,24 +1585,24 @@ function global:GetConfigFile() {
         $folder = "c:\kubernetes\deployments"
     }
     if (Test-Path -Path $folder -PathType Container) {
-        Write-Host "Looking in $folder for *.json files"
-        Write-Host "You can set CatalystConfigPath environment variable to use a different path"
+        Write-Output "Looking in $folder for *.json files"
+        Write-Output "You can set CatalystConfigPath environment variable to use a different path"
 
         $files = Get-ChildItem "$folder" -Filter *.json
 
         if ($files.Count -gt 0) {
-            Write-Host "Choose config file from $folder"
+            Write-Output "Choose config file from $folder"
             for ($i = 1; $i -le $files.count; $i++) {
-                Write-Host "$i. $($($files[$i-1]).Name)"
+                Write-Output "$i. $($($files[$i-1]).Name)"
             }    
-            Write-Host "-------------"
+            Write-Output "-------------"
             $index = Read-Host "Enter number of file to use (1 - $($files.count))"
             $Return.FilePath = $($($files[$index - 1]).FullName)
             return $Return
         }
     }
 
-    Write-Host "Sample config file: https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/deployments/sample.json"
+    Write-Output "Sample config file: https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/deployments/sample.json"
     Do { $fullpath = Read-Host "Type full path to config file: "}
     while ([string]::IsNullOrWhiteSpace($fullpath))
     
@@ -1615,7 +1615,7 @@ function global:ReadConfigFile() {
 
     $configfilepath = $(GetConfigFile).FilePath
 
-    Write-Host "Reading config from $configfilepath"
+    Write-Output "Reading config from $configfilepath"
     $config = $(Get-Content $configfilepath -Raw | ConvertFrom-Json)
 
     $Return.Config = $config
@@ -1646,7 +1646,7 @@ function global:CreateAzureStorage([ValidateNotNullOrEmpty()] $namespace) {
     
     $resourceGroup = $(GetResourceGroup).ResourceGroup
 
-    Write-Host "Using resource group: $resourceGroup"        
+    Write-Output "Using resource group: $resourceGroup"        
     
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
         kubectl create namespace $namespace
@@ -1668,14 +1668,14 @@ function global:DeleteAzureStorage([ValidateNotNullOrEmpty()] $namespace) {
     
     $resourceGroup = $(GetResourceGroup).ResourceGroup
 
-    Write-Host "Using resource group: $resourceGroup"        
+    Write-Output "Using resource group: $resourceGroup"        
     
     $shareName = "$namespace"
     $storageAccountName = ReadSecretValue -secretname azure-secret -valueName "azurestorageaccountname" 
     
     $storageAccountConnectionString = az storage account show-connection-string -n $storageAccountName -g $resourceGroup -o tsv
     
-    Write-Host "deleting the file share: $shareName"
+    Write-Output "deleting the file share: $shareName"
     DeleteAzureFileShare -sharename $sharename -storageAccountConnectionString $storageAccountConnectionString
     return $Return
 }
@@ -1692,7 +1692,7 @@ function global:CreateOnPremStorage([ValidateNotNullOrEmpty()] $namespace) {
     $shareName = "$namespace"
     $sharePath = "/mnt/data/$shareName"
 
-    Write-Host "Create the file share: $sharePath"
+    Write-Output "Create the file share: $sharePath"
 
     New-Item -ItemType Directory -Force -Path $sharePath   
     
@@ -1710,7 +1710,7 @@ function global:DeleteOnPremStorage([ValidateNotNullOrEmpty()] $namespace) {
     $shareName = "$namespace"
     $sharePath = "/mnt/data/$shareName"
 
-    Write-Host "Deleting the file share: $sharePath"
+    Write-Output "Deleting the file share: $sharePath"
 
     Remove-Item -Recurse -Force $sharePath 
     
@@ -1726,7 +1726,7 @@ function global:WaitForLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) 
     }
     $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
     
-    Write-Host "Sleeping for 10 seconds so kube services get IPs assigned"
+    Write-Output "Sleeping for 10 seconds so kube services get IPs assigned"
     Start-Sleep -Seconds 10
     
     FixLoadBalancers -resourceGroup $resourceGroup
@@ -1776,4 +1776,4 @@ function global:DeleteNamespaceAndData([ValidateNotNullOrEmpty()] $namespace, $i
     return $Return
 }
 #-------------------
-Write-Host "end common.ps1 version $versioncommon"
+Write-Output "end common.ps1 version $versioncommon"

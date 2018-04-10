@@ -1,13 +1,13 @@
 param([int]$ssl, [string]$ingressInternal, [string]$ingressExternal, [string]$customerid, [string]$publicIp)
 # the above MUST be the first line
-Write-Host "Received parameters:"
-Write-Host "ssl:$ssl"
-Write-Host "ingressInternal:$ingressInternal"
-Write-Host "ingressExternal:$ingressExternal"
-Write-Host "customerid:$customerid"
-Write-Host "publicIp:$publicIp"
-Write-Host "----"
-Write-Host "Version 2018.04.02.02"
+Write-Output "Received parameters:"
+Write-Output "ssl:$ssl"
+Write-Output "ingressInternal:$ingressInternal"
+Write-Output "ingressExternal:$ingressExternal"
+Write-Output "customerid:$customerid"
+Write-Output "publicIp:$publicIp"
+Write-Output "----"
+Write-Output "Version 2018.04.10.01"
 
 #
 # This script is meant for quick & easy install via:
@@ -16,7 +16,7 @@ Write-Host "Version 2018.04.02.02"
 $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 # $GITHUB_URL = "C:\Catalyst\git\Installscripts"
 
-Write-Host "GITHUB_URL: $GITHUB_URL"
+Write-Output "GITHUB_URL: $GITHUB_URL"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random

@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/main.sh | bash
 #
 #
-version="2018.04.10.01"
+version="2018.04.10.02"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -33,9 +33,9 @@ while [[ "$input" != "q" ]]; do
         ;;
     41)  kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=fabricnlp -o wide
         ;;
-    43)  Write-Host "MySql root password: $(ReadSecretPassword mysqlrootpassword fabricnlp)"
-            Write-Host "MySql NLP_APP_USER password: $(ReadSecretPassword mysqlpassword fabricnlp)"
-            Write-Host "SendGrid SMTP Relay key: $(ReadSecretPassword smtprelaypassword fabricnlp)"
+    43)  Write-Output "MySql root password: $(ReadSecretPassword mysqlrootpassword fabricnlp)"
+            Write-Output "MySql NLP_APP_USER password: $(ReadSecretPassword mysqlpassword fabricnlp)"
+            Write-Output "SendGrid SMTP Relay key: $(ReadSecretPassword smtprelaypassword fabricnlp)"
         ;;
     44)  pods=$(kubectl get pods -n fabricnlp -o jsonpath='{.items[*].metadata.name}')
         for pod in $pods

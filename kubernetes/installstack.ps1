@@ -1,11 +1,11 @@
 param([String]$namespace, [String]$appfolder, [int]$isAzure)
 # the above MUST be the first line
-Write-Host "Received parameters:"
-Write-Host "namespace:$namespace"
-Write-Host "appfolder:$appfolder"
-Write-Host "isAzure:$isAzure"
-Write-Host "----"
-Write-Host "Version 2018.04.02.01"
+Write-Output "Received parameters:"
+Write-Output "namespace:$namespace"
+Write-Output "appfolder:$appfolder"
+Write-Output "isAzure:$isAzure"
+Write-Output "----"
+Write-Output "Version 2018.04.10.01"
 
 # curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/realtime/installrealtimekubernetes.ps1 | iex;
 

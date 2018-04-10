@@ -4,7 +4,7 @@ set -e
 # This script is meant for quick & easy install via:
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/menu-realtime.sh | bash
 #
-version="2018.03.28.01"
+version="2018.04.10.01"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -41,11 +41,11 @@ while [[ "$input" != "q" ]]; do
         echo "RabbitMq Mgmt UI is at: http://${certhostname}/rabbitmq/ user: admin password: $(ReadSecretPassword rabbitmqmgmtuipassword fabricrealtime)"
         echo "Mirth Mgmt UI is at: http://${certhostname}/mirth/ user: admin password:admin"
         ;;
-    4)  Write-Host "MySql root password: $(ReadSecretPassword mysqlrootpassword fabricrealtime)"
-            Write-Host "MySql NLP_APP_USER password: $(ReadSecretPassword mysqlpassword fabricrealtime)"
-            Write-Host "certhostname: $(ReadSecret certhostname fabricrealtime)"
-            Write-Host "certpassword: $(ReadSecretPassword certpassword fabricrealtime)"
-            Write-Host "rabbitmq mgmtui user: admin password: $(ReadSecretPassword rabbitmqmgmtuipassword fabricrealtime)"
+    4)  Write-Output "MySql root password: $(ReadSecretPassword mysqlrootpassword fabricrealtime)"
+            Write-Output "MySql NLP_APP_USER password: $(ReadSecretPassword mysqlpassword fabricrealtime)"
+            Write-Output "certhostname: $(ReadSecret certhostname fabricrealtime)"
+            Write-Output "certpassword: $(ReadSecretPassword certpassword fabricrealtime)"
+            Write-Output "rabbitmq mgmtui user: admin password: $(ReadSecretPassword rabbitmqmgmtuipassword fabricrealtime)"
         ;;
     5)  pods=$(kubectl get pods -n fabricrealtime -o jsonpath='{.items[*].metadata.name}')
         for pod in $pods

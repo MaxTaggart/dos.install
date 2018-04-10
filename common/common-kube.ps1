@@ -1,10 +1,10 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.10.01"
+$versionkubecommon = "2018.04.10.02"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
 
-Write-Host "Including common-kube.ps1 version $versionkubecommon"
+Write-Output "Including common-kube.ps1 version $versionkubecommon"
 function global:GetCommonKubeVersion() {
     return $versionkubecommon
 }
@@ -80,7 +80,7 @@ function global:AskForPassword ([ValidateNotNullOrEmpty()] $secretname, $prompt,
         kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$mysqlrootpassword
     }
     else {
-        Write-Host "$secretname secret already set so will reuse it"
+        Write-Output "$secretname secret already set so will reuse it"
     }
 
     return $Return
@@ -102,7 +102,7 @@ function global:GenerateSecretPassword ([ValidateNotNullOrEmpty()] $secretname, 
         kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$mysqlrootpassword
     }
     else {
-        Write-Host "$secretname secret already set so will reuse it"
+        Write-Output "$secretname secret already set so will reuse it"
     }
 
     return $Return
@@ -131,7 +131,7 @@ function global:AskForPasswordAnyCharacters ([ValidateNotNullOrEmpty()] $secretn
         kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$mysqlrootpassword
     }
     else {
-        Write-Host "$secretname secret already set so will reuse it"
+        Write-Output "$secretname secret already set so will reuse it"
     }
 
     return $Return
@@ -152,7 +152,7 @@ function global:AskForSecretValue ([ValidateNotNullOrEmpty()] $secretname, $prom
         kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$certhostname
     }
     else {
-        Write-Host "$secretname secret already set so will reuse it"
+        Write-Output "$secretname secret already set so will reuse it"
     }    
     return $Return
 }
@@ -160,7 +160,7 @@ function global:AskForSecretValue ([ValidateNotNullOrEmpty()] $secretname, $prom
 function global:ReadYamlAndReplaceCustomer([ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $templateFile, $customerid ) {
     [hashtable]$Return = @{} 
     
-    Write-Host "Reading from url: ${baseUrl}/${templateFile}"
+    Write-Output "Reading from url: ${baseUrl}/${templateFile}"
 
     if ($baseUrl.StartsWith("http")) { 
         Invoke-WebRequest -Uri "${baseUrl}/${templateFile}?f=${randomstring}" -UseBasicParsing -ContentType "text/plain; charset=utf-8" `
@@ -168,7 +168,7 @@ function global:ReadYamlAndReplaceCustomer([ValidateNotNullOrEmpty()] $baseUrl, 
             | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"}
     }
     else {
-        #        Write-Host "Reading from local file: $GITHUB_URL/$templateFile"
+        #        Write-Output "Reading from local file: $GITHUB_URL/$templateFile"
         Get-Content -Path "$baseUrl/$templateFile" `
             | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"} 
     }
@@ -200,7 +200,7 @@ function global:Stop-ProcessByPort( [ValidateNotNullOrEmpty()] [int] $Port ) {
 
     $netstat = netstat.exe -ano | Select-Object -Skip 4
     $p_line = $netstat | Where-Object { $p = ( -split $_ | Select-Object -Index 1) -split ':' | Select-Object -Last 1; $p -eq $Port } | Select-Object -First 1
-    if (!$p_line) { Write-Host "No process found using port" $Port; return }    
+    if (!$p_line) { Write-Output "No process found using port" $Port; return }    
     $p_id = $p_line -split '\s+' | Select-Object -Last 1
     if (!$p_id) { throw "Can't parse process id for port $Port" }
     
@@ -216,7 +216,7 @@ function global:CreateNamespaceIfNotExists([ValidateNotNullOrEmpty()] $namespace
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
-        Write-Host "Creating namespace: $namespace"
+        Write-Output "Creating namespace: $namespace"
         kubectl create namespace $namespace
     }
     return $Return
@@ -226,7 +226,7 @@ function global:CreateNamespaceIfNotExists([ValidateNotNullOrEmpty()] $namespace
 function global:CleanOutNamespace([ValidateNotNullOrEmpty()] $namespace) {
     [hashtable]$Return = @{} 
 
-    Write-Host "--- Cleaning out any old resources in $namespace ---"
+    Write-Output "--- Cleaning out any old resources in $namespace ---"
 
     # note kubectl doesn't like spaces in between commas below
     kubectl delete --all 'deployments,pods,services,ingress,persistentvolumeclaims,jobs,cronjobs' --namespace=$namespace --ignore-not-found=true
@@ -234,30 +234,30 @@ function global:CleanOutNamespace([ValidateNotNullOrEmpty()] $namespace) {
     # can't delete persistent volume claims since they are not scoped to namespace
     kubectl delete 'pv' -l namespace=$namespace --ignore-not-found=true
 
-    Write-Host "Waiting for resources to be deleted"
+    Write-Output "Waiting for resources to be deleted"
     $CLEANUP_DONE = "n"
     $counter = 0
     Do {
         $CLEANUP_DONE = $(kubectl get 'deployments,pods,services,ingress,persistentvolumeclaims,jobs,cronjobs' --namespace=$namespace -o jsonpath="{.items[*].metadata.name}")
         if (![string]::IsNullOrEmpty($CLEANUP_DONE)) {
             $counter++
-            Write-Host "[$counter] Remaining items: $CLEANUP_DONE"
+            Write-Output "[$counter] Remaining items: $CLEANUP_DONE"
             Start-Sleep 5
         }
     }
     while ((![string]::IsNullOrEmpty($CLEANUP_DONE)) -and ($counter -lt 12))
 
     if (![string]::IsNullOrEmpty($CLEANUP_DONE)) {
-        Write-Host "Deleting pods didn't work so deleting with force"
+        Write-Output "Deleting pods didn't work so deleting with force"
         kubectl delete --all 'pods' --grace-period=0 --force --namespace=$namespace --ignore-not-found=true
-        Write-Host "Waiting for resources to be deleted"
+        Write-Output "Waiting for resources to be deleted"
         $CLEANUP_DONE = "n"
         $counter = 0
         Do {
             $CLEANUP_DONE = $(kubectl get 'deployments,pods,services,ingress,persistentvolumeclaims,jobs,cronjobs' --namespace=$namespace -o jsonpath="{.items[*].metadata.name}")
             if (![string]::IsNullOrEmpty($CLEANUP_DONE)) {
                 $counter++
-                Write-Host "[$counter] Remaining items: $CLEANUP_DONE"
+                Write-Output "[$counter] Remaining items: $CLEANUP_DONE"
                 Start-Sleep 5
             }
         }
@@ -270,10 +270,10 @@ function global:CleanOutNamespace([ValidateNotNullOrEmpty()] $namespace) {
 function global:DeleteAllSecrets([ValidateNotNullOrEmpty()] $namespace) {
     [hashtable]$Return = @{} 
 
-    Write-Host "--- Deleting all secrets in $namespace ---"
+    Write-Output "--- Deleting all secrets in $namespace ---"
     $secrets = $(kubectl get secrets -n $namespace -o jsonpath="{.items[?(@.type=='Opaque')].metadata.name}")
     foreach ($secret in $secrets.Split(" ")) {
-        Write-Host "deleting secret: $secret"
+        Write-Output "deleting secret: $secret"
         kubectl delete secret $secret -n $namespace
     }
 
@@ -286,22 +286,22 @@ function global:SwitchToKubCluster([ValidateNotNullOrEmpty()] $folderToUse) {
 
     $fileToUse = "${folderToUse}\temp\.kube\config"
 
-    Write-Host "Checking if file exists: $fileToUse"
+    Write-Output "Checking if file exists: $fileToUse"
 
     if (Test-Path -Path $fileToUse) {
         $userKubeConfigFolder = "${env:userprofile}\.kube"
         If (!(Test-Path $userKubeConfigFolder)) {
-            Write-Host "Creating $userKubeConfigFolder"
+            Write-Output "Creating $userKubeConfigFolder"
             New-Item -ItemType Directory -Force -Path "$userKubeConfigFolder"
         }            
 
         $destinationFile = "${userKubeConfigFolder}\config"
-        Write-Host "Copying $fileToUse to $destinationFile"
+        Write-Output "Copying $fileToUse to $destinationFile"
         Copy-Item -Path "$fileToUse" -Destination "$destinationFile"
         # set environment variable KUBECONFIG to point to this location
         $env:KUBECONFIG = "$destinationFile"
         [Environment]::SetEnvironmentVariable("KUBECONFIG", "$destinationFile", [EnvironmentVariableTarget]::User)
-        Write-Host "Current cluster: $(kubectl config current-context)"    
+        Write-Output "Current cluster: $(kubectl config current-context)"    
     }
     else {
         Write-Error "$fileToUse not found"
@@ -312,7 +312,7 @@ function global:SwitchToKubCluster([ValidateNotNullOrEmpty()] $folderToUse) {
 function global:CleanKubConfig() {
     [hashtable]$Return = @{} 
 
-    Write-Host "Clearing out kube config"
+    Write-Output "Clearing out kube config"
     $userKubeConfigFolder = "$env:userprofile\.kube"
     $destinationFile = "${userKubeConfigFolder}\config"
     Remove-Item -Path "$destinationFile" -Force
@@ -339,7 +339,7 @@ function global:DeployYamlFiles([ValidateNotNullOrEmpty()] $namespace, [Validate
     [hashtable]$Return = @{} 
 
     if ($resources) {
-        Write-Host "-- Deploying $folder --"
+        Write-Output "-- Deploying $folder --"
         foreach ($file in $resources) {
             ReadYamlAndReplaceCustomer -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -customerid $customerid | kubectl apply -f -
         }
@@ -350,7 +350,7 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
-        Write-Host "namespace $namespace does not exist so creating it"
+        Write-Output "namespace $namespace does not exist so creating it"
         kubectl create namespace $namespace
     }
     
@@ -360,7 +360,7 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
     # $configpath="./$appfolder/index.json"
     # $config = $(Get-Content "$configpath" -Raw | ConvertFrom-Json)
 
-    Write-Host "Installing stack $($config.name) version $($config.version) from $configpath"
+    Write-Output "Installing stack $($config.name) version $($config.version) from $configpath"
 
     foreach ($secret in $($config.secrets.password)) {
         GenerateSecretPassword -secretname "$secret" -namespace "$namespace"
@@ -374,7 +374,7 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
             $sourceSecretName = $($secret.valueFromSecret.name)
             $sourceSecretNamespace = $($secret.valueFromSecret.namespace)
             $value = ReadSecret -secretname $sourceSecretName -namespace $sourceSecretNamespace
-            Write-Host "Setting secret [$($secret.name)] to secret [$sourceSecretName] in namespace [$sourceSecretNamespace] with value [$value]"
+            Write-Output "Setting secret [$($secret.name)] to secret [$sourceSecretName] in namespace [$sourceSecretNamespace] with value [$value]"
             SaveSecretValue -secretname "$($secret.name)" -valueName "value" -value $value -namespace "$namespace"
         }
     }
@@ -385,7 +385,7 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
     
     $customerid = ReadSecret -secretname customerid
     $customerid = $customerid.ToLower().Trim()
-    Write-Host "Customer ID: $customerid"
+    Write-Output "Customer ID: $customerid"
 
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "dns" -customerid $customerid -resources $($config.resources.dns)
 
@@ -422,7 +422,7 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
 function global:DeploySimpleService([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $appfolder, [ValidateNotNullOrEmpty()] $customerid, $service) {
     [hashtable]$Return = @{} 
 
-    Write-Host "Deploying simpleservice: $($service.name)"
+    Write-Output "Deploying simpleservice: $($service.name)"
 
     $servicepublic = "$($service.name)-service"
 
@@ -433,7 +433,7 @@ function global:DeploySimpleService([ValidateNotNullOrEmpty()] $namespace, [Vali
         servicepublic = "$servicepublic"
     }
 
-    Write-Host "Creating pods for simpleservice"
+    Write-Output "Creating pods for simpleservice"
     # replace env section
     # populate ports
 
@@ -454,10 +454,10 @@ function global:DeploySimpleService([ValidateNotNullOrEmpty()] $namespace, [Vali
         $object = New-Object –TypeNamePSObject –Prop $properties
         $container.ports += $object
     }
-    Write-Host "--- deployment ---"
-    Write-Host $json            
+    Write-Output "--- deployment ---"
+    Write-Output $json            
 
-    Write-Host "Creating services for simpleservice"
+    Write-Output "Creating services for simpleservice"
     $templatefile = "$baseUrl\templates\services\cluster\template.json"
     $template = $(Get-Content -Raw -Path $templatefile)
     $jsontext = $(Merge-Tokens $template $tokens)
@@ -471,10 +471,10 @@ function global:DeploySimpleService([ValidateNotNullOrEmpty()] $namespace, [Vali
         }
         $json.ports += $portspec
     }
-    Write-Host "--- cluster service ---"
-    Write-Host $json            
+    Write-Output "--- cluster service ---"
+    Write-Output $json            
 
-    Write-Host "Creating ingress for simpleservice"
+    Write-Output "Creating ingress for simpleservice"
     $templatefile = "$baseUrl\templates\ingress\http\template.path.json"
     $template = $(Get-Content -Raw -Path $templatefile)
     $jsontext = $(Merge-Tokens $template $tokens)
@@ -492,9 +492,9 @@ function global:DeploySimpleService([ValidateNotNullOrEmpty()] $namespace, [Vali
         # $json.ports.add $portspec
     }
 
-    Write-Host "Creating Persistent Volumes for simple service"
+    Write-Output "Creating Persistent Volumes for simple service"
 
-    Write-Host "Creating Volume Claims for simple service"
+    Write-Output "Creating Volume Claims for simple service"
 
     return $Return
 }
@@ -503,7 +503,7 @@ function global:DeploySimpleServices([ValidateNotNullOrEmpty()] $namespace, [Val
     [hashtable]$Return = @{} 
 
     if ($services) {
-        Write-Host "-- Deploying simpleservices --"
+        Write-Output "-- Deploying simpleservices --"
         foreach ($service in $services) {
             DeploySimpleService -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -customerid $customerid -service $service
         }
@@ -526,12 +526,12 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
 
     kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
 
-    Write-Host "GITHUB_URL: $baseUrl"
+    Write-Output "GITHUB_URL: $baseUrl"
 
     # setting up traefik
     # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
 
-    Write-Host "Deploying configmaps"
+    Write-Output "Deploying configmaps"
     $folder = "loadbalancer/configmaps"
     if ($ssl) {
         $files = "config.ssl.yaml"
@@ -544,16 +544,16 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
 
     $kubectlversion = $(kubectl version --short=true)[1]
     if ($kubectlversion -match "v1.8") {
-        Write-Host "Since kubectlversion ($kubectlversion) is less than 1.9 no roles are needed"
+        Write-Output "Since kubectlversion ($kubectlversion) is less than 1.9 no roles are needed"
     }
     else {
-        Write-Host "Deploying roles"
+        Write-Output "Deploying roles"
         $folder = "loadbalancer/roles"
         $files = "ingress-roles.yaml"
         DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
     }
 
-    Write-Host "Deploying pods"
+    Write-Output "Deploying pods"
     $folder = "loadbalancer/pods"
 
     if ($ingressExternal -eq "onprem" ) {
@@ -575,12 +575,12 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
         }    
     }
 
-    Write-Host "Deploying services"
+    Write-Output "Deploying services"
     $folder = "loadbalancer/services/cluster"
     $files = "dashboard.yaml dashboard-internal.yaml"
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
 
-    Write-Host "Deploying ingress"
+    Write-Output "Deploying ingress"
     $folder = "loadbalancer/ingress"
 
     if ($ssl ) {
@@ -595,21 +595,21 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     $folder = "loadbalancer/services/external"
 
     if ($ingressExternal -eq "onprem" ) {
-        Write-Host "Setting up external load balancer"
+        Write-Output "Setting up external load balancer"
         $files = "loadbalancer.onprem.yaml"
         DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
     }    
     elseif ("$ingressExternal" -ne "vnetonly") {
-        Write-Host "Setting up a public load balancer"
+        Write-Output "Setting up a public load balancer"
 
-        Write-Host "Using Public IP: [$publicip]"
+        Write-Output "Using Public IP: [$publicip]"
 
-        Write-Host "Setting up external load balancer"
+        Write-Output "Setting up external load balancer"
         $files = "loadbalancer.external.yaml"
         DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
     }
     else {
-        Write-Host "Setting up an external load balancer"
+        Write-Output "Setting up an external load balancer"
         $files = "loadbalancer.external.restricted.yaml"
         DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
     }
@@ -618,11 +618,11 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     if ($ingressExternal -eq "onprem" ) {
     }
     elseif ("$ingressInternal" -eq "public") {
-        Write-Host "Setting up an internal load balancer"
+        Write-Output "Setting up an internal load balancer"
         $files = "loadbalancer.internal.open.yaml"
     }
     else {
-        Write-Host "Setting up an internal load balancer"
+        Write-Output "Setting up an internal load balancer"
         $files = "loadbalancer.internal.yaml"
     }
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
@@ -647,4 +647,4 @@ function Merge-Tokens($template, $tokens) {
         })
 }
 # --------------------
-Write-Host "end common-kube.ps1 version $versioncommon"
+Write-Output "end common-kube.ps1 version $versioncommon"
