@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.04.10.01"
+version="2018.04.10.02"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -180,7 +180,7 @@ while [[ "$input" != "q" ]]; do
         ;;
     51) curl -sSL $GITHUB_URL/onprem/menu-realtime.sh?p=$RANDOM | bash
         ;;
-    51) curl -sSL $GITHUB_URL/onprem/menu-nlp.sh?p=$RANDOM | bash
+    52) curl -sSL $GITHUB_URL/onprem/menu-nlp.sh?p=$RANDOM | bash
         ;;
     q) echo  "Exiting" 
     ;;
