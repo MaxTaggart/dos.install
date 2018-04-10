@@ -1,4 +1,4 @@
-Write-Host "setup-loadbalancer version 2018.04.09.04"
+Write-Host "setup-loadbalancer version 2018.04.09.05"
 
 #
 # This script is meant for quick & easy install via:
@@ -175,7 +175,7 @@ if ("$($config.ingress.external)" -ne "vnetonly") {
     Write-Host "Using Public IP: [$publicip]"
 }
 
-LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl $ssl -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -publicIp $publicIp
+LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl $($config.ssl) -ingressInternal "$ingressInternal" -ingressExternal "$ingressExternal" -customerid $customerid -publicIp $publicIp
 
 # setting up traefik
 # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
