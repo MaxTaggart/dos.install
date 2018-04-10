@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/main.sh | bash
 #
 #
-version="2018.03.27.06"
+version="2018.04.10.01"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -29,7 +29,7 @@ while [[ "$input" != "q" ]]; do
     read -p "Please make a selection:" -e input  < /dev/tty 
 
     case "$input" in
-    25)  curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/nlp/installnlpkubernetes.sh?p=$RANDOM | bash
+    25)  InstallStack $GITHUB_URL "fabricnlp" "nlp"
         ;;
     41)  kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=fabricnlp -o wide
         ;;
