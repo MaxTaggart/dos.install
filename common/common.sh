@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.09.03"
+versioncommon="2018.04.10.01"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -336,7 +336,7 @@ function InstallStack(){
     local appfolder=$3
     
     curl -sSL -o installstack.ps1 "$baseUrl/kubernetes/installstack.ps1?p=$RANDOM"
-    clear
+    # clear
     # can't put tee on the next line or pwsh has issues including common files
     pwsh -f installstack.ps1 -namespace "$namespace" -appfolder "$appfolder" -isAzure 0 -NonInteractive    
 }
@@ -350,7 +350,7 @@ function InstallLoadBalancerStack(){
     local publicIp=""
     
     curl -sSL -o installloadbalancerstack.ps1 "$baseUrl/kubernetes/installloadbalancerstack.ps1?p=$RANDOM"
-    clear
+    # clear
     # can't put tee on the next line or pwsh has issues including common files
     pwsh -f installloadbalancerstack.ps1 -ssl $ssl -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -publicIp $publicIp -NonInteractive    
 }
