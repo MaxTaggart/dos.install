@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #
 #
-version="2018.04.09.03"
+version="2018.04.10.01"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -30,8 +30,8 @@ source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 echo "running stty sane to fix terminal keyboard mappings"
 stty sane < /dev/tty
 
-echo "setting TERM to xterm"
-export TERM=xterm
+# echo "setting TERM to xterm"
+# export TERM=xterm
 
 mkdir -p $HOME/bin
 installscript="$HOME/bin/dos"
