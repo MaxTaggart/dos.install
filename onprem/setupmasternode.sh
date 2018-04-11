@@ -25,6 +25,9 @@ echo "--- running kubeadm init ---"
 sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=10.244.0.0/16
 echo "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
 
+echo "--- kubelet status ---"
+sudo systemctl status kubelet
+
 # which CNI plugin to use: https://chrislovecnm.com/kubernetes/cni/choosing-a-cni-provider/
 
 # for logs, sudo journalctl -xeu kubelet

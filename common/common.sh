@@ -470,5 +470,7 @@ function TestDNS(){
     echo "--- testing if we can access external network ---"
     kubectl exec busybox wget www.google.com
     kubectl delete -f $baseUrl/kubernetes/test/busybox.yaml    
+    echo "--- firewall logs ---"
+    sudo systemctl status firewalld
 }
 echo "--- Finished including common.sh version $versioncommon ---"

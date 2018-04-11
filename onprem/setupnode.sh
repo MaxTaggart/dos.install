@@ -42,57 +42,65 @@ sudo yum -y remove postfix chrony iptables-services
 echo "turning off swap"
 # https://blog.alexellis.io/kubernetes-in-10-minutes/
 sudo swapoff -a
-# comment out swap file in /etc/fstab
+echo "removing swap from /etc/fstab"
+grep -v "swap" /etc/fstab | sudo tee /etc/fstab
 echo "--- current swap files ---"
 sudo cat /proc/swaps
 
-# echo "switching from firewalld to iptables"
-# # https://www.digitalocean.com/community/tutorials/how-to-migrate-from-firewalld-to-iptables-on-centos-7
-# sudo systemctl stop firewalld && sudo systemctl start iptables; sudo systemctl start ip6tables
-# # sudo firewall-cmd --state
-# sudo systemctl disable firewalld
-# sudo systemctl enable iptables
-# sudo systemctl enable ip6tables
+function ConfigureIpTables(){
+  echo "switching from firewalld to iptables"
+  # https://www.digitalocean.com/community/tutorials/how-to-migrate-from-firewalld-to-iptables-on-centos-7
+  sudo systemctl stop firewalld && sudo systemctl start iptables; sudo systemctl start ip6tables
+  # sudo firewall-cmd --state
+  sudo systemctl disable firewalld
+  sudo systemctl enable iptables
+  sudo systemctl enable ip6tables
 
-# echo "setting up iptables rules"
-# # https://www.digitalocean.com/community/tutorials/iptables-essentials-common-firewall-rules-and-commands
-# echo "allowing loopback connections"
-# sudo iptables -A INPUT -i lo -j ACCEPT
-# sudo iptables -A OUTPUT -o lo -j ACCEPT
-# echo "allowing established and related incoming connections"
-# sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-# echo "allowing established outgoing connections"
-# sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
-# echo "allowing docker containers to access the external network"
-# sudo iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
-# sudo iptables -A FORWARD -i docker0 -o eth0 -j ACCEPT
-# echo "allow all incoming ssh"
-# sudo iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
-# sudo iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
-# # reject an IP address
-# # sudo iptables -A INPUT -s 15.15.15.51 -j REJECT
-# echo "allow incoming HTTP"
-# sudo iptables -A INPUT -p tcp --dport 80 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
-# sudo iptables -A OUTPUT -p tcp --sport 80 -m conntrack --ctstate ESTABLISHED -j ACCEPT
-# echo "allow incoming HTTPS"
-# sudo iptables -A INPUT -p tcp --dport 443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
-# sudo iptables -A OUTPUT -p tcp --sport 443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
-# #echo "block outgoing SMTP Mail"
-# #sudo iptables -A OUTPUT -p tcp --dport 25 -j REJECT
-# echo "---- current iptables rules ---"
-# sudo iptables -t nat -L
+  echo "setting up iptables rules"
+  # https://www.digitalocean.com/community/tutorials/iptables-essentials-common-firewall-rules-and-commands
+  echo "allowing loopback connections"
+  sudo iptables -A INPUT -i lo -j ACCEPT
+  sudo iptables -A OUTPUT -o lo -j ACCEPT
+  echo "allowing established and related incoming connections"
+  sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+  echo "allowing established outgoing connections"
+  sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
+  echo "allowing docker containers to access the external network"
+  sudo iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+  sudo iptables -A FORWARD -i docker0 -o eth0 -j ACCEPT
+  echo "allow all incoming ssh"
+  sudo iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+  sudo iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+  # reject an IP address
+  # sudo iptables -A INPUT -s 15.15.15.51 -j REJECT
+  echo "allow incoming HTTP"
+  sudo iptables -A INPUT -p tcp --dport 80 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+  sudo iptables -A OUTPUT -p tcp --sport 80 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+  echo "allow incoming HTTPS"
+  sudo iptables -A INPUT -p tcp --dport 443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+  sudo iptables -A OUTPUT -p tcp --sport 443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+  #echo "block outgoing SMTP Mail"
+  #sudo iptables -A OUTPUT -p tcp --dport 25 -j REJECT
+  echo "---- current iptables rules ---"
+  sudo iptables -t nat -L
+}
 
-echo "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
-# https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
-# kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
+function ConfigureFirewall(){
+  echo "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
+  # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
+  # kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
 
-sudo firewall-cmd --add-port=6443/tcp --permanent # kubernetes API server
-sudo firewall-cmd --add-port=10250/tcp --permanent # Kubelet API
-sudo firewall-cmd --add-port=10255/tcp --permanent # Read-only Kubelet API
-sudo firewall-cmd --add-port=80/tcp --permanent # HTTP
-sudo firewall-cmd --add-port=443/tcp --permanent # HTTPS
-sudo firewall-cmd --add-service=ntp --permanent # NTP server
-sudo firewall-cmd --reload
+  sudo firewall-cmd --add-port=6443/tcp --permanent # kubernetes API server
+  sudo firewall-cmd --add-port=10250/tcp --permanent # Kubelet API
+  sudo firewall-cmd --add-port=10255/tcp --permanent # Read-only Kubelet API
+  sudo firewall-cmd --add-port=80/tcp --permanent # HTTP
+  sudo firewall-cmd --add-port=443/tcp --permanent # HTTPS
+  sudo firewall-cmd --add-service=ntp --permanent # NTP server
+  sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0  
+  sudo firewall-cmd --reload
+}
+
+ConfigureFirewall
 
 echo "-- starting NTP deamon ---"
 # https://www.tecmint.com/install-ntp-server-in-centos/
