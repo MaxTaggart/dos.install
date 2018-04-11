@@ -98,8 +98,8 @@ function ConfigureIpTables(){
   
   echo "--- reloading iptables ---"
   sudo systemctl reload iptables
-  echo "--- saving iptables ---"
-  sudo iptables save
+  # echo "--- saving iptables ---"
+  # sudo iptables-save
   # echo "--- restarting iptables ---"
   # sudo systemctl restart iptables
   echo "--- status of iptables --"
