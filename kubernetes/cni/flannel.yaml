@@ -54,7 +54,7 @@ metadata:
 data:
   cni-conf.json: |
     {
-      "name": "cbr0",
+      "name": "vxlan0",
       "plugins": [
         {
           "type": "flannel",
@@ -73,9 +73,11 @@ data:
     }
   net-conf.json: |
     {
-      "Network": "10.244.0.0/16",
+      "Network": "192.168.0.0/16",
       "Backend": {
-        "Type": "vxlan"
+        "Type": "vxlan",
+        "VNI" : 4096,
+        "Port": 4789
       }
     }
 ---
