@@ -11,9 +11,9 @@ function New-LinuxVM {
 		[Parameter()][String]$InstallISOPath = '',
 		[Parameter()][Switch]$Cluster,
 		[Parameter()][String]$VMSwitchName = '',
-		[Parameter()][Uint32]$StartupMemory = 512MB,
+		[Parameter()][Uint32]$StartupMemory = 2048MB,
 		[Parameter()][Uint32]$MinimumMemory = 256MB,
-		[Parameter()][Uint32]$MaximumMemory = 1GB,
+		[Parameter()][Uint32]$MaximumMemory = 2GB,
 		[Parameter()][Uint64]$VHDXSizeBytes = 30GB
 	)
 

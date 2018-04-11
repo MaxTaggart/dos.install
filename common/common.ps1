@@ -372,6 +372,8 @@ function global:CreateStorageIfNotExists([ValidateNotNullOrEmpty()] $resourceGro
     #Create an hashtable variable 
     [hashtable]$Return = @{} 
 
+    Write-Information -MessageData "Checking to see if storage account exists"
+
     $location = az group show --name $resourceGroup --query "location" -o tsv
 
     if ([string]::IsNullOrWhiteSpace($storageAccountName)) {

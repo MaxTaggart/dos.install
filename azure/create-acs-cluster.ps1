@@ -1,4 +1,9 @@
-Write-Host "--- create-acs-cluster Version 2018.04.02.02 ----"
+Write-Host "--- create-acs-cluster Version 2018.04.10.01 ----"
+
+# stop on error
+$ErrorActionPreference = "Stop"
+# show Information messages
+$InformationPreference = "Continue"
 
 #
 # This script is meant for quick & easy install via:
