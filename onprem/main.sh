@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.10.05"
+version="2018.04.10.06"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -114,8 +114,17 @@ while [[ "$input" != "q" ]]; do
         fi
         sudo rm -rf /var/etcd/backups/*
         sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
-        sudo yum -y remove docker docker-common docker-selinux docker-engine    
-        echo "Please restart this computer"
+        sudo yum -y remove docker docker-common docker-selinux docker-engine docker-ce
+        sudo yum -y remove docker \
+                        docker-client \
+                        docker-client-latest \
+                        docker-common \
+                        docker-latest \
+                        docker-latest-logrotate \
+                        docker-logrotate \
+                        docker-selinux \
+                        docker-engine-selinux \
+                        docker-engine
         ;;
     9)  SetupMaster $GITHUB_URL true
         ;;
