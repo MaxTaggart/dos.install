@@ -1,16 +1,16 @@
 #!/bin/bash
-set -e
+# set -e
 #
 # This script is meant for quick & easy install via:
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.10.06"
+version="2018.04.10.07"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
 if [ ! -x "$(command -v yum)" ]; then
-    echo "yum command is not available"
+    echo "ERROR: yum command is not available"
     exit
 fi
 
@@ -104,27 +104,7 @@ while [[ "$input" != "q" ]]; do
         ;;
     7)  InstallStack $GITHUB_URL "kube-system" "dashboard"
         ;;
-    8)  if [ -x "$(command -v kubeadm)" ]; then
-            sudo kubeadm reset
-        fi    
-        sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
-        if [ -x "$(command -v docker)" ]; then
-            sudo docker system prune -f
-            # sudo docker volume rm etcd
-        fi
-        sudo rm -rf /var/etcd/backups/*
-        sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
-        sudo yum -y remove docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux
-        sudo yum -y remove docker \
-                        docker-client \
-                        docker-client-latest \
-                        docker-common \
-                        docker-latest \
-                        docker-latest-logrotate \
-                        docker-logrotate \
-                        docker-selinux \
-                        docker-engine-selinux \
-                        docker-engine
+    8)  UninstallDockerAndKubernetes
         ;;
     9)  SetupMaster $GITHUB_URL true
         ;;
@@ -147,12 +127,7 @@ while [[ "$input" != "q" ]]; do
         ;;
     15)  mountAzureFile false
         ;;
-    16) sudo kubeadm reset 2>/dev/null
-        sudo docker system prune -f 2>/dev/null
-        sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
-        sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
-        sudo yum -y remove docker docker-common docker-selinux docker-engine    
-        echo "Please restart this computer"
+    16) UninstallDockerAndKubernetes
         ;;
     31)  echo "Current cluster: $(kubectl config current-context)"
         kubectl version --short

@@ -6,8 +6,10 @@ set -e
 #
 #
 
-version="2018.04.10.02"
+version="2018.04.10.03"
 echo "---- setupnode version $version ----"
+
+dockerversion="17.03.2.ce-1"
 
 u="$(whoami)"
 echo "User name: $u"
@@ -15,8 +17,17 @@ echo "User name: $u"
 echo "updating yum packages"
 sudo yum update -y
 
-echo "installing yum-utils"
-sudo yum -y install yum-versionlock yum-utils net-tools nmap
+echo "---- RAM ----"
+free -h
+echo "--- disk space ---"
+df -h
+
+echo "installing yum-utils and other packages"
+sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof
+
+echo "removing unneeded packages"
+# https://www.tecmint.com/remove-unwanted-services-in-centos-7/
+sudo yum -y remove postfix chrony
 
 echo "turning off swap"
 sudo swapoff -a
@@ -59,8 +70,6 @@ sudo yum -y remove docker \
                   
 # sudo rm -rf /var/lib/docker
 
-
-
 echo "--- Adding docker repo --"
 sudo yum-config-manager \
     --add-repo \
@@ -73,7 +82,7 @@ sudo yum -y --showduplicates list docker-ce
 
 echo "--- Installing docker via yum --"
 # need to pass --setpot=obsoletes=0 due to this bug: https://github.com/docker/for-linux/issues/20#issuecomment-312122325
-sudo yum install -y --setopt=obsoletes=0 docker-ce-17.03.2.ce-1.el7.centos docker-ce-selinux-17.03.2.ce-1.el7.centos
+sudo yum install -y --setopt=obsoletes=0 docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos
 echo "--- Locking version of docker so it does not get updated via yum update --"
 sudo yum versionlock docker-ce
 sudo yum versionlock docker-ce-selinux

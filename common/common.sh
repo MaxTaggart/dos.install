@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.10.02"
+versioncommon="2018.04.10.03"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -408,4 +408,27 @@ function SetupMaster(){
     fi
 }
 
+function UninstallDockerAndKubernetes(){
+    if [ -x "$(command -v kubeadm)" ]; then
+        sudo kubeadm reset
+    fi    
+    sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
+    if [ -x "$(command -v docker)" ]; then
+        sudo docker system prune -f
+        # sudo docker volume rm etcd
+    fi
+    sudo rm -rf /var/etcd/backups/*
+    sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
+    sudo yum -y remove docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux
+    sudo yum -y remove docker \
+                    docker-client \
+                    docker-client-latest \
+                    docker-common \
+                    docker-latest \
+                    docker-latest-logrotate \
+                    docker-logrotate \
+                    docker-selinux \
+                    docker-engine-selinux \
+                    docker-engine    
+}
 echo "--- Finished including common.sh version $versioncommon ---"
