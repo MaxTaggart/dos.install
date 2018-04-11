@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.11.02"
+versioncommon="2018.04.11.03"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -164,12 +164,16 @@ function AskForSecretValue () {
     if [[ -z "$(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true)" ]]; then
         # MySQL password requirements: https://dev.mysql.com/doc/refman/5.6/en/validate-password-plugin.html
         # we also use sed to replace configs: https://unix.stackexchange.com/questions/32907/what-characters-do-i-need-to-escape-when-using-sed-in-a-sh-script
-        read -p "${prompt}: " myvalue < /dev/tty
-        if [[ -z "$myvalue" ]]; then
-            if [[ ! -z "$defaultvalue" ]]; then
-                myvalue=$defaultvalue
+        myvalue=""
+        while [[ -z "$myvalue" ]]; do
+            read -p "${prompt}: " myvalue < /dev/tty       
+            if [[ -z "$myvalue" ]]; then
+                if [[ ! -z "$defaultvalue" ]]; then
+                    myvalue=$defaultvalue
+                fi
             fi
-        fi
+        done
+
         kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$myvalue
     else 
         Write-Output "$secretname secret already set so will reuse it"
@@ -231,7 +235,7 @@ function mountSMB(){
         read -p "path to SMB share (e.g., //myserver.mydomain/myshare): " pathToShare < /dev/tty    
     done  
     while [[ -z "$username" ]]; do
-    read -p "username: " username < /dev/tty
+        read -p "username: " username < /dev/tty
     done  
     while [[ -z "$password" ]]; do
         read -p "password: " password < /dev/tty

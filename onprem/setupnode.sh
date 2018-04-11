@@ -135,7 +135,13 @@ function ConfigureFirewall(){
   # sudo firewall-cmd --get-zone-of-interface=docker0
   # sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0  
 
+  # https://basildoncoder.com/blog/logging-connections-with-firewalld.html
+  # sudo firewall-cmd --zone=public --add-rich-rule="rule family="ipv4" source address="198.51.100.0/32" port protocol="tcp" port="10000" log prefix="test-firewalld-log" level="info" accept"
+  # sudo tail -f /var/log/messages |grep test-firewalld-log
 
+  # echo "log dropped packets"
+  # sudo firewall-cmd  --set-log-denied=all
+  
   # flannel settings
   # from https://github.com/kubernetes/contrib/blob/master/ansible/roles/flannel/tasks/firewalld.yml
   # echo "Open flanneld subnet traffic"
