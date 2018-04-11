@@ -42,11 +42,12 @@ sudo swapoff -a
 echo "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
 # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
 # kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
-sudo firewall-cmd --add-port=6443/tcp --permanent
-sudo firewall-cmd --add-port=10250/tcp --permanent
-sudo firewall-cmd --add-port=80/tcp --permanent
-sudo firewall-cmd --add-port=443/tcp --permanent
-sudo firewall-cmd --add-service=ntp --permanent
+sudo firewall-cmd --add-port=6443/tcp --permanent # kubernetes API server
+sudo firewall-cmd --add-port=10250/tcp --permanent # Kubelet API
+sudo firewall-cmd --add-port=10255/tcp --permanent # Read-only Kubelet API
+sudo firewall-cmd --add-port=80/tcp --permanent # HTTP
+sudo firewall-cmd --add-port=443/tcp --permanent # HTTPS
+sudo firewall-cmd --add-service=ntp --permanent # NTP server
 sudo firewall-cmd --reload
 
 echo "-- starting NTP deamon ---"
