@@ -113,7 +113,8 @@ while [[ "$input" != "q" ]]; do
     	sudo yum install -y hyperv-daemons
         echo "turning off disk optimization in centos since Hyper-V already does disk optimization"
         echo "noop" | sudo tee /sys/block/sda/queue/scheduler
-        echo "You can connect to this machine via SSH: ssh $(whoami)@$(hostname -i)"
+        myip=$(host $(hostname) | awk '/has address/ { print $4 ; exit }')
+        echo "You can connect to this machine via SSH: ssh $(whoami)@${myip}"
         grep -v "$(hostname)" /etc/hosts | sudo tee /etc/hosts > /dev/null
         echo "127.0.0.1 $(hostname)" | sudo tee -a /etc/hosts > /dev/null
         ;;
@@ -172,7 +173,7 @@ while [[ "$input" != "q" ]]; do
     38)  ls -al /mnt/data
         ;;
     39)  dnshostname=$(ReadSecret "dnshostname")
-        myip=$(hostname -i)
+        myip=$(host $(hostname) | awk '/has address/ { print $4 ; exit }')
         echo "--- dns entries for c:\windows\system32\drivers\etc\hosts (if needed) ---"
         echo "${myip} ${dnshostname}"
         echo "-----------------------------------------"
