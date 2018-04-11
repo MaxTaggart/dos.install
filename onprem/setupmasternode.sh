@@ -16,7 +16,7 @@ u="$(whoami)"
 echo "User name: $u"
 
 # for calico network plugin
-# sudo kubeadm init --kubernetes-version=v1.9.3 --pod-network-cidr=192.168.0.0/16
+# sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=192.168.0.0/16
 
 # CLUSTER_DNS_CORE_DNS="true"
 
@@ -36,7 +36,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 # calico
 # from https://docs.projectcalico.org/v3.0/getting-started/kubernetes/installation/hosted/kubeadm/
-# kubectl apply -f ${GITHUB_URL}/kubernetes/calico.yaml
+# kubectl apply -f ${GITHUB_URL}/kubernetes/cni/calico.yaml
 
 # flannel
 # kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Documentation/kube-flannel.yml

@@ -449,6 +449,8 @@ function TestDNS(){
     kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o wide
     echo "----------- Details about DNS pods -----------"
     kubectl describe pods --namespace=kube-system -l k8s-app=kube-dns    
+    echo "----------- Details about flannel pods -----------"
+    kubectl logs --namespace kube-system -l app=flannel
     echo "----------- Checking if DNS service is running -----------"
     kubectl get svc --namespace=kube-system
     echo "----------- Checking if DNS endpoints are exposed ------------"

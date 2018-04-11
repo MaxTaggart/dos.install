@@ -72,6 +72,8 @@ function ConfigureIpTables(){
   sudo iptables -I INPUT -p tcp -m tcp --dport 10250 -j ACCEPT  
   sudo iptables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT  
   sudo iptables -I INPUT -p tcp -m tcp --dport 8081 -j ACCEPT  
+  # echo "allow all outgoing connections"
+  # sudo iptables -I OUTPUT -o eth0 -d 0.0.0.0/0 -j ACCEPT
   echo "allowing loopback connections"
   sudo iptables -A INPUT -i lo -j ACCEPT
   sudo iptables -A OUTPUT -o lo -j ACCEPT
@@ -109,29 +111,56 @@ function ConfigureIpTables(){
 }
 
 function ConfigureFirewall(){
-  echo "--- removing iptables ---"
+  echo " --- installing firewalld ---"
+  # https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7
   sudo yum -y install firewalld
-  sudo yum -y remove iptables-services
   sudo systemctl status firewalld
+  echo "--- removing iptables ---"
+  sudo yum -y remove iptables-services
   echo "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
   # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
   # kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
 
   sudo firewall-cmd --add-port=6443/tcp --permanent # kubernetes API server
-  sudo firewall-cmd --add-port=10250/tcp --permanent # Kubelet API
+  sudo firewall-cmd --add-port=2379-2380/tcp --permanent 
+  
+  sudo firewall-cmd --add-port=8472/udp --permanent  # flannel networking
+  sudo firewall-cmd --add-port=10250/tcp --permanent  # Kubelet API
+  sudo firewall-cmd --add-port=10251/tcp --permanent 
+  sudo firewall-cmd --add-port=10252/tcp --permanent 
   sudo firewall-cmd --add-port=10255/tcp --permanent # Read-only Kubelet API
   sudo firewall-cmd --add-port=80/tcp --permanent # HTTP
   sudo firewall-cmd --add-port=443/tcp --permanent # HTTPS
   sudo firewall-cmd --add-service=ntp --permanent # NTP server
-  sudo firewall-cmd --get-zone-of-interface=docker0
+  # sudo firewall-cmd --get-zone-of-interface=docker0
   # sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0  
+
+
+  # flannel settings
+  # from https://github.com/kubernetes/contrib/blob/master/ansible/roles/flannel/tasks/firewalld.yml
+  # echo "Open flanneld subnet traffic"
+  # sudo firewall-cmd --direct --add-rule ipv4 filter FORWARD 1 -i flannel.1 -j ACCEPT -m comment --comment "flannel subnet"  
+
+  # echo "Save flanneld subnet traffic"
+  # sudo firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 1 -i flannel.1 -j ACCEPT -m comment --comment "flannel subnet"
+
+  # echo "Open flanneld to DNAT'ed traffic"
+  # sudo firewall-cmd --direct --add-rule ipv4 filter FORWARD 1 -o flannel.1 -j ACCEPT -m comment --comment "flannel subnet"
+
+  # echo "Save flanneld to DNAT'ed traffic"
+  # sudo firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 1 -o flannel.1 -j ACCEPT -m comment --comment "flannel subnet"
+
+  # http://wrightrocket.blogspot.com/2017/11/installing-kubernetes-on-centos-7-with.html
   sudo firewall-cmd --reload
 
   sudo systemctl status firewalld  
+
+  echo "--- ports allowed in firewall ---"
+  sudo firewall-cmd --list-ports
 }
 
-# ConfigureFirewall
-ConfigureIpTables
+ConfigureFirewall
+# ConfigureIpTables
 
 echo "-- starting NTP deamon ---"
 # https://www.tecmint.com/install-ntp-server-in-centos/
@@ -174,6 +203,7 @@ sudo yum-config-manager \
     --add-repo \
     https://download.docker.com/linux/centos/docker-ce.repo
 
+echo " --- current repo list ---"
 sudo yum -y repolist
 
 echo "-- docker versions available in repo --"
@@ -234,6 +264,7 @@ EOF
 # https://saurabh-deochake.github.io/posts/2017/07/post-1/
 echo "disabling selinux"
 sudo setenforce 0
+sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
 
 echo "--- Removing previous versions of kubernetes ---"
 sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
