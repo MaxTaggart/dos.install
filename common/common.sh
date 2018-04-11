@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.10.03"
+versioncommon="2018.04.11.01"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -434,5 +434,39 @@ function UninstallDockerAndKubernetes(){
                     docker-selinux \
                     docker-engine-selinux \
                     docker-engine    
+}
+
+function TestDNS(){
+    local baseUrl=$1
+    echo "To resolve DNS issues: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#debugging-dns-resolution"
+    echo "----------- Checking if DNS pods are running -----------"
+    kubectl get pods --namespace=kube-system -l k8s-app=kube-dns
+    echo "----------- Checking if DNS service is running -----------"
+    kubectl get svc --namespace=kube-system
+    echo "----------- Checking if DNS endpoints are exposed ------------"
+    kubectl get ep kube-dns --namespace=kube-system
+    echo "----------- Checking logs for DNS service -----------"
+    kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c kubedns
+    kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c dnsmasq
+    kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c sidecar        
+    echo "----------- Creating a busybox pod to test DNS -----------"
+    while [[ ! -z "$(kubectl get pods busybox -n default -o jsonpath='{.status.phase}' --ignore-not-found=true)" ]]; do
+        echo "Waiting for busybox to terminate"
+        echo "."
+        sleep 5
+    done
+
+    kubectl create -f $baseUrl/kubernetes/test/busybox.yaml
+    while [[ "$(kubectl get pods busybox -n default -o jsonpath='{.status.phase}')" != "Running" ]]; do
+        echo "."
+        sleep 5
+    done
+    echo "---- resolve.conf ----"
+    kubectl exec busybox cat /etc/resolv.conf
+    echo "--- testing if we can access internal (pod) network ---"
+    kubectl exec busybox nslookup kubernetes.default
+    echo "--- testing if we can access external network ---"
+    kubectl exec busybox curl www.google.com
+    kubectl delete -f $baseUrl/kubernetes/test/busybox.yaml    
 }
 echo "--- Finished including common.sh version $versioncommon ---"

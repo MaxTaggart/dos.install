@@ -142,33 +142,7 @@ while [[ "$input" != "q" ]]; do
         echo "--- IP services ---"
         sudo firewall-cmd --list-services
     ;;
-    37)  # from https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#debugging-dns-resolution
-        echo "To resolve DNS issues: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#debugging-dns-resolution"
-        echo "----------- Checking if DNS pods are running -----------"
-        kubectl get pods --namespace=kube-system -l k8s-app=kube-dns
-        echo "----------- Checking if DNS service is running -----------"
-        kubectl get svc --namespace=kube-system
-        echo "----------- Checking if DNS endpoints are exposed ------------"
-        kubectl get ep kube-dns --namespace=kube-system
-        echo "----------- Checking logs for DNS service -----------"
-        kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c kubedns
-        kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c dnsmasq
-        kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c sidecar        
-        echo "----------- Creating a busybox pod to test DNS -----------"
-        while [[ ! -z "$(kubectl get pods busybox -n default -o jsonpath='{.status.phase}' --ignore-not-found=true)" ]]; do
-            echo "Waiting for busybox to terminate"
-            echo "."
-            sleep 5
-        done
-
-        kubectl create -f $GITHUB_URL/kubernetes/test/busybox.yaml
-        while [[ "$(kubectl get pods busybox -n default -o jsonpath='{.status.phase}')" != "Running" ]]; do
-            echo "."
-            sleep 5
-        done
-        kubectl exec busybox nslookup kubernetes.default
-        kubectl exec busybox cat /etc/resolv.conf
-        kubectl delete -f $GITHUB_URL/kubernetes/test/busybox.yaml
+    37) TestDNS $GITHUB_URL
         ;;
     38)  ls -al /mnt/data
         ;;
