@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.10.06"
+$versionkubecommon = "2018.04.10.07"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -416,7 +416,43 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
     
     # DeploySimpleServices -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -customerid $customerid -resources $($config.resources.ingress.simpleservices)
 
+    WaitForPodsInNamespace -namespace $namespace -interval 5
     return $Return
+}
+
+function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $interval){
+    [hashtable]$Return = @{} 
+
+    $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+    $waitingonPod="n"
+
+    Do {
+        $waitingonPod=""
+        Write-Information -MessageData "---- waiting until all pods are running in namespace $namespace ---"
+
+        Start-Sleep -Seconds $interval
+        $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+
+        foreach ($pod in $pods) {
+            $podstatus=$(kubectl get pods $pod -n $namespace -o jsonpath='{.status.phase}')
+            if($podstatus -ne "Running"){
+                Write-Information -MessageData "${pod}: $podstatus"
+                $waitingonPod="${waitingonPod}${pod}($podstatus);"
+            }
+            else {
+                $containerReady=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].ready}")
+                if($containerReady -ne "true" ){
+                    $waitingonPod="${waitingonPod}${pod}(container);"
+                    Write-Information -MessageData "container in $pod is not ready yet: $containerReady"
+                }
+            }
+        }
+            
+        Write-Information -MessageData "$waitingonPod"
+    }
+    while (![string]::IsNullOrEmpty($waitingonPod) )
+
+    return $Return    
 }
 
 function global:DeploySimpleService([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $appfolder, [ValidateNotNullOrEmpty()] $customerid, $service) {
