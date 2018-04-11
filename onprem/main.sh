@@ -5,7 +5,7 @@
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.10.07"
+version="2018.04.10.08"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -172,7 +172,11 @@ while [[ "$input" != "q" ]]; do
     38)  ls -al /mnt/data
         ;;
     39)  dnshostname=$(ReadSecret "dnshostname")
-        echo "You can access the kubernetes dashboard at: https://${dnshostname}/api/ "
+        myip=$(hostname -i)
+        echo "--- dns entries for c:\windows\system32\drivers\etc\hosts (if needed) ---"
+        echo "${myip} ${dnshostname}"
+        echo "-----------------------------------------"
+        echo "You can access the kubernetes dashboard at: https://${dnshostname}/api/ or https://${myip}/api/"
         secretname=$(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
         token=$(ReadSecretValue "$secretname" "token" "kube-system")
         echo "----------- Bearer Token ---------------"
