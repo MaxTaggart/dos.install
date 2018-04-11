@@ -41,6 +41,7 @@ sudo swapoff -a
 
 echo "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
 # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
+# kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
 sudo firewall-cmd --add-port=6443/tcp --permanent
 sudo firewall-cmd --add-port=10250/tcp --permanent
 sudo firewall-cmd --add-port=80/tcp --permanent
@@ -135,7 +136,7 @@ echo "--- Adding kubernetes repo ---"
 cat << EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
-baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
@@ -144,6 +145,7 @@ EOF
 
 # install kubeadm
 # https://saurabh-deochake.github.io/posts/2017/07/post-1/
+echo "disabling selinux"
 sudo setenforce 0
 
 echo "--- Removing previous versions of kubernetes ---"
