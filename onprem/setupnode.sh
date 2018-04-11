@@ -23,7 +23,14 @@ echo "--- disk space ---"
 df -h
 
 echo "installing yum-utils and other packages"
-sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof
+# yum-version: lock yum packages so they don't update automatically
+# yum-utils: for yum-config-manager
+# net-tools: for DNS tools
+# nmap: nmap command for listing open ports
+# curl: for downloading
+# lsof: show open files
+# ntp: Network Time Protocol
+sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof ntp
 
 echo "removing unneeded packages"
 # https://www.tecmint.com/remove-unwanted-services-in-centos-7/
@@ -38,7 +45,14 @@ sudo firewall-cmd --add-port=6443/tcp --permanent
 sudo firewall-cmd --add-port=10250/tcp --permanent
 sudo firewall-cmd --add-port=80/tcp --permanent
 sudo firewall-cmd --add-port=443/tcp --permanent
+sudo firewall-cmd --add-service=ntp --permanent
 sudo firewall-cmd --reload
+
+echo "-- starting NTP deamon ---"
+# https://www.tecmint.com/install-ntp-server-in-centos/
+sudo systemctl start ntpd
+sudo systemctl enable ntpd
+sudo systemctl status ntpd
 
 echo "--- stopping docker and kubectl ---"
 servicestatus=$(systemctl show -p SubState kubelet)
