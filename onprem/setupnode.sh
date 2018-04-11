@@ -37,7 +37,7 @@ sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof ntp nano 
 
 echo "removing unneeded packages"
 # https://www.tecmint.com/remove-unwanted-services-in-centos-7/
-sudo yum -y remove postfix chrony
+sudo yum -y remove postfix chrony iptables-services
 
 echo "turning off swap"
 # https://blog.alexellis.io/kubernetes-in-10-minutes/
