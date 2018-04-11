@@ -663,6 +663,8 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     }
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
 
+    WaitForPodsInNamespace -namespace kube-system -interval 5
+    
     return $Return
 }
 # from http://www.bricelam.net/2012/09/simple-template-engine-for-powershell.html
