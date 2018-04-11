@@ -70,6 +70,8 @@ function ConfigureIpTables(){
   sudo iptables -I INPUT -p tcp -m tcp --dport 6443 -j ACCEPT
   sudo iptables -I INPUT -p tcp -m tcp --dport 9898 -j ACCEPT
   sudo iptables -I INPUT -p tcp -m tcp --dport 10250 -j ACCEPT  
+  sudo iptables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT  
+  sudo iptables -I INPUT -p tcp -m tcp --dport 8081 -j ACCEPT  
   echo "allowing loopback connections"
   sudo iptables -A INPUT -i lo -j ACCEPT
   sudo iptables -A OUTPUT -o lo -j ACCEPT
@@ -93,6 +95,15 @@ function ConfigureIpTables(){
   sudo iptables -A OUTPUT -p tcp --sport 443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
   #echo "block outgoing SMTP Mail"
   #sudo iptables -A OUTPUT -p tcp --dport 25 -j REJECT
+  
+  echo "--- reloading iptables ---"
+  sudo systemctl reload iptables
+  echo "--- saving iptables ---"
+  sudo iptables save
+  # echo "--- restarting iptables ---"
+  # sudo systemctl restart iptables
+  echo "--- status of iptables --"
+  sudo systemctl status iptables
   echo "---- current iptables rules ---"
   sudo iptables -t nat -L
 }
@@ -101,6 +112,7 @@ function ConfigureFirewall(){
   echo "--- removing iptables ---"
   sudo yum -y install firewalld
   sudo yum -y remove iptables-services
+  sudo systemctl status firewalld
   echo "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
   # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
   # kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
@@ -112,8 +124,10 @@ function ConfigureFirewall(){
   sudo firewall-cmd --add-port=443/tcp --permanent # HTTPS
   sudo firewall-cmd --add-service=ntp --permanent # NTP server
   sudo firewall-cmd --get-zone-of-interface=docker0
-  sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0  
+  # sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0  
   sudo firewall-cmd --reload
+
+  sudo systemctl status firewalld  
 }
 
 # ConfigureFirewall
