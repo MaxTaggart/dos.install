@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.10.07"
+$versionkubecommon = "2018.04.10.09"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -426,31 +426,33 @@ function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $i
     $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     $waitingonPod="n"
 
+    $counter = 0
     Do {
         $waitingonPod=""
         Write-Information -MessageData "---- waiting until all pods are running in namespace $namespace ---"
 
         Start-Sleep -Seconds $interval
+        $counter++
         $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
 
-        foreach ($pod in $pods) {
+        foreach ($pod in $pods.Split(" ")) {
             $podstatus=$(kubectl get pods $pod -n $namespace -o jsonpath='{.status.phase}')
             if($podstatus -ne "Running"){
-                Write-Information -MessageData "${pod}: $podstatus"
+                # Write-Information -MessageData "${pod}: $podstatus"
                 $waitingonPod="${waitingonPod}${pod}($podstatus);"
             }
             else {
                 $containerReady=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].ready}")
                 if($containerReady -ne "true" ){
                     $waitingonPod="${waitingonPod}${pod}(container);"
-                    Write-Information -MessageData "container in $pod is not ready yet: $containerReady"
+                    # Write-Information -MessageData "container in $pod is not ready yet: $containerReady"
                 }
             }
         }
             
-        Write-Information -MessageData "$waitingonPod"
+        Write-Information -MessageData "[$counter] $waitingonPod"
     }
-    while (![string]::IsNullOrEmpty($waitingonPod) )
+    while (![string]::IsNullOrEmpty($waitingonPod) -and ($counter -lt 30) )
 
     return $Return    
 }
@@ -664,7 +666,7 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
 
     WaitForPodsInNamespace -namespace kube-system -interval 5
-    
+
     return $Return
 }
 # from http://www.bricelam.net/2012/09/simple-template-engine-for-powershell.html
