@@ -114,7 +114,7 @@ while [[ "$input" != "q" ]]; do
         fi
         sudo rm -rf /var/etcd/backups/*
         sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
-        sudo yum -y remove docker docker-common docker-selinux docker-engine docker-ce
+        sudo yum -y remove docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux
         sudo yum -y remove docker \
                         docker-client \
                         docker-client-latest \
