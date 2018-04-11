@@ -1,3 +1,5 @@
+# stop on error
+$ErrorActionPreference = "Stop"
 
 function New-LinuxVM {
 	#requires -Modules Hyper-V
