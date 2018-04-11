@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.11.01"
+versioncommon="2018.04.11.02"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -155,6 +155,7 @@ function AskForSecretValue () {
     local secretname=$1
     local prompt=$2
     local namespace=$3
+    local defaultvalue=$4
 
     if [[ -z "$namespace" ]]; then
         namespace="default"
@@ -164,6 +165,11 @@ function AskForSecretValue () {
         # MySQL password requirements: https://dev.mysql.com/doc/refman/5.6/en/validate-password-plugin.html
         # we also use sed to replace configs: https://unix.stackexchange.com/questions/32907/what-characters-do-i-need-to-escape-when-using-sed-in-a-sh-script
         read -p "${prompt}: " myvalue < /dev/tty
+        if [[ -z "$myvalue" ]]; then
+            if [[ ! -z "$defaultvalue" ]]; then
+                myvalue=$defaultvalue
+            fi
+        fi
         kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$myvalue
     else 
         Write-Output "$secretname secret already set so will reuse it"

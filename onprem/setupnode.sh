@@ -31,7 +31,7 @@ echo "installing yum-utils and other packages"
 # lsof: show open files
 # ntp: Network Time Protocol
 # nano: simple editor
-# bind-utils: for dig
+# bind-utils: for dig, host
 # iptables-services: for iptables firewall
 sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof ntp nano bind-utils
 
@@ -183,6 +183,9 @@ if [ $u != "root" ]; then
     echo "--- Reloading permissions via newgrp ---"
     newgrp docker
 fi
+
+echo "--- docker status ---"
+sudo systemctl status docker
 
 echo "--- Adding kubernetes repo ---"
 

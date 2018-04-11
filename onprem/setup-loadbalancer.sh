@@ -28,8 +28,9 @@ AskForSecretValue "customerid" "Customer ID "
 echo "reading secret from kubernetes"
 customerid=$(ReadSecret "customerid")
 
-echo "Full host name of current machine: $(hostname --fqdn)"
-AskForSecretValue "dnshostname" "DNS name used to connect to the master VM "
+fullhostname=$(hostname --fqdn)
+echo "Full host name of current machine: $fullhostname"
+AskForSecretValue "dnshostname" "DNS name used to connect to the master VM (leave empty to use $fullhostname)" "default" $fullhostname
 dnsrecordname=$(ReadSecret "dnshostname")
 
 sslsecret=$(kubectl get secret traefik-cert-ahmn -n kube-system --ignore-not-found=true)

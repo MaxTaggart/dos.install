@@ -25,9 +25,6 @@ echo "--- running kubeadm init ---"
 sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=10.244.0.0/16
 echo "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
 
-echo "--- kubelet status ---"
-sudo systemctl status kubelet
-
 # which CNI plugin to use: https://chrislovecnm.com/kubernetes/cni/choosing-a-cni-provider/
 
 # for logs, sudo journalctl -xeu kubelet
@@ -46,6 +43,12 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 echo "--- enabling flannel network plugin ---"
 kubectl apply -f ${GITHUB_URL}/kubernetes/cni/flannel.yaml
 
+echo "--- sleeping 10 secs to wait for pods ---"
+sleep 10
+
+echo "--- kubelet status ---"
+sudo systemctl status kubelet
+
 # enable master to run containers
 # kubectl taint nodes --all node-role.kubernetes.io/master-
 
@@ -53,8 +56,6 @@ kubectl apply -f ${GITHUB_URL}/kubernetes/cni/flannel.yaml
 echo "--- nodes ---"
 kubectl get nodes
 
-echo "--- sleeping 10 secs to wait for pods ---"
-sleep 10
 
 echo "--- current pods ---"
 kubectl get pods -n kube-system -o wide
