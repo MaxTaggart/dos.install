@@ -33,7 +33,7 @@ echo "installing yum-utils and other packages"
 # nano: simple editor
 # bind-utils: for dig
 # iptables-services: for iptables firewall
-sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof ntp nano bind-utils iptables-services
+sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof ntp nano bind-utils
 
 echo "removing unneeded packages"
 # https://www.tecmint.com/remove-unwanted-services-in-centos-7/
