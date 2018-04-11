@@ -401,11 +401,15 @@ function SetupMaster(){
     curl -sSL $baseUrl/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
     InstallStack $baseUrl "kube-system" "dashboard"
     # clear
+    echo "--- waiting for pods to run ---"
+    WaitForPodsInNamespace kube-system 5    
+
     if [[ $singlenode == true ]]; then
-        echo "setting up single-node cluster"
+        echo "Finished setting up a single-node cluster"
     else
         ShowCommandToJoinCluster $baseUrl    
     fi
+
 }
 
 function UninstallDockerAndKubernetes(){
