@@ -6,20 +6,28 @@ set -e
 #
 #
 
-version="2018.04.01.01"
+version="2018.04.10.01"
 echo "---- setupnode version $version ----"
 
 u="$(whoami)"
 echo "User name: $u"
 
-echo "installing yum-utils"
-sudo yum -y install yum-versionlock yum-utils
-
 echo "updating yum packages"
 sudo yum update -y
 
+echo "installing yum-utils"
+sudo yum -y install yum-versionlock yum-utils net-tools nmap
+
 echo "turning off swap"
 sudo swapoff -a
+
+echo "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
+# https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
+sudo firewall-cmd --add-port=6443/tcp --permanent
+sudo firewall-cmd --add-port=10250/tcp --permanent
+sudo firewall-cmd --add-port=80/tcp --permanent
+sudo firewall-cmd --add-port=443/tcp --permanent
+sudo firewall-cmd --reload
 
 echo "--- stopping docker and kubectl ---"
 servicestatus=$(systemctl show -p SubState kubelet)
@@ -62,7 +70,7 @@ echo "-- docker versions available in repo --"
 sudo yum -y --showduplicates list docker-engine
 
 echo "--- Installing docker via yum --"
-sudo yum install -y docker-engine-selinux-17.03.1.ce-1.el7.centos.noarch docker-engine-17.03.1.ce-1.el7.centos
+sudo yum install -y docker-engine-selinux-17.05.0.ce-1.el7.centos.noarch docker-engine-17.05.0.ce-1.el7.centos
 echo "--- Locking version of docker so it does not get updated via yum update --"
 sudo yum versionlock docker-engine
 

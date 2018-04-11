@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.10.04"
+version="2018.04.10.05"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -75,6 +75,7 @@ while [[ "$input" != "q" ]]; do
     # echo "33: View status of DNS pods"
     # echo "34: Apply updates and restart all VMs"
     echo "35: Show load balancer logs"
+    echo "36: Show open ports"
     echo "37: Test DNS"
     echo "38: Show contents of shared folder"
     echo "39: Show dashboard url"
@@ -149,6 +150,12 @@ while [[ "$input" != "q" ]]; do
         kubectl get "deployments,pods,services,nodes,ingress,secrets" --namespace=kube-system -o wide
         ;;
     35) kubectl logs --namespace=kube-system -l k8s-app=traefik-ingress-lb-onprem --tail=100
+    ;;
+    36) # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
+        echo "---- open ports ----" 
+        sudo nmap 127.0.0.1
+        echo "--- IP services ---"
+        sudo firewall-cmd --list-services
     ;;
     37)  # from https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#debugging-dns-resolution
         echo "To resolve DNS issues: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#debugging-dns-resolution"

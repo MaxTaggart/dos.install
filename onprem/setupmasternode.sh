@@ -9,7 +9,7 @@ set -e
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 source <(curl -sSL "$GITHUB_URL/common/common.sh")
 
-version="2018.03.28.01"
+version="2018.04.10.01"
 echo "---- setupmaster version $version ----"
 
 u="$(whoami)"
@@ -18,9 +18,12 @@ echo "User name: $u"
 # for calico network plugin
 # sudo kubeadm init --kubernetes-version=v1.9.3 --pod-network-cidr=192.168.0.0/16
 
+# CLUSTER_DNS_CORE_DNS="true"
+
 echo "--- running kubeadm init ---"
 # for flannel network plugin
-sudo kubeadm init --kubernetes-version=v1.9.3 --pod-network-cidr=10.244.0.0/16
+sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=10.244.0.0/16
+echo "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
 
 # which CNI plugin to use: https://chrislovecnm.com/kubernetes/cni/choosing-a-cni-provider/
 
