@@ -440,7 +440,9 @@ function TestDNS(){
     local baseUrl=$1
     echo "To resolve DNS issues: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#debugging-dns-resolution"
     echo "----------- Checking if DNS pods are running -----------"
-    kubectl get pods --namespace=kube-system -l k8s-app=kube-dns
+    kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o wide
+    echo "----------- Details about DNS pods -----------"
+    kubectl describe pods --namespace=kube-system -l k8s-app=kube-dns    
     echo "----------- Checking if DNS service is running -----------"
     kubectl get svc --namespace=kube-system
     echo "----------- Checking if DNS endpoints are exposed ------------"
@@ -466,7 +468,7 @@ function TestDNS(){
     echo "--- testing if we can access internal (pod) network ---"
     kubectl exec busybox nslookup kubernetes.default
     echo "--- testing if we can access external network ---"
-    kubectl exec busybox curl www.google.com
+    kubectl exec busybox wget www.google.com
     kubectl delete -f $baseUrl/kubernetes/test/busybox.yaml    
 }
 echo "--- Finished including common.sh version $versioncommon ---"

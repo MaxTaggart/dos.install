@@ -6,7 +6,7 @@ set -e
 #
 #
 
-version="2018.04.11.01"
+version="2018.04.11.02"
 echo "---- setupnode version $version ----"
 
 dockerversion="17.03.2.ce-1"
@@ -63,9 +63,9 @@ echo "allowing established and related incoming connections"
 sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 echo "allowing established outgoing connections"
 sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
-# echo "allowing docker containers to access the external network"
-# sudo iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
-# sudo iptables -A FORWARD -i docker0 -o eth0 -j ACCEPT
+echo "allowing docker containers to access the external network"
+sudo iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+sudo iptables -A FORWARD -i docker0 -o eth0 -j ACCEPT
 echo "allow all incoming ssh"
 sudo iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
 sudo iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
@@ -79,6 +79,8 @@ sudo iptables -A INPUT -p tcp --dport 443 -m conntrack --ctstate NEW,ESTABLISHED
 sudo iptables -A OUTPUT -p tcp --sport 443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
 #echo "block outgoing SMTP Mail"
 #sudo iptables -A OUTPUT -p tcp --dport 25 -j REJECT
+echo "---- current iptables rules ---"
+sudo iptables -t nat -L
 
 # echo "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
 # # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
