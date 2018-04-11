@@ -1,7 +1,7 @@
 Write-Host "--- create-acs-cluster Version 2018.04.10.01 ----"
 
 # stop on error
-$ErrorActionPreference = "Stop"
+# $ErrorActionPreference = "Stop"
 # show Information messages
 $InformationPreference = "Continue"
 
@@ -125,6 +125,8 @@ $VnetInfo = GetVnetInfo -subscriptionId $AKS_SUBSCRIPTION_ID -subnetResourceGrou
 $AKS_FIRST_STATIC_IP = $VnetInfo.AKS_FIRST_STATIC_IP
 $AKS_SUBNET_CIDR = $VnetInfo.AKS_SUBNET_CIDR
 
+$AKS_SERVICE_PRINCIPAL_CLIENTSECRET = ReadSecretPassword -secretname "serviceprincipal"
+
 CleanResourceGroup -resourceGroup ${AKS_PERS_RESOURCE_GROUP} -location $AKS_PERS_LOCATION -vnet $AKS_VNET_NAME `
     -subnet $AKS_SUBNET_NAME -subnetResourceGroup $AKS_SUBNET_RESOURCE_GROUP `
     -storageAccount $AKS_PERS_STORAGE_ACCOUNT_NAME
@@ -139,7 +141,6 @@ $myscope = "/subscriptions/${AKS_SUBSCRIPTION_ID}/resourceGroups/${AKS_PERS_RESO
 # https://docs.microsoft.com/en-us/azure/active-directory/active-directory-passwords-policy
 if ("$AKS_SERVICE_PRINCIPAL_CLIENTID") {
     Write-Host "Service Principal already exists with name: [$AKS_SERVICE_PRINCIPAL_NAME]"
-    $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = ReadSecretPassword -secretname "serviceprincipal"
     if ([string]::IsNullOrWhiteSpace($AKS_SERVICE_PRINCIPAL_CLIENTSECRET)) {
         Write-Host "Could not read client secret from kub secrets so deleting service principal:$AKS_SERVICE_PRINCIPAL_CLIENTID ..."
         az ad sp delete --id "$AKS_SERVICE_PRINCIPAL_CLIENTID" --verbose

@@ -5,7 +5,7 @@ set -e
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.10.03"
+version="2018.04.10.04"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -62,7 +62,7 @@ while [[ "$input" != "q" ]]; do
     echo "7: Setup Kubernetes Dashboard"
     echo "8: Uninstall Docker & Kubernetes"
     echo "9: Create a single node cluster"
-    echo "10: Optimize centos under Hyper-V"
+    echo "10: Fix Centos under Hyper-V"
     echo "------ Worker Node Tasks-------"
     echo "12: Add this VM as Worker"
     echo "13: Join this VM to an existing cluster"
@@ -123,6 +123,9 @@ while [[ "$input" != "q" ]]; do
     	sudo yum install -y hyperv-daemons
         echo "turning off disk optimization in centos since Hyper-V already does disk optimization"
         echo "noop" | sudo tee /sys/block/sda/queue/scheduler
+        echo "You can connect to this machine via SSH: ssh $(whoami)@$(hostname -i)"
+        grep -v "$(hostname)" /etc/hosts | sudo tee /etc/hosts > /dev/null
+        echo "127.0.0.1 $(hostname)" | sudo tee -a /etc/hosts > /dev/null
         ;;
     12)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
         mountSharedFolder false
