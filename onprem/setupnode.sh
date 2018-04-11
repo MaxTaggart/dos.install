@@ -2,7 +2,7 @@
 set -e
 #
 # This script is meant for quick & easy install via:
-#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/kubernetes/setupnode.txt | bash
+#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/setupnode.sh | bash
 #
 #
 
@@ -43,12 +43,13 @@ echo "turning off swap"
 # https://blog.alexellis.io/kubernetes-in-10-minutes/
 sudo swapoff -a
 # comment out swap file in /etc/fstab
+echo "--- current swap files ---"
 sudo cat /proc/swaps
 
 echo "switching from firewalld to iptables"
 # https://www.digitalocean.com/community/tutorials/how-to-migrate-from-firewalld-to-iptables-on-centos-7
 sudo systemctl stop firewalld && sudo systemctl start iptables; sudo systemctl start ip6tables
-sudo firewall-cmd --state
+# sudo firewall-cmd --state
 sudo systemctl disable firewalld
 sudo systemctl enable iptables
 sudo systemctl enable ip6tables
