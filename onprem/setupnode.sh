@@ -6,7 +6,7 @@ set -e
 #
 #
 
-version="2018.04.11.03"
+version="2018.04.11.04"
 echo "---- setupnode version $version ----"
 
 dockerversion="17.03.2.ce-1"
@@ -32,12 +32,12 @@ echo "installing yum-utils and other packages"
 # ntp: Network Time Protocol
 # nano: simple editor
 # bind-utils: for dig, host
-# iptables-services: for iptables firewall
+
 sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof ntp nano bind-utils
 
 echo "removing unneeded packages"
 # https://www.tecmint.com/remove-unwanted-services-in-centos-7/
-sudo yum -y remove postfix chrony iptables-services
+sudo yum -y remove postfix chrony
 
 echo "turning off swap"
 # https://blog.alexellis.io/kubernetes-in-10-minutes/
@@ -49,15 +49,27 @@ sudo cat /proc/swaps
 
 function ConfigureIpTables(){
   echo "switching from firewalld to iptables"
+  # iptables-services: for iptables firewall  
+  sudo yum -y install iptables-services
   # https://www.digitalocean.com/community/tutorials/how-to-migrate-from-firewalld-to-iptables-on-centos-7
-  sudo systemctl stop firewalld && sudo systemctl start iptables; sudo systemctl start ip6tables
+  sudo systemctl stop firewalld && sudo systemctl start iptables; 
+  # sudo systemctl start ip6tables
   # sudo firewall-cmd --state
   sudo systemctl disable firewalld
   sudo systemctl enable iptables
-  sudo systemctl enable ip6tables
+  # sudo systemctl enable ip6tables
 
+  echo "--- removing firewalld ---"
+  sudo yum -y remove firewalld
+  
   echo "setting up iptables rules"
   # https://www.digitalocean.com/community/tutorials/iptables-essentials-common-firewall-rules-and-commands
+  echo "fixing kubedns"
+  sudo iptables -P FORWARD ACCEPT
+  sudo iptables -I INPUT -p tcp -m tcp --dport 8472 -j ACCEPT
+  sudo iptables -I INPUT -p tcp -m tcp --dport 6443 -j ACCEPT
+  sudo iptables -I INPUT -p tcp -m tcp --dport 9898 -j ACCEPT
+  sudo iptables -I INPUT -p tcp -m tcp --dport 10250 -j ACCEPT  
   echo "allowing loopback connections"
   sudo iptables -A INPUT -i lo -j ACCEPT
   sudo iptables -A OUTPUT -o lo -j ACCEPT
@@ -86,6 +98,9 @@ function ConfigureIpTables(){
 }
 
 function ConfigureFirewall(){
+  echo "--- removing iptables ---"
+  sudo yum -y install firewalld
+  sudo yum -y remove iptables-services
   echo "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
   # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
   # kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
@@ -96,11 +111,13 @@ function ConfigureFirewall(){
   sudo firewall-cmd --add-port=80/tcp --permanent # HTTP
   sudo firewall-cmd --add-port=443/tcp --permanent # HTTPS
   sudo firewall-cmd --add-service=ntp --permanent # NTP server
+  sudo firewall-cmd --get-zone-of-interface=docker0
   sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0  
   sudo firewall-cmd --reload
 }
 
-ConfigureFirewall
+# ConfigureFirewall
+ConfigureIpTables
 
 echo "-- starting NTP deamon ---"
 # https://www.tecmint.com/install-ntp-server-in-centos/
