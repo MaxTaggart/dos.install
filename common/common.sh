@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.11.03"
+versioncommon="2018.04.12.01"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -403,7 +403,8 @@ function SetupMaster(){
     if [[ $singlenode == true ]]; then
         echo "enabling master node to run containers"
         # enable master to run containers
-        kubectl taint nodes --all node-role.kubernetes.io/master-        
+        # kubectl taint nodes --all node-role.kubernetes.io/master-       
+        kubectl taint node --all node-role.kubernetes.io/master:NoSchedule- 
     else
         mountSharedFolder true 2>&1 | tee mountsharedfolder.log
     fi
