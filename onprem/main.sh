@@ -75,7 +75,7 @@ while [[ "$input" != "q" ]]; do
     # echo "33: View status of DNS pods"
     # echo "34: Apply updates and restart all VMs"
     echo "35: Show load balancer logs"
-    echo "36: Show open ports"
+    echo "36: Troubleshoot networking"
     echo "37: Test DNS"
     echo "38: Show contents of shared folder"
     echo "39: Show dashboard url"
@@ -152,11 +152,13 @@ while [[ "$input" != "q" ]]; do
         sudo firewall-cmd --get-services
         echo "--- all rules in firewall ---"
         sudo firewall-cmd --list-all
+        sudo firewall-cmd --zone trusted --list-all
         echo "--- iptables --list ---"
         sudo iptables --list
         echo "--- checking DNS server ----"
-        sudo dig @192.168.0.2 kubernetes.default.svc.cluster.local +noall +answer
-        sudo dig @192.168.0.2 ptr 1.0.96.10.in-addr.arpa. +noall +answer
+        ipfordnsservice=$(kubectl get svc kube-dns -n kube-system -o jsonpath="{.spec.clusterIP}")
+        sudo dig @${ipfordnsservice} kubernetes.default.svc.cluster.local +noall +answer
+        sudo dig @${ipfordnsservice} ptr 1.0.96.10.in-addr.arpa. +noall +answer
         echo "--- recent rejected packets ----"
         sudo tail --lines 1000 /var/log/messages | grep REJECT
     ;;
