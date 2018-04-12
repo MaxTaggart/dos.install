@@ -154,8 +154,8 @@ while [[ "$input" != "q" ]]; do
         echo "--- iptables --list ---"
         sudo iptables --list
         echo "--- checking DNS server ----"
-        sudo dig @192.168.0.16 kubernetes.default.svc.cluster.local +noall +answer
-        sudo dig @192.168.0.16 ptr 1.0.96.10.in-addr.arpa. +noall +answer
+        sudo dig @192.168.0.2 kubernetes.default.svc.cluster.local +noall +answer
+        sudo dig @192.168.0.2 ptr 1.0.96.10.in-addr.arpa. +noall +answer
         echo "--- recent rejected packets ----"
         sudo tail --lines 1000 /var/log/messages | grep REJECT
     ;;
