@@ -6,7 +6,7 @@ set -e
 #
 #
 
-version="2018.04.12.02"
+version="2018.04.12.03"
 echo "---- setupnode version $version ----"
 
 dockerversion="17.03.2.ce-1"
@@ -248,6 +248,7 @@ echo "-- docker versions available in repo --"
 sudo yum -y --showduplicates list docker-ce
 
 echo "--- Installing docker via yum --"
+echo "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
 # need to pass --setpot=obsoletes=0 due to this bug: https://github.com/docker/for-linux/issues/20#issuecomment-312122325
 sudo yum install -y --setopt=obsoletes=0 docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos
 echo "--- Locking version of docker so it does not get updated via yum update --"
@@ -282,6 +283,8 @@ if [ $u != "root" ]; then
     echo "--- Reloading permissions via newgrp ---"
     newgrp docker
 fi
+
+echo "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
 
 echo "--- docker status ---"
 sudo systemctl status docker
