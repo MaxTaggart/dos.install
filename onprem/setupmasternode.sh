@@ -9,7 +9,7 @@ set -e
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 source <(curl -sSL "$GITHUB_URL/common/common.sh")
 
-version="2018.04.12.01"
+version="2018.04.12.02"
 echo "---- setupmaster version $version ----"
 
 kubernetesversion="1.9.6"
@@ -19,13 +19,13 @@ echo "User name: $u"
 
 # for calico network plugin
 # echo "--- running kubeadm init for calico ---"
-# sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=192.168.0.0/16
+# sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
 
 # CLUSTER_DNS_CORE_DNS="true"
 
 # echo "--- running kubeadm init for flannel ---"
 # for flannel network plugin
-sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=192.168.0.0/16 --feature-gates CoreDNS=true
+sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
 
 echo "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
 
