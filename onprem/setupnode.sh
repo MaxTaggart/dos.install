@@ -6,7 +6,7 @@ set -e
 #
 #
 
-version="2018.04.12.01"
+version="2018.04.12.02"
 echo "---- setupnode version $version ----"
 
 dockerversion="17.03.2.ce-1"
@@ -15,6 +15,8 @@ kubernetesversion="1.9.6-0"
 # 1.9.6-0
 # 1.10.0-0
 kubernetescniversion="0.6.0-0"
+
+echo "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
 
 u="$(whoami)"
 echo "User name: $u"
@@ -313,7 +315,8 @@ echo "--- kubernetes versions available in repo ---"
 sudo yum -y --showduplicates list kubelet kubeadm kubectl kubernetes-cni
 
 echo "--- installing kubernetes ---"
-sudo yum install -y kubelet-${kubernetesversion} kubeadm-${kubernetesversion} kubectl-${kubernetesversion} kubernetes-cni-${kubernetescniversion}
+echo "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
+sudo yum install -y "kubelet-${kubernetesversion}" "kubeadm-${kubernetesversion}" "kubectl-${kubernetesversion}" "kubernetes-cni-${kubernetescniversion}"
 echo "--- locking versions of kubernetes so they don't get updated by yum update ---"
 sudo yum versionlock kubelet
 sudo yum versionlock kubeadm
