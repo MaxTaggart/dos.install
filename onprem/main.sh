@@ -5,7 +5,7 @@
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.12.01"
+version="2018.04.12.02"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -79,6 +79,7 @@ while [[ "$input" != "q" ]]; do
     echo "37: Test DNS"
     echo "38: Show contents of shared folder"
     echo "39: Show dashboard url"
+    echo "40: Show kubernetes service status"
     echo "-----------"
     echo "51: Load Fabric Realtime Menu"
     echo "52: Load NLP Menu"
@@ -174,6 +175,10 @@ while [[ "$input" != "q" ]]; do
         echo "----------- Bearer Token ---------------"
         echo $token
         echo "-------- End of Bearer Token -------------"
+        ;; 
+    40) sudo systemctl status kubelet -l
+        sudo journalctl -xe --priority 0..3
+        sudo journalctl -u kube-apiserve
         ;;
     51) curl -sSL $GITHUB_URL/onprem/menu-realtime.sh?p=$RANDOM | bash
         ;;
