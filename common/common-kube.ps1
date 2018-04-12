@@ -454,6 +454,7 @@ function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $i
     }
     while (![string]::IsNullOrEmpty($waitingonPod) -and ($counter -lt 30) )
 
+    kubectl get pods -n $namespace -o wide
     return $Return    
 }
 

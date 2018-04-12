@@ -22,8 +22,8 @@ source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 echo "running stty sane to fix terminal keyboard mappings"
 stty sane < /dev/tty
 
-echo "setting TERM to xterm"
-export TERM=xterm
+# echo "setting TERM to xterm"
+# export TERM=xterm
 
 SetupMaster $GITHUB_URL false
 

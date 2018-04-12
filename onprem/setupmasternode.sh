@@ -16,14 +16,14 @@ u="$(whoami)"
 echo "User name: $u"
 
 # for calico network plugin
-echo "--- running kubeadm init for calico ---"
-sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=192.168.0.0/16
+# echo "--- running kubeadm init for calico ---"
+# sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=192.168.0.0/16
 
 # CLUSTER_DNS_CORE_DNS="true"
 
 # echo "--- running kubeadm init for flannel ---"
 # for flannel network plugin
-# sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=192.168.0.0/16
+sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=192.168.0.0/16
 
 echo "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
 
@@ -38,14 +38,14 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 # calico
 # from https://docs.projectcalico.org/v3.0/getting-started/kubernetes/installation/hosted/kubeadm/
-echo "--- enabling calico network plugin ---"
+# echo "--- enabling calico network plugin ---"
 # http://leebriggs.co.uk/blog/2017/02/18/kubernetes-networking-calico.html
-kubectl apply -f ${GITHUB_URL}/kubernetes/cni/calico.yaml
+# kubectl apply -f ${GITHUB_URL}/kubernetes/cni/calico.yaml
 
 # flannel
 # kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Documentation/kube-flannel.yml
-# echo "--- enabling flannel network plugin ---"
-# kubectl apply -f ${GITHUB_URL}/kubernetes/cni/flannel.yaml
+echo "--- enabling flannel network plugin ---"
+kubectl apply -f ${GITHUB_URL}/kubernetes/cni/flannel.yaml
 
 echo "--- sleeping 10 secs to wait for pods ---"
 sleep 10
