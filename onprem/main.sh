@@ -5,7 +5,7 @@
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.11.01"
+version="2018.04.12.01"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -139,6 +139,8 @@ while [[ "$input" != "q" ]]; do
     36) # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
         echo "---- open ports ----" 
         sudo nmap 127.0.0.1
+        echo "--- network interfaces --"
+        sudo ip link show
         echo "--- services enabled in firewall ---"
         sudo firewall-cmd --list-services
         echo "--- ports enabled in firewall ---"
@@ -147,9 +149,15 @@ while [[ "$input" != "q" ]]; do
         sudo firewall-cmd --get-active-zones
         echo "--- available services to enable ---"
         sudo firewall-cmd --get-services
+        echo "--- all rules in firewall ---"
+        sudo firewall-cmd --list-all
+        echo "--- iptables --list ---"
+        sudo iptables --list
         echo "--- checking DNS server ----"
         sudo dig @192.168.0.16 kubernetes.default.svc.cluster.local +noall +answer
         sudo dig @192.168.0.16 ptr 1.0.96.10.in-addr.arpa. +noall +answer
+        echo "--- recent rejected packets ----"
+        sudo tail --lines 1000 /var/log/messages | grep REJECT
     ;;
     37) TestDNS $GITHUB_URL
         ;;

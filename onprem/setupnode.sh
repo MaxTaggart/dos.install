@@ -6,7 +6,7 @@ set -e
 #
 #
 
-version="2018.04.11.05"
+version="2018.04.12.01"
 echo "---- setupnode version $version ----"
 
 dockerversion="17.03.2.ce-1"
@@ -120,13 +120,16 @@ function ConfigureFirewall(){
   echo "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
   # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
   # kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
-
+  # https://github.com/coreos/coreos-kubernetes/blob/master/Documentation/kubernetes-networking.md
+  # https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/rhel/installing-workers.md
   echo "opening port 6443 for Kubernetes API server"
   sudo firewall-cmd --add-port=6443/tcp --permanent # kubernetes API server
   echo "opening ports 2379-2380 for Kubernetes API server"
   sudo firewall-cmd --add-port=2379-2380/tcp --permanent 
-  echo "opening port 8472 for Flannel networking"
+  echo "opening port 8472,8285 and 4789 for Flannel networking"
   sudo firewall-cmd --add-port=8472/udp --permanent  # flannel networking
+  sudo firewall-cmd --add-port=8285/udp --permanent  # flannel networking
+  sudo firewall-cmd --add-port 4789/udp --permanent
   echo "opening ports 10250,10251,10252 and 10255 for Kubelet API"
   sudo firewall-cmd --add-port=10250/tcp --permanent  # Kubelet API
   sudo firewall-cmd --add-port=10251/tcp --permanent 
@@ -138,9 +141,15 @@ function ConfigureFirewall(){
   echo "Opening port 53 for internal DNS"
   sudo firewall-cmd --add-port=53/udp --permanent # DNS
   sudo firewall-cmd --add-port=53/tcp --permanent # DNS
+  sudo firewall-cmd --add-port=67/udp --permanent # DNS
+  sudo firewall-cmd --add-port=68/udp --permanent # DNS
+  sudo firewall-cmd --add-port=30000-60000/udp --permanent # DNS
+  sudo firewall-cmd --add-service=dns --permanent # DNS
   echo "Adding NTP service to firewall"
   sudo firewall-cmd --add-service=ntp --permanent # NTP server
-  #sudo firewall-cmd --add-service=dns --permanent # DNS
+  echo "enable all communication between pods"
+  # sudo firewall-cmd --zone=trusted --add-interface eth0
+  # sudo firewall-cmd --set-default-zone=trusted
   # sudo firewall-cmd --get-zone-of-interface=docker0
   # sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0  
 
@@ -165,6 +174,9 @@ function ConfigureFirewall(){
   # echo "Save flanneld to DNAT'ed traffic"
   # sudo firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 1 -o flannel.1 -j ACCEPT -m comment --comment "flannel subnet"
 
+  echo "--- enable logging of rejected packets ---"
+  sudo firewall-cmd --set-log-denied=all
+
   # http://wrightrocket.blogspot.com/2017/11/installing-kubernetes-on-centos-7-with.html
   sudo firewall-cmd --reload
 
@@ -175,6 +187,7 @@ function ConfigureFirewall(){
   echo "--- ports enabled in firewall ---"
   sudo firewall-cmd --list-ports
 
+  sudo firewall-cmd --list-all
 }
 
 ConfigureFirewall
@@ -283,6 +296,7 @@ EOF
 echo "disabling selinux"
 sudo setenforce 0
 sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+# sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
 
 echo "--- Removing previous versions of kubernetes ---"
 sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni

@@ -9,7 +9,7 @@ set -e
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 source <(curl -sSL "$GITHUB_URL/common/common.sh")
 
-version="2018.04.11.01"
+version="2018.04.12.01"
 echo "---- setupmaster version $version ----"
 
 u="$(whoami)"
@@ -49,6 +49,12 @@ kubectl apply -f ${GITHUB_URL}/kubernetes/cni/flannel.yaml
 
 echo "--- sleeping 10 secs to wait for pods ---"
 sleep 10
+
+echo "adding cni0 network interface to trusted zone"
+sudo firewall-cmd --zone=trusted --add-interface cni0 --permanent
+# sudo firewall-cmd --zone=trusted --add-interface docker0 --permanent
+sudo firewall-cmd --reload
+
 
 echo "--- kubelet status ---"
 sudo systemctl status kubelet
