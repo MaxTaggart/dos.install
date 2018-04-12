@@ -6,15 +6,15 @@ set -e
 #
 #
 
-version="2018.04.12.03"
+version="2018.04.12.04"
 echo "---- setupnode version $version ----"
 
-dockerversion="17.03.2.ce-1"
-kubernetesversion="1.9.6-0"
+export dockerversion="17.03.2.ce-1"
+export kubernetesversion="1.9.6-0"
 # 1.9.3-0
 # 1.9.6-0
 # 1.10.0-0
-kubernetescniversion="0.6.0-0"
+export kubernetescniversion="0.6.0-0"
 
 echo "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
 
