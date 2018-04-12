@@ -143,6 +143,13 @@ while [[ "$input" != "q" ]]; do
         sudo firewall-cmd --list-services
         echo "--- ports enabled in firewall ---"
         sudo firewall-cmd --list-ports
+        echo "--- active zones ---"
+        sudo firewall-cmd --get-active-zones
+        echo "--- available services to enable ---"
+        sudo firewall-cmd --get-services
+        echo "--- checking DNS server ----"
+        sudo dig @192.168.0.16 kubernetes.default.svc.cluster.local +noall +answer
+        sudo dig @192.168.0.16 ptr 1.0.96.10.in-addr.arpa. +noall +answer
     ;;
     37) TestDNS $GITHUB_URL
         ;;

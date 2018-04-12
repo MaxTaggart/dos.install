@@ -23,7 +23,7 @@ echo "User name: $u"
 
 # echo "--- running kubeadm init for flannel ---"
 # for flannel network plugin
-sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=192.168.0.0/16
+sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=192.168.0.0/16 --feature-gates CoreDNS=true
 
 echo "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
 

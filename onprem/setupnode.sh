@@ -304,12 +304,12 @@ sudo yum versionlock kubernetes-cni
 echo "--- starting kubernetes service ---"
 sudo systemctl enable kubelet && sudo systemctl start kubelet
 
-echo "--- setting up iptables for kubernetes ---"
-# Some users on RHEL/CentOS 7 have reported issues with traffic being routed incorrectly due to iptables being bypassed
-cat << EOF | sudo tee /etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-ip6tables = 1
-net.bridge.bridge-nf-call-iptables = 1
-EOF
-sudo sysctl --system
+# echo "--- setting up iptables for kubernetes ---"
+# # Some users on RHEL/CentOS 7 have reported issues with traffic being routed incorrectly due to iptables being bypassed
+# cat << EOF | sudo tee /etc/sysctl.d/k8s.conf
+# net.bridge.bridge-nf-call-ip6tables = 1
+# net.bridge.bridge-nf-call-iptables = 1
+# EOF
+# sudo sysctl --system
 
 echo "---- finish setupnode version $version ----"
