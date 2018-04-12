@@ -5,7 +5,7 @@
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.10.08"
+version="2018.04.11.01"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -139,8 +139,10 @@ while [[ "$input" != "q" ]]; do
     36) # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
         echo "---- open ports ----" 
         sudo nmap 127.0.0.1
-        echo "--- IP services ---"
+        echo "--- services enabled in firewall ---"
         sudo firewall-cmd --list-services
+        echo "--- ports enabled in firewall ---"
+        sudo firewall-cmd --list-ports
     ;;
     37) TestDNS $GITHUB_URL
         ;;

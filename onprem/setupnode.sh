@@ -6,7 +6,7 @@ set -e
 #
 #
 
-version="2018.04.11.04"
+version="2018.04.11.05"
 echo "---- setupnode version $version ----"
 
 dockerversion="17.03.2.ce-1"
@@ -121,17 +121,26 @@ function ConfigureFirewall(){
   # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
   # kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
 
+  echo "opening port 6443 for Kubernetes API server"
   sudo firewall-cmd --add-port=6443/tcp --permanent # kubernetes API server
+  echo "opening ports 2379-2380 for Kubernetes API server"
   sudo firewall-cmd --add-port=2379-2380/tcp --permanent 
-  
+  echo "opening port 8472 for Flannel networking"
   sudo firewall-cmd --add-port=8472/udp --permanent  # flannel networking
+  echo "opening ports 10250,10251,10252 and 10255 for Kubelet API"
   sudo firewall-cmd --add-port=10250/tcp --permanent  # Kubelet API
   sudo firewall-cmd --add-port=10251/tcp --permanent 
   sudo firewall-cmd --add-port=10252/tcp --permanent 
   sudo firewall-cmd --add-port=10255/tcp --permanent # Read-only Kubelet API
+  echo "opening ports 80 and 443 for HTTP and HTTPS"
   sudo firewall-cmd --add-port=80/tcp --permanent # HTTP
   sudo firewall-cmd --add-port=443/tcp --permanent # HTTPS
+  echo "Opening port 53 for internal DNS"
+  sudo firewall-cmd --add-port=53/udp --permanent # DNS
+  sudo firewall-cmd --add-port=53/tcp --permanent # DNS
+  echo "Adding NTP service to firewall"
   sudo firewall-cmd --add-service=ntp --permanent # NTP server
+  #sudo firewall-cmd --add-service=dns --permanent # DNS
   # sudo firewall-cmd --get-zone-of-interface=docker0
   # sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0  
 
@@ -161,8 +170,11 @@ function ConfigureFirewall(){
 
   sudo systemctl status firewalld  
 
-  echo "--- ports allowed in firewall ---"
+  echo "--- services enabled in firewall ---"
+  sudo firewall-cmd --list-services
+  echo "--- ports enabled in firewall ---"
   sudo firewall-cmd --list-ports
+
 }
 
 ConfigureFirewall
