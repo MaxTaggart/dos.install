@@ -461,6 +461,7 @@ function TestDNS(){
     echo "----------- Checking if DNS endpoints are exposed ------------"
     kubectl get ep kube-dns --namespace=kube-system
     echo "----------- Checking logs for DNS service -----------"
+    # kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name)
     kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c kubedns
     kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c dnsmasq
     kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c sidecar        

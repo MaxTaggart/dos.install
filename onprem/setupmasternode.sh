@@ -9,7 +9,7 @@ set -e
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 source <(curl -sSL "$GITHUB_URL/common/common.sh")
 
-version="2018.04.12.03"
+version="2018.04.12.04"
 echo "---- setupmaster version $version ----"
 
 kubernetesversion="1.9.6"
@@ -25,7 +25,8 @@ echo "User name: $u"
 
 # echo "--- running kubeadm init for flannel ---"
 # for flannel network plugin
-sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
+# sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
+sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16
 
 echo "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
 
@@ -68,6 +69,8 @@ sudo systemctl status kubelet
 echo "--- nodes ---"
 kubectl get nodes
 
+echo "--- sleep for 10 secs ---"
+sleep 10
 
 echo "--- current pods ---"
 kubectl get pods -n kube-system -o wide

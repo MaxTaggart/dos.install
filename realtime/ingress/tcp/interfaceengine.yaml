@@ -30,6 +30,7 @@ spec:
       # https://ekartco.com/2017/09/kubernetes-make-pods-run-on-your-master-nodes/
       nodeSelector:
         node-role.kubernetes.io/master: ""
+        # kubernetes.io/role: master
       # https://stackoverflow.com/questions/41999756/how-to-force-pods-deployments-to-master-nodes
       # https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
       tolerations:

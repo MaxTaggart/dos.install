@@ -66,7 +66,7 @@ function New-LinuxVM {
 	Set-VMProcessor -VM $VM -Count 2
 	Start-VM -VM $VM
 	Stop-VM -VM $VM -Force
-	New-VHD -Path $VHDStoragePath -SizeBytes $VHDXSizeBytes -Dynamic -BlockSizeBytes 1MB
+	New-VHD -Path $VHDStoragePath -SizeBytes $VHDXSizeBytes -Fixed -BlockSizeBytes 1MB
 	$VMVHD = Add-VMHardDiskDrive -VM $VM -ControllerType SCSI -ControllerNumber 0 -ControllerLocation 0 -Path $VHDStoragePath -Passthru
 	$VMDVDDrive = Add-VMDvdDrive -VM $VM -ControllerNumber 0 -ControllerLocation 1 -Passthru
 	$VMNetAdapter = Get-VMNetworkAdapter -VM $VM
@@ -79,4 +79,4 @@ function New-LinuxVM {
 	}
 }
 
-New-LinuxVM -InstallISOPath C:\hyperv\CentOS-7-x86_64-Minimal-1708.iso -VMSwitchName "centos"
+New-LinuxVM -InstallISOPath C:\hyperv\CentOS-7-x86_64-Minimal-1708.iso -VMSwitchName "Default Switch"
