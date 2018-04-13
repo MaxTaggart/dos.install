@@ -1,4 +1,4 @@
-Write-Host "--- create-acs-cluster Version 2018.04.10.01 ----"
+Write-Host "--- create-acs-cluster Version 2018.04.13.01 ----"
 
 # stop on error
 # $ErrorActionPreference = "Stop"
@@ -480,6 +480,9 @@ Write-Host "Removing extra stuff that acs-engine creates"
 # az vm extension set --resource-group Prod-Kub-AHMN-RG --vm-name k8s-master-37819884-0 --name customScript --publisher Microsoft.Azure.Extensions --protected-settings "{'commandToExecute': 'whoami;touch /tmp/me.txt'}"
 # az vm run-command invoke -g Prod-Kub-AHMN-RG -n k8s-master-37819884-0 --command-id RunShellScript --scripts "whomai"
 # az vm run-command invoke -g Prod-Kub-AHMN-RG -n k8s-master-37819884-0 --command-id RunShellScript --scripts "crontab -l | { cat; echo '*/10 * * * * /etc/cron.hourly/restartkubedns.sh >>/tmp/restartkubedns.log 2>&1'; } | crontab -"
+
+Write-Host "Add label to master node"
+FixLabelOnMaster
 
 Write-Host "Run the following to see status of the cluster"
 Write-Host "kubectl get deployments,pods,services,ingress,secrets --namespace=kube-system -o wide"

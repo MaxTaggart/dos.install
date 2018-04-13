@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.10.09"
+$versionkubecommon = "2018.04.13.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -686,6 +686,19 @@ function Merge-Tokens($template, $tokens) {
 
             return $tokens[$tokenName]
         })
+}
+
+function global:FixLabelOnMaster(){
+    # for some reaosn ACS doesn't set this label on the master correctly and we need it to target pods to the master
+    Write-Information -MessageData "Looking for node with label [kubernetes.io/role=master]"
+    $masternodename=$(kubectl get nodes -l kubernetes.io/role=master -o jsonpath="{.items[0].metadata.name}")
+    if(![string]::IsNullOrEmpty($masternodename)){
+        Write-Information -MessageData "Setting label [node-role.kubernetes.io/master] on node [$masternodename]"
+        kubectl label nodes $masternodename node-role.kubernetes.io/master=""
+    }
+    else {
+        Write-Information -MessageData "No node found with label [kubernetes.io/role=master]"        
+    }
 }
 # --------------------
 Write-Information -MessageData "end common-kube.ps1 version $versioncommon"
