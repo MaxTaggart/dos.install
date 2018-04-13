@@ -185,6 +185,7 @@ function ConfigureFirewall(){
   sudo firewall-cmd --set-log-denied=all
 
   # http://wrightrocket.blogspot.com/2017/11/installing-kubernetes-on-centos-7-with.html
+  echo "reloading firewall"
   sudo firewall-cmd --reload
 
   sudo systemctl status firewalld  

@@ -62,7 +62,7 @@ while [[ "$input" != "q" ]]; do
     echo "7: Setup Kubernetes Dashboard"
     echo "8: Uninstall Docker & Kubernetes"
     echo "9: Create a single node cluster"
-    echo "10: Fix Centos under Hyper-V"
+    echo "10: Optimize Centos under Hyper-V"
     echo "------ Worker Node Tasks-------"
     echo "12: Add this VM as Worker"
     echo "13: Join this VM to an existing cluster"

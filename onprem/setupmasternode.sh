@@ -9,7 +9,7 @@ set -e
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 source <(curl -sSL "$GITHUB_URL/common/common.sh")
 
-version="2018.04.12.02"
+version="2018.04.12.03"
 echo "---- setupmaster version $version ----"
 
 kubernetesversion="1.9.6"
@@ -102,5 +102,14 @@ sudo yum install -y powershell
 
 # Start PowerShell
 # pwsh
+
+echo "opening port 6661 for mirth"
+sudo firewall-cmd --add-port=6661/tcp --permanent
+echo "opening port 5671 for rabbitmq"
+sudo firewall-cmd --add-port=5671/tcp --permanent  # flannel networking
+echo "opening port 3307 for mysql"
+sudo firewall-cmd --add-port 3307/tcp --permanent
+echo "reloading firewall"
+sudo firewall-cmd --reload
 
 echo "---- end setupmaster version $version ----"

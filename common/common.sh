@@ -484,6 +484,6 @@ function TestDNS(){
     kubectl exec busybox wget www.google.com
     kubectl delete -f $baseUrl/kubernetes/test/busybox.yaml    
     echo "--- firewall logs ---"
-    sudo systemctl status firewalld
+    sudo systemctl status firewalld -l
 }
 echo "--- Finished including common.sh version $versioncommon ---"
