@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.12.01"
+versioncommon="2018.04.13.01"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -234,6 +234,9 @@ function mountSMB(){
     while [[ -z "$pathToShare" ]]; do
         read -p "path to SMB share (e.g., //myserver.mydomain/myshare): " pathToShare < /dev/tty    
     done  
+    while [[ -z "$domain" ]]; do
+        read -p "domain: " domain < /dev/tty
+    done  
     while [[ -z "$username" ]]; do
         read -p "username: " username < /dev/tty
     done  
@@ -241,7 +244,7 @@ function mountSMB(){
         read -p "password: " password < /dev/tty
     done  
 
-    mountSMBWithParams $pathToShare $username $password $saveIntoSecret
+    mountSMBWithParams $pathToShare $username $domain $password $saveIntoSecret true
 }
 
 function mountAzureFile(){
@@ -259,15 +262,20 @@ function mountAzureFile(){
         read -p "storage account key: " storageAccountKey < /dev/tty
     done
 
-    mountSMBWithParams $pathToShare $username $storageAccountKey $saveIntoSecret
+    mountSMBWithParams $pathToShare $username "" $storageAccountKey $saveIntoSecret false
 }
 
 
 function mountSMBWithParams(){
     local pathToShare=$1
     local username=$2 #<storage-account-name>
-    local password=$3
-    local saveIntoSecret=$4
+    local domain=$3
+    local password=$4
+    local saveIntoSecret=$5
+    local isUNC=$6
+
+    passwordlength=${#password}
+    echo "mounting file share with path: [$pathToShare], user: [$username], domain: [$domain], password_length: [$passwordlength] saveIntoSecret: [$saveIntoSecret], isUNC: [$isUNC]"
     # save as secret
     # secretname="sharedfolder"
     # namespace="default"
@@ -289,7 +297,13 @@ function mountSMBWithParams(){
 
     echo "mounting path: $pathToShare using username: $username"
 
-    echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null
+    if [[ $isUNC == true ]]; then
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm
+        echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm" | sudo tee -a /etc/fstab > /dev/null
+    else
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino
+        echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null
+    fi
 
     sudo mount -a --verbose
 
@@ -300,14 +314,13 @@ function mountSMBWithParams(){
         if [[ ! -z "$(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true)" ]]; then
             kubectl delete secret $secretname --namespace=$namespace
         fi
-        kubectl create secret generic $secretname --namespace=$namespace --from-literal=path=$pathToShare --from-literal=username=$username --from-literal=password=$password
+        kubectl create secret generic $secretname --namespace=$namespace --from-literal=path=$pathToShare --from-literal=username=$username --from-literal=domain=$domain --from-literal=password=$password 
     fi
 
     touch "/mnt/data/$(hostname).txt"
 
     echo "Listing files in shared folder"
     ls -al /mnt/data
-
 }
 
 function CleanOutNamespace(){
@@ -365,6 +378,7 @@ function ShowCommandToJoinCluster(){
 
     local pathToShare=$(ReadSecretValue $secretname "path" $namespace)
     local username=$(ReadSecretValue $secretname "username" $namespace)
+    local domain=$(ReadSecretValue $secretname "domain" $namespace)
     local password=$(ReadSecretValue $secretname "password" $namespace)
     
     echo "Run this command on any new node to join this cluster (this command expires in 24 hours):"
@@ -372,7 +386,7 @@ function ShowCommandToJoinCluster(){
     echo "curl -sSL $baseUrl/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log"
     
     if [[ ! -z "$pathToShare" ]]; then
-        echo "curl -sSL $baseUrl/onprem/mountfolder.sh | bash -s $pathToShare $username $password 2>&1 | tee mountfolder.log"
+        echo "curl -sSL $baseUrl/onprem/mountfolder.sh | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
     fi
     echo "sudo $(sudo kubeadm token create --print-join-command)"
     echo ""

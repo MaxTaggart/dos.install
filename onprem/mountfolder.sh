@@ -9,12 +9,13 @@ GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 # source ./common/common.sh
 
-version="2018.04.02.01"
+version="2018.04.13.01"
 
 echo "---- mountfolder.sh version $version ------"
 pathToShare=$1
 username=$2
-password=$3
+domain=$3
+password=$4
 
-mountSMBWithParams $pathToShare $username $password false
+mountSMBWithParams $pathToShare $username $domain $password false true
 
