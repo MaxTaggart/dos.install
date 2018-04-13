@@ -111,7 +111,7 @@ while [[ "$input" != "q" ]]; do
         ;;
     10) # from https://www.altaro.com/hyper-v/centos-linux-hyper-v/
         echo "installing hyperv-daemons package"
-    	sudo yum install -y hyperv-daemons
+    	sudo yum install -y hyperv-daemons bind-utils
         echo "turning off disk optimization in centos since Hyper-V already does disk optimization"
         echo "noop" | sudo tee /sys/block/sda/queue/scheduler
         myip=$(host $(hostname) | awk '/has address/ { print $4 ; exit }')
