@@ -386,7 +386,7 @@ function ShowCommandToJoinCluster(){
     echo "curl -sSL $baseUrl/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log"
     
     if [[ ! -z "$pathToShare" ]]; then
-        echo "curl -sSL $baseUrl/onprem/mountfolder.sh | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
+        echo "curl -sSL $baseUrl/onprem/mountfolder.sh?p=$RANDOM | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
     fi
     echo "sudo $(sudo kubeadm token create --print-join-command)"
     echo ""
@@ -930,7 +930,7 @@ function SetupNewNode(){
     echo "--- Adding docker repo --"
     sudo yum-config-manager \
         --add-repo \
-        https://download.docker.com/linux/centos/docker-ce.repo
+        https://download.docker.com/linux/centos/docker-ce.repo?p=$RANDOM
 
     echo " --- current repo list ---"
     sudo yum -y repolist
@@ -951,7 +951,7 @@ function SetupNewNode(){
     # https://docs.docker.com/config/containers/logging/json-file/
     echo "--- Configuring docker to use systemd and set logs to max size of 10MB and 5 days --"
     sudo mkdir -p /etc/docker
-    sudo curl -o /etc/docker/daemon.json ${baseUrl}/onprem/daemon.json
+    sudo curl -o /etc/docker/daemon.json ${baseUrl}/onprem/daemon.json?p=$RANDOM
     
     echo "--- Starting docker service --"
     sudo systemctl enable docker && sudo systemctl start docker
@@ -974,7 +974,7 @@ function SetupNewNode(){
     echo "--- Adding kubernetes repo ---"
     sudo yum-config-manager \
         --add-repo \
-        ${baseUrl}/onprem/kubernetes.repo
+        ${baseUrl}/onprem/kubernetes.repo?p=$RANDOM
 
     # install kubeadm
     # https://saurabh-deochake.github.io/posts/2017/07/post-1/
