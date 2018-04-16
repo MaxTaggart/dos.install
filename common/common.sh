@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.13.01"
+versioncommon="2018.04.16.01"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -262,7 +262,7 @@ function mountAzureFile(){
         read -p "storage account key: " storageAccountKey < /dev/tty
     done
 
-    mountSMBWithParams $pathToShare $username "" $storageAccountKey $saveIntoSecret false
+    mountSMBWithParams $pathToShare $username "domain" $storageAccountKey $saveIntoSecret false
 }
 
 
