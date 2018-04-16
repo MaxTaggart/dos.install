@@ -5,7 +5,7 @@
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.12.02"
+version="2018.04.16.01"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -101,7 +101,7 @@ while [[ "$input" != "q" ]]; do
     5)  mountAzureFile true
         ;;
     6)  # cannot use tee here because it calls a ps1 file
-        curl -sSL $GITHUB_URL/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
+        SetupNewLoadBalancer $GITHUB_URL
         ;;
     7)  InstallStack $GITHUB_URL "kube-system" "dashboard"
         ;;
@@ -119,7 +119,7 @@ while [[ "$input" != "q" ]]; do
         grep -v "$(hostname)" /etc/hosts | sudo tee /etc/hosts > /dev/null
         echo "127.0.0.1 $(hostname)" | sudo tee -a /etc/hosts > /dev/null
         ;;
-    12)  curl -sSL $GITHUB_URL/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
+    12) SetupNewNode | tee setupnode.log
         mountSharedFolder false
         JoinNodeToCluster
         ;;

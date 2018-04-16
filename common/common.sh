@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.02"
+versioncommon="2018.04.16.03"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -412,8 +412,8 @@ function SetupMaster(){
     local baseUrl=$1
     local singlenode=$2
     
-    curl -sSL $baseUrl/onprem/setupnode.sh?p=$RANDOM | bash 2>&1 | tee setupnode.log
-    curl -sSL $baseUrl/onprem/setupmasternode.sh?p=$RANDOM | bash 2>&1 | tee setupmaster.log
+    SetupNewNode | tee setupnode.log
+    SetupNewMasterNode | tee setupmaster.log
     if [[ $singlenode == true ]]; then
         echo "enabling master node to run containers"
         # enable master to run containers
@@ -423,7 +423,8 @@ function SetupMaster(){
         mountSharedFolder true 2>&1 | tee mountsharedfolder.log
     fi
     # cannot use tee here because it calls a ps1 file
-    curl -sSL $baseUrl/onprem/setup-loadbalancer.sh?p=$RANDOM | bash
+    SetupNewLoadBalancer $baseUrl
+
     InstallStack $baseUrl "kube-system" "dashboard"
     # clear
     echo "--- waiting for pods to run ---"
@@ -523,6 +524,510 @@ function ShowLogsOfAllPodsInNameSpace(){
         kubectl logs --tail=20 $pod -n $namespace
 #            read -n1 -r -p "Press space to continue..." key < /dev/tty
     done    
+}
+
+function ConfigureIpTables(){
+  echo "switching from firewalld to iptables"
+  # iptables-services: for iptables firewall  
+  sudo yum -y install iptables-services
+  # https://www.digitalocean.com/community/tutorials/how-to-migrate-from-firewalld-to-iptables-on-centos-7
+  sudo systemctl stop firewalld && sudo systemctl start iptables; 
+  # sudo systemctl start ip6tables
+  # sudo firewall-cmd --state
+  sudo systemctl disable firewalld
+  sudo systemctl enable iptables
+  # sudo systemctl enable ip6tables
+
+  echo "--- removing firewalld ---"
+  sudo yum -y remove firewalld
+  
+  echo "setting up iptables rules"
+  # https://www.digitalocean.com/community/tutorials/iptables-essentials-common-firewall-rules-and-commands
+  echo "fixing kubedns"
+  sudo iptables -P FORWARD ACCEPT
+  sudo iptables -I INPUT -p tcp -m tcp --dport 8472 -j ACCEPT
+  sudo iptables -I INPUT -p tcp -m tcp --dport 6443 -j ACCEPT
+  sudo iptables -I INPUT -p tcp -m tcp --dport 9898 -j ACCEPT
+  sudo iptables -I INPUT -p tcp -m tcp --dport 10250 -j ACCEPT  
+  sudo iptables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT  
+  sudo iptables -I INPUT -p tcp -m tcp --dport 8081 -j ACCEPT  
+  # echo "allow all outgoing connections"
+  # sudo iptables -I OUTPUT -o eth0 -d 0.0.0.0/0 -j ACCEPT
+  echo "allowing loopback connections"
+  sudo iptables -A INPUT -i lo -j ACCEPT
+  sudo iptables -A OUTPUT -o lo -j ACCEPT
+  echo "allowing established and related incoming connections"
+  sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+  echo "allowing established outgoing connections"
+  sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
+  echo "allowing docker containers to access the external network"
+  sudo iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+  sudo iptables -A FORWARD -i docker0 -o eth0 -j ACCEPT
+  echo "allow all incoming ssh"
+  sudo iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+  sudo iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+  # reject an IP address
+  # sudo iptables -A INPUT -s 15.15.15.51 -j REJECT
+  echo "allow incoming HTTP"
+  sudo iptables -A INPUT -p tcp --dport 80 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+  sudo iptables -A OUTPUT -p tcp --sport 80 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+  echo "allow incoming HTTPS"
+  sudo iptables -A INPUT -p tcp --dport 443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+  sudo iptables -A OUTPUT -p tcp --sport 443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+  #echo "block outgoing SMTP Mail"
+  #sudo iptables -A OUTPUT -p tcp --dport 25 -j REJECT
+  
+  echo "--- reloading iptables ---"
+  sudo systemctl reload iptables
+  # echo "--- saving iptables ---"
+  # sudo iptables-save
+  # echo "--- restarting iptables ---"
+  # sudo systemctl restart iptables
+  echo "--- status of iptables --"
+  sudo systemctl status iptables
+  echo "---- current iptables rules ---"
+  sudo iptables -t nat -L
+}
+
+function ConfigureFirewall(){
+  echo " --- installing firewalld ---"
+  # https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7
+  sudo yum -y install firewalld
+  sudo systemctl status firewalld
+  echo "--- removing iptables ---"
+  sudo yum -y remove iptables-services
+  echo "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
+  # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
+  # kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
+  # https://github.com/coreos/coreos-kubernetes/blob/master/Documentation/kubernetes-networking.md
+  # https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/rhel/installing-workers.md
+  echo "opening port 6443 for Kubernetes API server"
+  sudo firewall-cmd --add-port=6443/tcp --permanent # kubernetes API server
+  echo "opening ports 2379-2380 for Kubernetes API server"
+  sudo firewall-cmd --add-port=2379-2380/tcp --permanent 
+  echo "opening port 8472,8285 and 4789 for Flannel networking"
+  sudo firewall-cmd --add-port=8472/udp --permanent  # flannel networking
+  sudo firewall-cmd --add-port=8285/udp --permanent  # flannel networking
+  sudo firewall-cmd --add-port 4789/udp --permanent
+  echo "opening ports 10250,10251,10252 and 10255 for Kubelet API"
+  sudo firewall-cmd --add-port=10250/tcp --permanent  # Kubelet API
+  sudo firewall-cmd --add-port=10251/tcp --permanent 
+  sudo firewall-cmd --add-port=10252/tcp --permanent 
+  sudo firewall-cmd --add-port=10255/tcp --permanent # Read-only Kubelet API
+  echo "opening ports 80 and 443 for HTTP and HTTPS"
+  sudo firewall-cmd --add-port=80/tcp --permanent # HTTP
+  sudo firewall-cmd --add-port=443/tcp --permanent # HTTPS
+  echo "Opening port 53 for internal DNS"
+  sudo firewall-cmd --add-port=53/udp --permanent # DNS
+  sudo firewall-cmd --add-port=53/tcp --permanent # DNS
+  sudo firewall-cmd --add-port=67/udp --permanent # DNS
+  sudo firewall-cmd --add-port=68/udp --permanent # DNS
+  sudo firewall-cmd --add-port=30000-60000/udp --permanent # DNS
+  sudo firewall-cmd --add-service=dns --permanent # DNS
+  echo "Adding NTP service to firewall"
+  sudo firewall-cmd --add-service=ntp --permanent # NTP server
+  echo "enable all communication between pods"
+  # sudo firewall-cmd --zone=trusted --add-interface eth0
+  # sudo firewall-cmd --set-default-zone=trusted
+  # sudo firewall-cmd --get-zone-of-interface=docker0
+  # sudo firewall-cmd --permanent --zone=trusted --add-interface=docker0  
+
+  # https://basildoncoder.com/blog/logging-connections-with-firewalld.html
+  # sudo firewall-cmd --zone=public --add-rich-rule="rule family="ipv4" source address="198.51.100.0/32" port protocol="tcp" port="10000" log prefix="test-firewalld-log" level="info" accept"
+  # sudo tail -f /var/log/messages |grep test-firewalld-log
+
+  # echo "log dropped packets"
+  # sudo firewall-cmd  --set-log-denied=all
+  
+  # flannel settings
+  # from https://github.com/kubernetes/contrib/blob/master/ansible/roles/flannel/tasks/firewalld.yml
+  # echo "Open flanneld subnet traffic"
+  # sudo firewall-cmd --direct --add-rule ipv4 filter FORWARD 1 -i flannel.1 -j ACCEPT -m comment --comment "flannel subnet"  
+
+  # echo "Save flanneld subnet traffic"
+  # sudo firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 1 -i flannel.1 -j ACCEPT -m comment --comment "flannel subnet"
+
+  # echo "Open flanneld to DNAT'ed traffic"
+  # sudo firewall-cmd --direct --add-rule ipv4 filter FORWARD 1 -o flannel.1 -j ACCEPT -m comment --comment "flannel subnet"
+
+  # echo "Save flanneld to DNAT'ed traffic"
+  # sudo firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 1 -o flannel.1 -j ACCEPT -m comment --comment "flannel subnet"
+
+  echo "--- enable logging of rejected packets ---"
+  sudo firewall-cmd --set-log-denied=all
+
+  # http://wrightrocket.blogspot.com/2017/11/installing-kubernetes-on-centos-7-with.html
+  echo "reloading firewall"
+  sudo firewall-cmd --reload
+
+  sudo systemctl status firewalld  
+
+  echo "--- services enabled in firewall ---"
+  sudo firewall-cmd --list-services
+  echo "--- ports enabled in firewall ---"
+  sudo firewall-cmd --list-ports
+
+  sudo firewall-cmd --list-all
+}
+
+function SetupNewMasterNode(){
+    local baseUrl=${1?baseUrl not set}
+
+    kubernetesversion="1.9.6"
+
+    u="$(whoami)"
+    echo "User name: $u"
+
+    # for calico network plugin
+    # echo "--- running kubeadm init for calico ---"
+    # sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
+
+    # CLUSTER_DNS_CORE_DNS="true"
+
+    # echo "--- running kubeadm init for flannel ---"
+    # for flannel network plugin
+    # sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
+    sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16
+
+    echo "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
+
+    # which CNI plugin to use: https://chrislovecnm.com/kubernetes/cni/choosing-a-cni-provider/
+
+    # for logs, sudo journalctl -xeu kubelet
+
+    echo "--- copying kube config to $HOME/.kube/config ---"
+    mkdir -p $HOME/.kube
+    sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+    # calico
+    # from https://docs.projectcalico.org/v3.0/getting-started/kubernetes/installation/hosted/kubeadm/
+    # echo "--- enabling calico network plugin ---"
+    # http://leebriggs.co.uk/blog/2017/02/18/kubernetes-networking-calico.html
+    # kubectl apply -f ${GITHUB_URL}/kubernetes/cni/calico.yaml
+
+    # flannel
+    # kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Documentation/kube-flannel.yml
+    echo "--- enabling flannel network plugin ---"
+    kubectl apply -f ${baseUrl}/kubernetes/cni/flannel.yaml
+
+    echo "--- sleeping 10 secs to wait for pods ---"
+    sleep 10
+
+    echo "adding cni0 network interface to trusted zone"
+    sudo firewall-cmd --zone=trusted --add-interface cni0 --permanent
+    # sudo firewall-cmd --zone=trusted --add-interface docker0 --permanent
+    sudo firewall-cmd --reload
+
+
+    echo "--- kubelet status ---"
+    sudo systemctl status kubelet
+
+    # enable master to run containers
+    # kubectl taint nodes --all node-role.kubernetes.io/master-
+
+    # kubectl create -f "$GITHUB_URL/azure/cafe-kube-dns.yml"
+    echo "--- nodes ---"
+    kubectl get nodes
+
+    echo "--- sleep for 10 secs ---"
+    sleep 10
+
+    echo "--- current pods ---"
+    kubectl get pods -n kube-system -o wide
+
+    echo "--- waiting for pods to run ---"
+    WaitForPodsInNamespace kube-system 5
+
+    echo "--- current pods ---"
+    kubectl get pods -n kube-system -o wide
+
+    if [[ ! -d "/mnt/data" ]]; then
+        echo "--- creating /mnt/data ---"
+        sudo mkdir -p /mnt/data
+        sudo chown $(id -u):$(id -g) /mnt/data
+        sudo chmod -R 777 /mnt/data
+    fi
+
+    # testing
+    # kubectl run nginx --image=nginx --port=80
+
+    # Register the Microsoft RedHat repository
+    echo "--- adding microsoft repo for powershell ---"
+    sudo yum-config-manager \
+    --add-repo \
+    https://packages.microsoft.com/config/rhel/7/prod.repo
+
+    # curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
+
+    # Install PowerShell
+    echo "--- installing powershell ---"
+    sudo yum install -y powershell
+
+    # Start PowerShell
+    # pwsh
+
+    echo "opening port 6661 for mirth"
+    sudo firewall-cmd --add-port=6661/tcp --permanent
+    echo "opening port 5671 for rabbitmq"
+    sudo firewall-cmd --add-port=5671/tcp --permanent  # flannel networking
+    echo "opening port 3307 for mysql"
+    sudo firewall-cmd --add-port 3307/tcp --permanent
+    echo "reloading firewall"
+    sudo firewall-cmd --reload
+    
+}
+
+function SetupNewLoadBalancer(){
+    local baseUrl=$1
+
+    # enable running pods on master
+    # kubectl taint node mymasternode node-role.kubernetes.io/master:NoSchedule
+    echo "--- deleting existing resources with label traefik ---"
+    kubectl delete 'pods,services,configMaps,deployments,ingress' -l k8s-traefik=traefik -n kube-system --ignore-not-found=true
+
+    echo "--- deleting existing service account for traefik ---"
+    kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
+
+    AKS_IP_WHITELIST=""
+    publicip=""
+
+    AskForSecretValue "customerid" "Customer ID "
+    echo "reading secret from kubernetes"
+    customerid=$(ReadSecret "customerid")
+
+    fullhostname=$(hostname --fqdn)
+    echo "Full host name of current machine: $fullhostname"
+    AskForSecretValue "dnshostname" "DNS name used to connect to the master VM (leave empty to use $fullhostname)" "default" $fullhostname
+    dnsrecordname=$(ReadSecret "dnshostname")
+
+    sslsecret=$(kubectl get secret traefik-cert-ahmn -n kube-system --ignore-not-found=true)
+
+    if [[ -z "$sslsecret" ]]; then
+
+            read -p "Location of SSL cert files (tls.crt and tls.key): (leave empty to use self-signed certificates) " certfolder < /dev/tty
+
+            if [[ -z "$certfolder" ]]; then
+                    echo "Creating self-signed SSL certificate"
+                    sudo yum -y install openssl
+                    u="$(whoami)"
+                    certfolder="/opt/healthcatalyst/certs"
+                    echo "Creating folder: $certfolder and giving access to $u"
+                    sudo mkdir -p "$certfolder"
+                    sudo setfacl -m u:$u:rwx "$certfolder"
+                    rm -rf "$certfolder/*"
+                    cd "$certfolder"
+                    # https://gist.github.com/fntlnz/cf14feb5a46b2eda428e000157447309
+                    echo "Generating CA cert"
+                    openssl genrsa -out rootCA.key 2048
+                    openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 3650 -subj /CN=HCKubernetes/O=HealthCatalyst/ -out rootCA.crt
+                    echo "Generating certificate for $dnsrecordname"
+                    openssl genrsa -out tls.key 2048
+                    openssl req -new -key tls.key -subj /CN=$dnsrecordname/O=HealthCatalyst/ -out tls.csr
+                    openssl x509 -req -in tls.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out tls.crt -days 3650 -sha256
+                    cp tls.crt tls.pem
+            fi
+
+            ls -al "$certfolder"
+
+            echo "Deleting any old TLS certs"
+            kubectl delete secret traefik-cert-ahmn -n kube-system --ignore-not-found=true
+
+            echo "Storing TLS certs as kubernetes secret"
+            kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$certfolder/tls.crt" --from-file="$certfolder/tls.key"
+    fi
+
+    InstallLoadBalancerStack $GITHUB_URL "$customerid"    
+}
+function SetupNewNode(){
+    local baseUrl=$1
+
+    export dockerversion="17.03.2.ce-1"
+    export kubernetesversion="1.9.6-0"
+    # 1.9.3-0
+    # 1.9.6-0
+    # 1.10.0-0
+    export kubernetescniversion="0.6.0-0"
+
+    echo "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
+
+    u="$(whoami)"
+    echo "User name: $u"
+
+    echo "updating yum packages"
+    sudo yum update -y
+
+    echo "---- RAM ----"
+    free -h
+    echo "--- disk space ---"
+    df -h
+
+    echo "installing yum-utils and other packages"
+    # yum-version: lock yum packages so they don't update automatically
+    # yum-utils: for yum-config-manager
+    # net-tools: for DNS tools
+    # nmap: nmap command for listing open ports
+    # curl: for downloading
+    # lsof: show open files
+    # ntp: Network Time Protocol
+    # nano: simple editor
+    # bind-utils: for dig, host
+
+    sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof ntp nano bind-utils
+
+    echo "removing unneeded packages"
+    # https://www.tecmint.com/remove-unwanted-services-in-centos-7/
+    sudo yum -y remove postfix chrony
+
+    echo "turning off swap"
+    # https://blog.alexellis.io/kubernetes-in-10-minutes/
+    sudo swapoff -a
+    echo "removing swap from /etc/fstab"
+    grep -v "swap" /etc/fstab | sudo tee /etc/fstab
+    echo "--- current swap files ---"
+    sudo cat /proc/swaps
+
+
+    ConfigureFirewall
+    # ConfigureIpTables
+
+    echo "-- starting NTP deamon ---"
+    # https://www.tecmint.com/install-ntp-server-in-centos/
+    sudo systemctl start ntpd
+    sudo systemctl enable ntpd
+    sudo systemctl status ntpd
+
+    echo "--- stopping docker and kubectl ---"
+    servicestatus=$(systemctl show -p SubState kubelet)
+    if [[ $servicestatus = *"running"* ]]; then
+    echo "stopping kubelet"
+    sudo systemctl stop kubelet
+    fi
+
+    # remove older versions
+    # sudo systemctl stop docker 2>/dev/null
+    echo "--- Removing previous versions of kubernetes and docker --"
+    if [ -x "$(command -v kubeadm)" ]; then
+    sudo kubeadm reset
+    fi
+
+    sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
+    sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
+    sudo yum -y remove docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux
+    sudo yum -y remove docker \
+                    docker-client \
+                    docker-client-latest \
+                    docker-common \
+                    docker-latest \
+                    docker-latest-logrotate \
+                    docker-logrotate \
+                    docker-selinux \
+                    docker-engine-selinux \
+                    docker-engine
+                    
+    # sudo rm -rf /var/lib/docker
+
+    echo "--- Adding docker repo --"
+    sudo yum-config-manager \
+        --add-repo \
+        https://download.docker.com/linux/centos/docker-ce.repo
+
+    echo " --- current repo list ---"
+    sudo yum -y repolist
+
+    echo "-- docker versions available in repo --"
+    sudo yum -y --showduplicates list docker-ce
+
+    echo "--- Installing docker via yum --"
+    echo "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
+    # need to pass --setpot=obsoletes=0 due to this bug: https://github.com/docker/for-linux/issues/20#issuecomment-312122325
+    sudo yum install -y --setopt=obsoletes=0 docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos
+    echo "--- Locking version of docker so it does not get updated via yum update --"
+    sudo yum versionlock docker-ce
+    sudo yum versionlock docker-ce-selinux
+
+    # https://kubernetes.io/docs/setup/independent/install-kubeadm/
+    # log rotation for docker: https://docs.docker.com/config/daemon/
+    # https://docs.docker.com/config/containers/logging/json-file/
+    echo "--- Configuring docker to use systemd and set logs to max size of 10MB and 5 days --"
+    sudo mkdir -p /etc/docker
+    cat << EOF | sudo tee /etc/docker/daemon.json
+    {
+    "exec-opts": ["native.cgroupdriver=systemd"],
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-size": "10m",
+        "max-file": "5"
+    }  
+    }
+    EOF
+    
+    echo "--- Starting docker service --"
+    sudo systemctl enable docker && sudo systemctl start docker
+
+    if [ $u != "root" ]; then
+        echo "--- Giving permission to $u to interact with docker ---"
+        sudo usermod -aG docker $u
+        # reload permissions without requiring a logout
+        # from https://superuser.com/questions/272061/reload-a-linux-users-group-assignments-without-logging-out
+        # https://man.cx/newgrp(1)
+        echo "--- Reloading permissions via newgrp ---"
+        newgrp docker
+    fi
+
+    echo "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
+
+    echo "--- docker status ---"
+    sudo systemctl status docker
+
+    echo "--- Adding kubernetes repo ---"
+
+    cat << EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+    [kubernetes]
+    name=Kubernetes
+    baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+    enabled=1
+    gpgcheck=1
+    repo_gpgcheck=1
+    gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    EOF
+
+    # install kubeadm
+    # https://saurabh-deochake.github.io/posts/2017/07/post-1/
+    echo "disabling selinux"
+    sudo setenforce 0
+    sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+    # sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+
+    echo "--- Removing previous versions of kubernetes ---"
+    sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
+
+    echo "--- checking to see if port 10250 is still busy ---"
+    sudo lsof -i -P -n | grep LISTEN
+
+    echo "--- kubernetes versions available in repo ---"
+    sudo yum -y --showduplicates list kubelet kubeadm kubectl kubernetes-cni
+
+    echo "--- installing kubernetes ---"
+    echo "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
+    sudo yum install -y "kubelet-${kubernetesversion}" "kubeadm-${kubernetesversion}" "kubectl-${kubernetesversion}" "kubernetes-cni-${kubernetescniversion}"
+    echo "--- locking versions of kubernetes so they don't get updated by yum update ---"
+    sudo yum versionlock kubelet
+    sudo yum versionlock kubeadm
+    sudo yum versionlock kubectl
+    sudo yum versionlock kubernetes-cni
+
+    echo "--- starting kubernetes service ---"
+    sudo systemctl enable kubelet && sudo systemctl start kubelet
+
+    # echo "--- setting up iptables for kubernetes ---"
+    # # Some users on RHEL/CentOS 7 have reported issues with traffic being routed incorrectly due to iptables being bypassed
+    # cat << EOF | sudo tee /etc/sysctl.d/k8s.conf
+    # net.bridge.bridge-nf-call-ip6tables = 1
+    # net.bridge.bridge-nf-call-iptables = 1
+    # EOF
+    # sudo sysctl --system
+
 }
 
 echo "--- Finished including common.sh version $versioncommon ---"
