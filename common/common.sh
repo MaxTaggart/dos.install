@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.04"
+versioncommon="2018.04.16.05"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -951,17 +951,7 @@ function SetupNewNode(){
     # https://docs.docker.com/config/containers/logging/json-file/
     echo "--- Configuring docker to use systemd and set logs to max size of 10MB and 5 days --"
     sudo mkdir -p /etc/docker
-    cat << EOF | sudo tee /etc/docker/daemon.json
-    {
-    "exec-opts": ["native.cgroupdriver=systemd"],
-    "log-driver": "json-file",
-    "log-opts": {
-        "max-size": "10m",
-        "max-file": "5"
-    }  
-    }
-EOF
-# EOF has to first character on the line per bash syntax
+    sudo curl -o /etc/docker/daemon.json ${baseUrl}/onprem/daemon.json
     
     echo "--- Starting docker service --"
     sudo systemctl enable docker && sudo systemctl start docker
@@ -982,16 +972,9 @@ EOF
     sudo systemctl status docker
 
     echo "--- Adding kubernetes repo ---"
-
-    cat << EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
-    [kubernetes]
-    name=Kubernetes
-    baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
-    enabled=1
-    gpgcheck=1
-    repo_gpgcheck=1
-    gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOF
+    sudo yum-config-manager \
+        --add-repo \
+        ${baseUrl}/onprem/kubernetes.repo
 
     # install kubeadm
     # https://saurabh-deochake.github.io/posts/2017/07/post-1/
