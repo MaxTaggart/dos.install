@@ -960,7 +960,8 @@ function SetupNewNode(){
         "max-file": "5"
     }  
     }
-    EOF
+EOF
+# EOF has to first character on the line per bash syntax
     
     echo "--- Starting docker service --"
     sudo systemctl enable docker && sudo systemctl start docker
@@ -990,7 +991,7 @@ function SetupNewNode(){
     gpgcheck=1
     repo_gpgcheck=1
     gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-    EOF
+EOF
 
     # install kubeadm
     # https://saurabh-deochake.github.io/posts/2017/07/post-1/
