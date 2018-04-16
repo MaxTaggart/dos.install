@@ -5,7 +5,7 @@
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.16.01"
+version="2018.04.16.02"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -33,17 +33,7 @@ stty sane < /dev/tty
 # echo "setting TERM to xterm"
 # export TERM=xterm
 
-mkdir -p $HOME/bin
-installscript="$HOME/bin/dos"
-if [[ ! -f "$installscript" ]]; then
-    echo "#!/bin/bash" > $installscript
-    echo "curl -sSL $GITHUB_URL/"'onprem/main.sh?p=$RANDOM | bash' >> $installscript
-    chmod +x $installscript
-    echo "NOTE: Next time just type 'dos' to bring up this menu"
-
-    # from http://web.archive.org/web/20120621035133/http://www.ibb.net/~anne/keyboard/keyboard.html
-    # curl -o ~/.inputrc "$GITHUB_URL/kubernetes/inputrc"
-fi
+createShortcutFordos $GITHUB_URL
 
 input=""
 while [[ "$input" != "q" ]]; do

@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.03"
+versioncommon="2018.04.16.04"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -1029,6 +1029,22 @@ EOF
     # EOF
     # sudo sysctl --system
 
+}
+
+function createShortcutFordos(){
+    local baseUrl=$1
+
+    mkdir -p $HOME/bin
+    installscript="$HOME/bin/dos"
+    if [[ ! -f "$installscript" ]]; then
+        echo "#!/bin/bash" > $installscript
+        echo "curl -sSL $baseUrl/"'onprem/main.sh?p=$RANDOM | bash' >> $installscript
+        chmod +x $installscript
+        echo "NOTE: Next time just type 'dos' to bring up this menu"
+
+        # from http://web.archive.org/web/20120621035133/http://www.ibb.net/~anne/keyboard/keyboard.html
+        # curl -o ~/.inputrc "$GITHUB_URL/kubernetes/inputrc"
+    fi    
 }
 
 echo "--- Finished including common.sh version $versioncommon ---"
