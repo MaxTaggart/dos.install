@@ -30,8 +30,8 @@ function Write-Host()
 # }
 
 function ReadSecretValue() {
-    local secretname=$1
-    local valueName=$2
+    local secretname=${1?secretname param not set}   
+    local valueName=${2?valuename param not set}
     local namespace=$3
     if [[ -z "$namespace" ]]; then 
         namespace="default"
@@ -182,8 +182,8 @@ function AskForSecretValue () {
 
 
 function WaitForPodsInNamespace(){
-    local namespace="$1"
-    local interval=$2
+    local namespace=${1?namespace param not set}
+    local interval=${2?interval param not set}
 
     pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     waitingonPod="n"
@@ -267,10 +267,10 @@ function mountAzureFile(){
 
 
 function mountSMBWithParams(){
-    local pathToShare=$1
-    local username=$2 #<storage-account-name>
-    local domain=$3
-    local password=$4
+    local pathToShare=${1?pathToShare param not set}
+    local username=${2?username param not set}
+    local domain=${3?domain param not set}
+    local password=${4?password param not set}
     local saveIntoSecret=$5
     local isUNC=$6
 
@@ -324,7 +324,7 @@ function mountSMBWithParams(){
 }
 
 function CleanOutNamespace(){
-    local namespace=$1
+    local namespace=${1?namespace param not set}
 
     echo "--- Cleaning out any old resources in $namespace ---"
 
@@ -345,9 +345,9 @@ function CleanOutNamespace(){
 }
 
 function InstallStack(){
-    local baseUrl=$1
-    local namespace=$2
-    local appfolder=$3
+    local baseUrl=${1?baseUrl param not set}
+    local namespace=${2?namespace param not set}
+    local appfolder=${3?appfolder param not set}
     
     echo "downloading: $baseUrl/kubernetes/installstack.ps1?p=$RANDOM"
     curl -sSL -o installstack.ps1 "$baseUrl/kubernetes/installstack.ps1?p=$RANDOM"
@@ -357,8 +357,8 @@ function InstallStack(){
 }
 
 function InstallLoadBalancerStack(){
-    local baseUrl=$1
-    local customerid=$2
+    local baseUrl=${1?baseUrl param not set}
+    local customerid=${2?customerid param not set}
     local ssl=0
     local ingressInternal="public"
     local ingressExternal="onprem"
@@ -371,7 +371,7 @@ function InstallLoadBalancerStack(){
 }
 
 function ShowCommandToJoinCluster(){
-    local baseUrl=$1
+    local baseUrl=${1?baseUrl param not set}
 
     secretname="mountsharedfolder"
     namespace="default"
@@ -409,11 +409,11 @@ function JoinNodeToCluster(){
 }
 
 function SetupMaster(){
-    local baseUrl=$1
+    local baseUrl=${1?baseUrl param not set}
     local singlenode=$2
     
-    SetupNewNode | tee setupnode.log
-    SetupNewMasterNode | tee setupmaster.log
+    SetupNewNode $baseUrl | tee setupnode.log
+    SetupNewMasterNode $baseUrl | tee setupmaster.log
     if [[ $singlenode == true ]]; then
         echo "enabling master node to run containers"
         # enable master to run containers
@@ -463,7 +463,7 @@ function UninstallDockerAndKubernetes(){
 }
 
 function TestDNS(){
-    local baseUrl=$1
+    local baseUrl=${1?baseUrl param not set}
     echo "To resolve DNS issues: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#debugging-dns-resolution"
     echo "----------- Checking if DNS pods are running -----------"
     kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o wide
@@ -504,7 +504,7 @@ function TestDNS(){
 }
 
 function ShowStatusOfAllPodsInNameSpace(){
-    local namespace=$1
+    local namespace=${1?namespace param not set}
     echo "showing status of pods in $namespace"
     pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     for pod in $pods
@@ -515,7 +515,7 @@ function ShowStatusOfAllPodsInNameSpace(){
     done    
 }
 function ShowLogsOfAllPodsInNameSpace(){
-    local namespace=$1
+    local namespace=${1?namespace param not set}
     echo "showing logs (last 20 lines) in $namespace"
     pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     for pod in $pods
@@ -779,7 +779,7 @@ function SetupNewMasterNode(){
 }
 
 function SetupNewLoadBalancer(){
-    local baseUrl=$1
+    local baseUrl=${1?baseUrl param not set}
 
     # enable running pods on master
     # kubectl taint node mymasternode node-role.kubernetes.io/master:NoSchedule
@@ -840,7 +840,7 @@ function SetupNewLoadBalancer(){
     InstallLoadBalancerStack $GITHUB_URL "$customerid"    
 }
 function SetupNewNode(){
-    local baseUrl=$1
+    local baseUrl=${1?baseUrl param not set}
 
     export dockerversion="17.03.2.ce-1"
     export kubernetesversion="1.9.6-0"
@@ -1012,10 +1012,12 @@ function SetupNewNode(){
     # EOF
     # sudo sysctl --system
 
+    echo "--- finished setting up node ---"
+
 }
 
 function createShortcutFordos(){
-    local baseUrl=$1
+    local baseUrl=${1?baseUrl param not set}
 
     mkdir -p $HOME/bin
     installscript="$HOME/bin/dos"

@@ -5,7 +5,7 @@
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.16.02"
+version="2018.04.16.03"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -22,7 +22,10 @@ freememInBytes=$(free|awk '/^Mem:/{print $2}')
 freememInMB=$(($freememInBytes/1024))
 echo "Free Memory: $freememInMB MB"
 
-source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
+curl -sSL -o ./common.sh "$GITHUB_URL/common/common.sh?p=$RANDOM"
+source ./common.sh
+
+# source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 # source ./common/common.sh
 
 # this sets the keyboard so it handles backspace properly
