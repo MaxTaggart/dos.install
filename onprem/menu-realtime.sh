@@ -4,7 +4,7 @@ set -e
 # This script is meant for quick & easy install via:
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/menu-realtime.sh | bash
 #
-version="2018.04.10.01"
+version="2018.04.16.01"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -42,26 +42,14 @@ while [[ "$input" != "q" ]]; do
         echo "Mirth Mgmt UI is at: http://${certhostname}/mirth/ user: admin password:admin"
         ;;
     4)  Write-Output "MySql root password: $(ReadSecretPassword mysqlrootpassword fabricrealtime)"
-            Write-Output "MySql NLP_APP_USER password: $(ReadSecretPassword mysqlpassword fabricrealtime)"
-            Write-Output "certhostname: $(ReadSecret certhostname fabricrealtime)"
-            Write-Output "certpassword: $(ReadSecretPassword certpassword fabricrealtime)"
-            Write-Output "rabbitmq mgmtui user: admin password: $(ReadSecretPassword rabbitmqmgmtuipassword fabricrealtime)"
+        Write-Output "MySql NLP_APP_USER password: $(ReadSecretPassword mysqlpassword fabricrealtime)"
+        Write-Output "certhostname: $(ReadSecret certhostname fabricrealtime)"
+        Write-Output "certpassword: $(ReadSecretPassword certpassword fabricrealtime)"
+        Write-Output "rabbitmq mgmtui user: admin password: $(ReadSecretPassword rabbitmqmgmtuipassword fabricrealtime)"
         ;;
-    5)  pods=$(kubectl get pods -n fabricrealtime -o jsonpath='{.items[*].metadata.name}')
-        for pod in $pods
-        do
-                Write-Output "=============== Describe Pod: $pod ================="
-                kubectl describe pods $pod -n fabricrealtime
-                read -n1 -r -p "Press space to continue..." key < /dev/tty
-        done
+    5)  ShowStatusOfAllPodsInNameSpace "fabricrealtime"
         ;;
-    6)  pods=$(kubectl get pods -n fabricrealtime -o jsonpath='{.items[*].metadata.name}')
-        for pod in $pods
-        do
-                Write-Output "=============== Logs for Pod: $pod ================="
-                kubectl logs --tail=20 $pod -n fabricrealtime
-                read -n1 -r -p "Press space to continue..." key < /dev/tty
-        done
+    6)  ShowLogsOfAllPodsInNameSpace "fabricrealtime"
         ;;
     7) certhostname=$(ReadSecret certhostname fabricrealtime)
         certpassword=$(ReadSecretPassword certpassword fabricrealtime)

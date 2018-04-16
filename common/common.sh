@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.01"
+versioncommon="2018.04.16.02"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -501,4 +501,28 @@ function TestDNS(){
     echo "--- firewall logs ---"
     sudo systemctl status firewalld -l
 }
+
+function ShowStatusOfAllPodsInNameSpace(){
+    local namespace=$1
+    echo "showing status of pods in $namespace"
+    pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+    for pod in $pods
+    do
+            Write-Output "=============== Describe Pod: $pod ================="
+            kubectl describe pods $pod -n $namespace
+#            read -n1 -r -p "Press space to continue..." key < /dev/tty
+    done    
+}
+function ShowLogsOfAllPodsInNameSpace(){
+    local namespace=$1
+    echo "showing logs (last 20 lines) in $namespace"
+    pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+    for pod in $pods
+    do
+        Write-Output "=============== Logs for Pod: $pod ================="
+        kubectl logs --tail=20 $pod -n $namespace
+#            read -n1 -r -p "Press space to continue..." key < /dev/tty
+    done    
+}
+
 echo "--- Finished including common.sh version $versioncommon ---"
