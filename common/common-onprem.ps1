@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.10"
+$versiononpremcommon = "2018.04.17.11"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -565,7 +565,9 @@ function MountFolderFromSecrets([ValidateNotNullOrEmpty()][string] $baseUrl) {
     Do {
         Write-Host '.' -NoNewline;
         Start-Sleep -Seconds 5;
-    } while (!Test-Path -Path "/etc/kubernetes/kubelet.conf")
+    } while (!(Test-Path -Path "/etc/kubernetes/kubelet.conf"))
+
+    Start-Sleep -Seconds 10
 
     Write-Status "--- copying kube config to ${HOME}/.kube/config ---"
     mkdir -p "${HOME}/.kube"
