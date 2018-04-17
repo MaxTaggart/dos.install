@@ -6,6 +6,8 @@ set -o pipefail
 #
 # This script is meant for quick & easy install via:
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh -o "${HOME}/main.sh"; bash "${HOME}/main.sh"
+#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh -o main.sh; bash main.sh
 #   curl https://bit.ly/2GOPcyX | bash
 #
 version="2018.04.17.02"
@@ -19,6 +21,9 @@ fi
 
 echo "CentOS version: $(cat /etc/redhat-release | grep -o '[0-9]\.[0-9]')"
 echo "$(cat /etc/redhat-release)"
+
+
+# curl -o "${HOME}/main.sh" -sSL "${GITHUB_URL}/onprem/main.sh?p=$RANDOM"
 
 declare -i freememInBytes=10
 freememInBytes=$(free|awk '/^Mem:/{print $2}')
