@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.05"
+versioncommon="2018.04.16.06"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -930,7 +930,7 @@ function SetupNewNode(){
     echo "--- Adding docker repo --"
     sudo yum-config-manager \
         --add-repo \
-        https://download.docker.com/linux/centos/docker-ce.repo?p=$RANDOM
+        https://download.docker.com/linux/centos/docker-ce.repo
 
     echo " --- current repo list ---"
     sudo yum -y repolist
@@ -951,7 +951,7 @@ function SetupNewNode(){
     # https://docs.docker.com/config/containers/logging/json-file/
     echo "--- Configuring docker to use systemd and set logs to max size of 10MB and 5 days --"
     sudo mkdir -p /etc/docker
-    sudo curl -o /etc/docker/daemon.json ${baseUrl}/onprem/daemon.json?p=$RANDOM
+    sudo curl -sSL -o /etc/docker/daemon.json ${baseUrl}/onprem/daemon.json?p=$RANDOM
     
     echo "--- Starting docker service --"
     sudo systemctl enable docker && sudo systemctl start docker
@@ -974,7 +974,7 @@ function SetupNewNode(){
     echo "--- Adding kubernetes repo ---"
     sudo yum-config-manager \
         --add-repo \
-        ${baseUrl}/onprem/kubernetes.repo?p=$RANDOM
+        ${baseUrl}/onprem/kubernetes.repo
 
     # install kubeadm
     # https://saurabh-deochake.github.io/posts/2017/07/post-1/

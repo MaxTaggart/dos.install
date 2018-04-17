@@ -1,11 +1,11 @@
 #!/bin/bash
-# set -e
+set -e
 #
 # This script is meant for quick & easy install via:
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.16.03"
+version="2018.04.16.04"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
