@@ -12,6 +12,10 @@ function WriteOut($txt) {
     Write-Information -MessageData "$txt"
 }
 
+function Write-Status($txt) {
+    Write-Information -MessageData "$txt"
+}
+
 function SetupMaster([ValidateNotNullOrEmpty()] $baseUrl, $singlenode) {
     [hashtable]$Return = @{} 
     
