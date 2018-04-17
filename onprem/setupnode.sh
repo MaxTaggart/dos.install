@@ -23,6 +23,9 @@ source ./common.sh
 
 createShortcutFordos $GITHUB_URL
 
+InstallPrerequisites
+
+
 SetupNewNode $GITHUB_URL
 
 SetupNewWorkerNode $GITHUB_URL

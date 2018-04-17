@@ -53,6 +53,8 @@ stty sane < /dev/tty
 
 createShortcutFordos $GITHUB_URL
 
+InstallPrerequisites
+
 input=""
 while [[ "$input" != "q" ]]; do
 

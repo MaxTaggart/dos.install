@@ -1078,4 +1078,52 @@ function RunPowerShellCommand(){
     result=$(pwsh -Command "& {$command}" -namespace fabricgoo -size foo)
 }
 
+
+function InstallPrerequisites(){
+    Write-Status "--- updating yum packages ---"
+    sudo yum update -y
+
+    WriteOut "---- RAM ----"
+    free -h
+    WriteOut "--- disk space ---"
+    df -h
+
+    Write-Status "installing yum-utils and other packages"
+    # yum-version: lock yum packages so they don't update automatically
+    # yum-utils: for yum-config-manager
+    # net-tools: for DNS tools
+    # nmap: nmap command for listing open ports
+    # curl: for downloading
+    # lsof: show open files
+    # ntp: Network Time Protocol
+    # nano: simple editor
+    # bind-utils: for dig, host
+
+    sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof ntp nano bind-utils
+
+    Write-Status "removing unneeded packages"
+    # https://www.tecmint.com/remove-unwanted-services-in-centos-7/
+    sudo yum -y remove postfix chrony
+
+    Write-Status "turning off swap"
+    # https://blog.alexellis.io/kubernetes-in-10-minutes/
+    sudo swapoff -a
+    WriteOut "removing swap from /etc/fstab"
+    grep -v "swap" /etc/fstab | sudo tee /etc/fstab
+    WriteOut "--- current swap files ---"
+    sudo cat /proc/swaps
+    
+    # Register the Microsoft RedHat repository
+    WriteOut "--- adding microsoft repo for powershell ---"
+    sudo yum-config-manager --add-repo https://packages.microsoft.com/config/rhel/7/prod.repo
+
+    # curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
+
+    # Install PowerShell
+    WriteOut "--- installing powershell ---"
+    sudo yum install -y powershell
+    # sudo yum install -y powershell-6.0.2-1.rhel.7
+    # sudo yum versionlock powershell    
+}
+
 echo "--- Finished including common.sh version $versioncommon ---"
