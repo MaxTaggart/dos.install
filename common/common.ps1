@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.10.04"
+$versioncommon = "2018.04.16.01"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -1657,6 +1657,7 @@ function global:CreateAzureStorage([ValidateNotNullOrEmpty()] $namespace) {
     $shareName = "$namespace"
 
     CreateShare -resourceGroup $resourceGroup -sharename $shareName -deleteExisting $false
+    CreateShare -resourceGroup $resourceGroup -sharename "${shareName}backups" -deleteExisting $false
 
     return $Return
 }
