@@ -184,7 +184,9 @@ $loadBalancerIPResult = GetLoadBalancerIPs
 $EXTERNAL_IP = $loadBalancerIPResult.ExternalIP
 $INTERNAL_IP = $loadBalancerIPResult.InternalIP
 
-FixLoadBalancers -resourceGroup $AKS_PERS_RESOURCE_GROUP
+if($($config.ingress.fixloadbalancer)){
+    FixLoadBalancers -resourceGroup $AKS_PERS_RESOURCE_GROUP
+}
 
 $dnsrecordname = $($config.dns.name)
 

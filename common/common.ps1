@@ -1731,7 +1731,10 @@ function global:WaitForLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) 
     Write-Information -MessageData "Sleeping for 10 seconds so kube services get IPs assigned"
     Start-Sleep -Seconds 10
     
-    FixLoadBalancers -resourceGroup $resourceGroup
+    # if($($config.ingress.fixloadbalancer)){
+    #     FixLoadBalancers -resourceGroup $AKS_PERS_RESOURCE_GROUP
+    # }    
+    # FixLoadBalancers -resourceGroup $resourceGroup
     
     return $Return
 }

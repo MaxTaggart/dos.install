@@ -12,7 +12,7 @@
         "create_windows_containers": false,
         "use_azure_networking": true,
         "acs_engine": {
-            "version": "0.14.6"
+            "version": "0.15.0"
         }
     },
     "service_principal": {
@@ -29,7 +29,8 @@
     "ingress": {
         "external": "public",
         "internal": "public",
-        "external_ip_whitelist": ""
+        "external_ip_whitelist": "",
+        "fixloadbalancer": false
     },
     "networking": {
         "vnet": "kubnettest",

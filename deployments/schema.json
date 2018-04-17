@@ -207,6 +207,15 @@
                     "examples": [
                         ""
                     ]
+                },
+                "fixloadbalancer": {
+                    "$id": "/properties/fixloadbalancer",
+                    "type": "boolean",
+                    "title": "Whether to fix the load balancer",
+                    "default": true,
+                    "examples": [
+                        false
+                    ]
                 }
             }
         },
