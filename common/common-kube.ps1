@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.16.02"
+$versionkubecommon = "2018.04.16.03"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -92,6 +92,7 @@ function global:GenerateSecretPassword ([ValidateNotNullOrEmpty()] $secretname, 
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
     if ([string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
 
+        Write-Information -MessageData "$secretname not found so generating it"
         $mysqlrootpassword = ""
         # MySQL password requirements: https://dev.mysql.com/doc/refman/5.6/en/validate-password-plugin.html
         # we also use sed to replace configs: https://unix.stackexchange.com/questions/32907/what-characters-do-i-need-to-escape-when-using-sed-in-a-sh-script
