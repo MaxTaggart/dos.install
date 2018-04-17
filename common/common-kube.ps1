@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.16.04"
+$versionkubecommon = "2018.04.17.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -450,7 +450,7 @@ function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $i
                 # Write-Information -MessageData "${pod}: $podstatus"
                 $containerReady=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].ready}")
                 if($containerReady -ne "true" ){
-                    $containerStatus=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].waiting.reason}")
+                    $containerStatus=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].state.waiting.reason}")
                     if(![string]::IsNullOrEmpty(($containerStatus))){
                         $waitingonPod="${waitingonPod}${pod}($containerStatus);"    
                     }
