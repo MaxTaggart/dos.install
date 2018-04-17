@@ -1,4 +1,4 @@
-$version = "2018.04.16.04"
+$version = "2018.04.16.06"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -11,17 +11,14 @@ $randomstring += $set | Get-Random
 
 Write-Host "Powershell version: $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor).$($PSVersionTable.PSVersion.Build)"
 
-Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring | Invoke-Expression;
-# Get-Content ./common/common-kube.ps1 -Raw | Invoke-Expression;
+function ImportModuleFromUrl($module){
+    Invoke-WebRequest -Uri $GITHUB_URL/common/${module}.ps1?f=$randomstring -OutFile ${module}.psm1
+    Import-Module -Name .\${module}.psm1 -Force
+}
 
-Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring | Invoke-Expression;
-# Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
+ImportModuleFromUrl "common-kube"
 
-# Invoke-WebRequest -useb $GITHUB_URL/common/common-onprem.ps1?f=$randomstring | Invoke-Expression;
-Get-Content ./common/common-onprem.ps1 -Raw | Invoke-Expression;
-
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/common/common-onprem.ps1 -Headers @{"Cache-Control"="no-cache"} -OutFile common-onprem.psm1
-Import-Module -Name .\common-onprem.psm1 -Force
+ImportModuleFromUrl "common-onprem"
 
 # show Information messages
 $InformationPreference = "Continue"
@@ -38,13 +35,13 @@ while ($userinput -ne "q") {
     $userinput = Read-Host "Please make a selection"
     switch ($userinput) {
         '1' {
-            SetupMaster -baseUrl $GITHUB_URL -singlenode $true
+            SetupMaster -baseUrl $GITHUB_URL -singlenode $false
         } 
         '2' {
             SetupNewNode -baseUrl $GITHUB_URL
         } 
         '3' {
-            SetupMaster -baseUrl $GITHUB_URL -singlenode $false
+            SetupMaster -baseUrl $GITHUB_URL -singlenode $true
         } 
         'q' {
             return
