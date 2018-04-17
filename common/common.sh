@@ -213,7 +213,7 @@ function WaitForPodsInNamespace(){
 }
 
 function mountSharedFolder(){
-    local saveIntoSecret=${1:false}
+    local saveIntoSecret=${1:-}
 
     echo "DOS requires a network folder that can be accessed from all the worker VMs"
     echo "1. Mount an existing Azure file share"
@@ -234,7 +234,7 @@ function mountSharedFolder(){
 }
 
 function mountSMB(){
-    local saveIntoSecret=${1:false}
+    local saveIntoSecret=${1:-}
 
     while [[ -z "${pathToShare:-}" ]]; do
         read -p "path to SMB share (e.g., //myserver.mydomain/myshare): " pathToShare < /dev/tty    
@@ -253,7 +253,7 @@ function mountSMB(){
 }
 
 function mountAzureFile(){
-    local saveIntoSecret=${1:false}
+    local saveIntoSecret=${1:-}
     
     while [[ -z "${storageAccountName:-}" ]]; do
         read -p "Storage Account Name: " storageAccountName < /dev/tty  
@@ -267,7 +267,7 @@ function mountAzureFile(){
         read -p "storage account key: " storageAccountKey < /dev/tty
     done
 
-    mountSMBWithParams $pathToShare $username "domain" $storageAccountKey $saveIntoSecret false
+    mountSMBWithParams $pathToShare $username "domain" $storageAccountKey $saveIntoSecret ""
 }
 
 
@@ -276,8 +276,8 @@ function mountSMBWithParams(){
     local username=$2
     local domain=$3
     local password=$4
-    local saveIntoSecret=${5:false}
-    local isUNC=${6:false}
+    local saveIntoSecret=${5:-}
+    local isUNC=${6:-}
 
     passwordlength=${#password}
     echo "mounting file share with path: [$pathToShare], user: [$username], domain: [$domain], password_length: [$passwordlength] saveIntoSecret: [$saveIntoSecret], isUNC: [$isUNC]"
@@ -415,7 +415,7 @@ function JoinNodeToCluster(){
 
 function SetupMaster(){
     local baseUrl=$1
-    local singlenode=${2:false}
+    local singlenode=${2:-}
     
     SetupNewNode $baseUrl | tee setupnode.log
     SetupNewMasterNode $baseUrl | tee setupmaster.log
