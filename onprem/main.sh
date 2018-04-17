@@ -24,6 +24,8 @@ declare -i freememInBytes=10
 freememInBytes=$(free|awk '/^Mem:/{print $2}')
 freememInMB=$(($freememInBytes/1024))
 echo "Free Memory: $freememInMB MB"
+echo "Free disk"
+df -hT /home
 
 # logging based on https://github.com/fredpalmer/log4bash
 curl -sSL -o ./log4bash.sh "$GITHUB_URL/common/log4bash.sh?p=$RANDOM"

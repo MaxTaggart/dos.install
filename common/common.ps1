@@ -1700,7 +1700,8 @@ function global:CreateOnPremStorage([ValidateNotNullOrEmpty()] $namespace) {
     Write-Information -MessageData "Create the file share: $sharePath"
 
     New-Item -ItemType Directory -Force -Path $sharePath   
-    
+    New-Item -ItemType Directory -Force -Path "${sharePath}backups"
+
     return $Return
 }
 function global:DeleteOnPremStorage([ValidateNotNullOrEmpty()] $namespace) {
