@@ -1064,4 +1064,16 @@ function SetupNewWorkerNode(){
     fi
 }
 
+function RunPowerShellCommand(){
+    GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+
+    command="Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1 | Invoke-Expression; GetCommonKubeVersion"
+
+    pwsh -Command "& {$command}"
+
+    command="Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1 | Invoke-Expression; TestFunction"
+
+    pwsh -Command "& {$command}" -namespace fabricgoo -size foo
+}
+
 echo "--- Finished including common.sh version $versioncommon ---"

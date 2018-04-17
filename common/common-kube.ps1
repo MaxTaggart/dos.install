@@ -709,5 +709,16 @@ function global:FixLabelOnMaster(){
         Write-Information -MessageData "No node found with label [kubernetes.io/role=master]"        
     }
 }
+
+function global:TestFunction(){
+    param 
+    ( 
+        [string]$namespace, 
+        [string]$size
+    )     
+
+    Write-Host "namespace: $namespace"
+    Write-Host "size: $size"
+}
 # --------------------
 Write-Information -MessageData "end common-kube.ps1 version $versioncommon"
