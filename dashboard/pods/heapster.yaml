@@ -16,8 +16,13 @@ spec:
       labels:
         task: monitoring
         k8s-app: heapster
-    spec:
+    spec:   
       serviceAccountName: heapster
+      # enable running on master so it can be setup before any nodes are added
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule          
       containers:
       - name: heapster
         image: k8s.gcr.io/heapster-amd64:v1.4.2

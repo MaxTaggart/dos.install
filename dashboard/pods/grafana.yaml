@@ -11,6 +11,11 @@ spec:
         task: monitoring
         k8s-app: grafana
     spec:
+      # enable running on master so it can be setup before any nodes are added
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule    
       containers:
       - name: grafana
         image: k8s.gcr.io/heapster-grafana-amd64:v4.4.3
