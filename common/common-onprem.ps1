@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.06"
+$versiononpremcommon = "2018.04.17.07"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -11,6 +11,20 @@ function WriteOut($txt) {
 
 function Write-Status($txt) {
     Write-Information -MessageData "$txt"
+}
+
+
+function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $token, [ValidateNotNullOrEmpty()][string] $masterurl, [ValidateNotNullOrEmpty()][string] $discoverytoken) {
+    [hashtable]$Return = @{} 
+    
+    Write-Status "--- setting up new node ---"
+    SetupNewNode -baseUrl $baseUrl
+
+    Write-Status "--- joining cluster ---"
+    sudo kubeadm join --token $token $masterurl --discovery-token-ca-cert-hash $discoverytoken
+
+    Write-Status "--- mounting network folder ---"
+    MountFolderFromSecrets -baseUrl $baseUrl
 }
 
 function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlenode) {
@@ -542,6 +556,34 @@ function mountAzureFile([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
     return $Return    
 }
 
+function MountFolderFromSecrets([ValidateNotNullOrEmpty()][string] $baseUrl){
+
+    Write-Status "--- copying kube config to ${HOME}/.kube/config ---"
+    mkdir -p "${HOME}/.kube"
+    sudo cp -f "/etc/kubernetes/kubelet.conf" "${HOME}/.kube/config"
+    sudo chown "$(id -u):$(id -g)" "${HOME}/.kube/config"
+
+    Write-Status "--- giving read access to current user to /var/lib/kubelet/pki/kubelet-client.key ---"
+    $u="$(whoami)"
+    sudo setfacl -m u:${u}:r "/var/lib/kubelet/pki/kubelet-client.key"
+
+    Write-Status "--- reading secret for folder to mount ----"
+
+    $secretname="mountsharedfolder"
+    $namespace="default"    
+    $pathToShare=$(ReadSecretValue -secretname $secretname -valueName "path" -namespace $namespace)
+    $username=$(ReadSecretValue -secretname $secretname -valueName "username" -namespace $namespace)
+    $domain=$(ReadSecretValue -secretname $secretname -valueName "domain" -namespace $namespace)
+    $password=$(ReadSecretValue -secretname $secretname -valueName "password" -namespace $namespace)
+
+    if($username){
+        mountSMBWithParams -pathToShare $pathToShare -username $username -domain $domain -password $password -saveIntoSecret $False -isUNC $True
+    }
+    else {
+        WriteOut "No username found in secrets"
+    }
+}
+
 function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [ValidateNotNullOrEmpty()][string] $username, [ValidateNotNullOrEmpty()][string] $domain, [ValidateNotNullOrEmpty()][string] $password, [ValidateNotNullOrEmpty()][bool] $saveIntoSecret, [ValidateNotNullOrEmpty()][bool] $isUNC) {
     [hashtable]$Return = @{} 
     $passwordlength = $($password.length)
@@ -597,16 +639,24 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
 
 function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
     
-    WriteOut "Run this command on any new node to join this cluster (this command expires in 24 hours):"
-    WriteOut "---- COPY BELOW THIS LINE ----"
-    WriteOut "curl -sSL $baseUrl/onprem/setupnode.sh?p="'$RANDOM'" | bash"
+    $joinCommand = $(sudo kubeadm token create --print-join-command)
+    if ($joinCommand) {
+        $parts = $joinCommand.Split(' ');
+        $token = $parts[3];
+        $masterurl = $parts[4];
+        $discoverytoken = $parts[6];
     
-    # if [[ ! -z "$pathToShare" ]]; then
-    #     WriteOut "curl -sSL $baseUrl/onprem/mountfolder.sh?p=$RANDOM | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
-    # fi
-    WriteOut "sudo $(sudo kubeadm token create --print-join-command)"
-    WriteOut ""
-    WriteOut "---- COPY ABOVE THIS LINE ----"
+        WriteOut "Run this command on any new node to join this cluster (this command expires in 24 hours):"
+        WriteOut "---- COPY BELOW THIS LINE ----"
+        WriteOut "curl -sSL $baseUrl/onprem/setupnode.sh?p="'$RANDOM'" -o setupnode.sh; bash setupnode.sh $token $masterurl $discoverytoken"
+    
+        # if [[ ! -z "$pathToShare" ]]; then
+        #     WriteOut "curl -sSL $baseUrl/onprem/mountfolder.sh?p=$RANDOM | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
+        # fi
+        WriteOut "sudo $(sudo kubeadm token create --print-join-command)"
+        WriteOut ""
+        WriteOut "---- COPY ABOVE THIS LINE ----"
+    }
 }
 
 # --------------------

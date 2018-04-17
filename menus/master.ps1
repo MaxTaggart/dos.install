@@ -1,4 +1,4 @@
-$version = "2018.04.17.02"
+$version = "2018.04.17.03"
 
 # This script is meant for quick & easy install via:
 #   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
@@ -40,6 +40,7 @@ while ($userinput -ne "q") {
     Write-Host "5: Show all nodes"
     Write-Host "6: Show status of cluster"
     Write-Host "7: Launch Kubernetes dashboard"
+    Write-Host "8: Show command to join another node to this cluster"
     Write-Host "-----------"
     Write-Host "q: Quit"
     $userinput = Read-Host "Please make a selection"
@@ -79,6 +80,10 @@ while ($userinput -ne "q") {
             Write-Host $token
             Write-Host "-------- End of Bearer Token -------------"
         } 
+        '8' {
+            ShowCommandToJoinCluster -baseUrl $GITHUB_URL
+        } 
+        
         'q' {
             return
         }
