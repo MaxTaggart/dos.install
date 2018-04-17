@@ -8,7 +8,7 @@ set -o pipefail
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.17.01"
+version="2018.04.17.02"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -51,10 +51,16 @@ stty sane < /dev/tty
 # echo "setting TERM to xterm"
 # export TERM=xterm
 
+echo "--- creating shortcut for dos ---"
 createShortcutFordos $GITHUB_URL
 
+echo "--- installing prerequisites ---"
 InstallPrerequisites
 
+echo "--- download master.ps1 ---"
 curl -o "${HOME}/master.ps1" -sSL "${GITHUB_URL}/menus/master.ps1?p=$RANDOM"
 
+echo "--- running master.ps1 ---"
 pwsh -f "${HOME}/master.ps1"
+
+echo " --- end of main.sh $version ---"
