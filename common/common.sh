@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.07"
+versioncommon="2018.04.16.08"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -220,7 +220,7 @@ function mountSharedFolder(){
     echo "2. Mount an existing UNC network file share"
     echo "3. I've already mounted a shared folder at /mnt/data/"
 
-    while [[ -z "$mountChoice" ]]; do
+    while [[ -z "${mountChoice:-}" ]]; do
         read -p "Choose a number: " mountChoice < /dev/tty    
     done      
     if [[ $mountChoice == 1 ]]; then
@@ -756,18 +756,6 @@ function SetupNewMasterNode(){
     # testing
     # kubectl run nginx --image=nginx --port=80
 
-    # Register the Microsoft RedHat repository
-    echo "--- adding microsoft repo for powershell ---"
-    sudo yum-config-manager \
-    --add-repo \
-    https://packages.microsoft.com/config/rhel/7/prod.repo
-
-    # curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
-
-    # Install PowerShell
-    echo "--- installing powershell ---"
-    sudo yum install -y powershell
-
     # Start PowerShell
     # pwsh
 
@@ -891,9 +879,21 @@ function SetupNewNode(){
     echo "--- current swap files ---"
     sudo cat /proc/swaps
 
-
     ConfigureFirewall
     # ConfigureIpTables
+
+    # Register the Microsoft RedHat repository
+    echo "--- adding microsoft repo for powershell ---"
+    sudo yum-config-manager \
+    --add-repo \
+    https://packages.microsoft.com/config/rhel/7/prod.repo
+
+    # curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
+
+    # Install PowerShell
+    echo "--- installing powershell ---"
+    sudo yum install -y powershell-6.0.2-1.rhel.7
+    sudo yum versionlock powershell
 
     Write-Status "-- starting NTP deamon ---"
     # https://www.tecmint.com/install-ntp-server-in-centos/
