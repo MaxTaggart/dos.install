@@ -1,4 +1,4 @@
-Write-Host "--- create-acs-cluster Version 2018.04.16.03 ----"
+Write-Host "--- create-acs-cluster Version 2018.04.16.04 ----"
 
 # stop on error
 # $ErrorActionPreference = "Stop"
@@ -244,9 +244,9 @@ else {
 
 # subnet CIDR to mask
 # https://doc.m0n0.ch/quickstartpc/intro-CIDR.html
-$kubernetesVersion=$(Coalesce $($config.kubernetes.version) "1.9")
-$masterVMSize=$(Coalesce $($config.azure.masterVMSize) "Standard_DS2_v2")
-$workerVMSize=$(Coalesce $($config.azure.workerVMSize) "Standard_DS2_v2")
+$kubernetesVersion = $(Coalesce $($config.kubernetes.version) "1.9")
+$masterVMSize = $(Coalesce $($config.azure.masterVMSize) "Standard_DS2_v2")
+$workerVMSize = $(Coalesce $($config.azure.workerVMSize) "Standard_DS2_v2")
 
 $WINDOWS_PASSWORD = "replacepassword1234$"
 Write-Host "replacing values in the acs.json file"
@@ -289,6 +289,11 @@ if (!(Test-Path -Path "$acsoutputfolder")) {
 Write-Host "Deleting everything in the output folder"
 Remove-Item -Path $acsoutputfolder -Recurse -Force
 
+# to get valid kubernetes versions: acs-engine orchestrators --orchestrator kubernetes
+
+Write-Host "Checking if acs-engine supports kubernetes version= $kubernetesVersion"
+acs-engine orchestrators --orchestrator kubernetes --version "$kubernetesVersion"
+
 Write-Host "Generating ACS engine template"
 
 # acs-engine deploy --subscription-id "$AKS_SUBSCRIPTION_ID" `
@@ -298,6 +303,14 @@ Write-Host "Generating ACS engine template"
 #                     --output-directory "$acsoutputfolder"
 
 acs-engine generate $output --output-directory $acsoutputfolder
+
+if ($?) {            
+    Write-Host "ACS Engine generated the template successfully"            
+}
+else {            
+    exit 1          
+} 
+
 
 if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
 
@@ -331,11 +344,6 @@ if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
 #     --agent-count=3 --agent-vm-size Standard_D2 `
 #     --master-vnet-subnet-id="$mysubnetid" `
 #     --agent-vnet-subnet-id="$mysubnetid"
-
-# to get valid kubernetes versions: acs-engine orchestrators --orchestrator kubernetes
-
-Write-Host "Checking if acs-engine supports kubernetes version= $kubernetesVersion"
-acs-engine orchestrators --orchestrator kubernetes --version "$kubernetesVersion"
 
 Write-Host "Validating deployment"
 az group deployment validate `
