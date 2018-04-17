@@ -1,4 +1,4 @@
-Write-Host "--- create-acs-cluster Version 2018.04.16.02 ----"
+Write-Host "--- create-acs-cluster Version 2018.04.16.03 ----"
 
 # stop on error
 # $ErrorActionPreference = "Stop"
@@ -244,7 +244,7 @@ else {
 
 # subnet CIDR to mask
 # https://doc.m0n0.ch/quickstartpc/intro-CIDR.html
-$kubernetesVersion=$(Coalesce $($config.kubernetes) "1.9")
+$kubernetesVersion=$(Coalesce $($config.kubernetes.version) "1.9")
 $masterVMSize=$(Coalesce $($config.azure.masterVMSize) "Standard_DS2_v2")
 $workerVMSize=$(Coalesce $($config.azure.workerVMSize) "Standard_DS2_v2")
 
