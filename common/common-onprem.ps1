@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.16.03"
+$versiononpremcommon = "2018.04.16.04"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -19,8 +19,9 @@ function Write-Status($txt) {
 function SetupMaster([ValidateNotNullOrEmpty()] $baseUrl, $singlenode) {
     [hashtable]$Return = @{} 
     
-    SetupNewNode $baseUrl
-    SetupNewMasterNode $baseUrl 
+    SetupNewNode -baseUrl $baseUrl
+    SetupNewMasterNode -baseUrl $baseUrl
+
     if ($singlenode -eq $true) {
         WriteOut "enabling master node to run containers"
         # enable master to run containers
@@ -31,12 +32,12 @@ function SetupMaster([ValidateNotNullOrEmpty()] $baseUrl, $singlenode) {
         mountSharedFolder true
     }
     # cannot use tee here because it calls a ps1 file
-    SetupNewLoadBalancer $baseUrl
+    SetupNewLoadBalancer -baseUrl $baseUrl
 
-    InstallStack $baseUrl "kube-system" "dashboard"
+    InstallStack -baseUrl $baseUrl -namespace "kube-system" -appfolder "dashboard"
     # clear
     WriteOut "--- waiting for pods to run ---"
-    WaitForPodsInNamespace kube-system 5    
+    WaitForPodsInNamespace -namespace "kube-system" -interval 5    
 
     if ($singlenode -eq $true) {
         WriteOut "Finished setting up a single-node cluster"
@@ -45,6 +46,96 @@ function SetupMaster([ValidateNotNullOrEmpty()] $baseUrl, $singlenode) {
         ShowCommandToJoinCluster $baseUrl    
     }
 
+    return $Return    
+}
+
+function SetupNewMasterNode([ValidateNotNullOrEmpty()] $baseUrl){
+    [hashtable]$Return = @{} 
+
+    $kubernetesversion="1.9.6"
+
+    $u="$(whoami)"
+    WriteOut "User name: $u"
+
+    # for calico network plugin
+    # WriteOut "--- running kubeadm init for calico ---"
+    # sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
+
+    # CLUSTER_DNS_CORE_DNS="true"
+
+    # WriteOut "--- running kubeadm init for flannel ---"
+    # for flannel network plugin
+    # sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
+    sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16
+
+    WriteOut "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
+
+    # which CNI plugin to use: https://chrislovecnm.com/kubernetes/cni/choosing-a-cni-provider/
+
+    # for logs, sudo journalctl -xeu kubelet
+
+    WriteOut "--- copying kube config to $HOME/.kube/config ---"
+    mkdir -p $HOME/.kube
+    sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+    # calico
+    # from https://docs.projectcalico.org/v3.0/getting-started/kubernetes/installation/hosted/kubeadm/
+    # WriteOut "--- enabling calico network plugin ---"
+    # http://leebriggs.co.uk/blog/2017/02/18/kubernetes-networking-calico.html
+    # kubectl apply -f ${GITHUB_URL}/kubernetes/cni/calico.yaml
+
+    # flannel
+    # kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Documentation/kube-flannel.yml
+    WriteOut "--- enabling flannel network plugin ---"
+    kubectl apply -f ${baseUrl}/kubernetes/cni/flannel.yaml
+
+    WriteOut "--- sleeping 10 secs to wait for pods ---"
+    Start-Sleep 10
+
+    WriteOut "adding cni0 network interface to trusted zone"
+    sudo firewall-cmd --zone=trusted --add-interface cni0 --permanent
+    # sudo firewall-cmd --zone=trusted --add-interface docker0 --permanent
+    sudo firewall-cmd --reload
+
+    WriteOut "--- kubelet status ---"
+    sudo systemctl status kubelet
+
+    # enable master to run containers
+    # kubectl taint nodes --all node-role.kubernetes.io/master-
+
+    # kubectl create -f "$GITHUB_URL/azure/cafe-kube-dns.yml"
+    WriteOut "--- nodes ---"
+    kubectl get nodes
+
+    WriteOut "--- sleep for 10 secs ---"
+    Start-Sleep 10
+
+    WriteOut "--- current pods ---"
+    kubectl get pods -n kube-system -o wide
+
+    WriteOut "--- waiting for pods to run ---"
+    WaitForPodsInNamespace kube-system 5
+
+    WriteOut "--- current pods ---"
+    kubectl get pods -n kube-system -o wide
+
+    if(!(Test-Path C:\Windows -PathType Leaf)){
+        WriteOut "--- creating /mnt/data ---"
+        sudo mkdir -p /mnt/data
+        sudo chown $(id -u):$(id -g) /mnt/data
+        sudo chmod -R 777 /mnt/data
+    }
+
+    WriteOut "opening port 6661 for mirth"
+    sudo firewall-cmd --add-port=6661/tcp --permanent
+    WriteOut "opening port 5671 for rabbitmq"
+    sudo firewall-cmd --add-port=5671/tcp --permanent  # flannel networking
+    WriteOut "opening port 3307 for mysql"
+    sudo firewall-cmd --add-port 3307/tcp --permanent
+    WriteOut "reloading firewall"
+    sudo firewall-cmd --reload
+    
     return $Return    
 }
 
@@ -132,7 +223,72 @@ function ConfigureFirewall() {
 
     return $Return        
 }
-  
+function SetupNewLoadBalancer([ValidateNotNullOrEmpty()] $baseUrl){
+    [hashtable]$Return = @{} 
+
+    # enable running pods on master
+    # kubectl taint node mymasternode node-role.kubernetes.io/master:NoSchedule
+    WriteOut "--- deleting existing resources with label traefik ---"
+    kubectl delete 'pods,services,configMaps,deployments,ingress' -l k8s-traefik=traefik -n kube-system --ignore-not-found=true
+
+    WriteOut "--- deleting existing service account for traefik ---"
+    kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
+
+    $publicip=""
+
+    AskForSecretValue "customerid" "Customer ID "
+    WriteOut "reading secret from kubernetes"
+    $customerid=$(ReadSecret "customerid")
+
+    $fullhostname=$(hostname --fqdn)
+    WriteOut "Full host name of current machine: $fullhostname"
+    AskForSecretValue "dnshostname" "DNS name used to connect to the master VM (leave empty to use $fullhostname)" "default" $fullhostname
+    $dnsrecordname=$(ReadSecret "dnshostname")
+
+    $sslsecret=$(kubectl get secret traefik-cert-ahmn -n kube-system --ignore-not-found=true)
+
+    if(!$sslsecret){
+        $certfolder = Read-Host -Prompt "Location of SSL cert files (tls.crt and tls.key): (leave empty to use self-signed certificates) "
+
+        if(!$certfolder){
+            WriteOut "Creating self-signed SSL certificate"
+            sudo yum -y install openssl
+            $u="$(whoami)"
+            $certfolder="/opt/healthcatalyst/certs"
+            WriteOut "Creating folder: $certfolder and giving access to $u"
+            sudo mkdir -p "$certfolder"
+            sudo setfacl -m u:$u:rwx "$certfolder"
+            rm -rf "$certfolder/*"
+            cd "$certfolder"
+            # https://gist.github.com/fntlnz/cf14feb5a46b2eda428e000157447309
+            WriteOut "Generating CA cert"
+            openssl genrsa -out rootCA.key 2048
+            openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 3650 -subj /CN=HCKubernetes/O=HealthCatalyst/ -out rootCA.crt
+            WriteOut "Generating certificate for $dnsrecordname"
+            openssl genrsa -out tls.key 2048
+            openssl req -new -key tls.key -subj /CN=$dnsrecordname/O=HealthCatalyst/ -out tls.csr
+            openssl x509 -req -in tls.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out tls.crt -days 3650 -sha256
+            cp tls.crt tls.pem
+        }
+
+        ls -al "$certfolder"
+
+        WriteOut "Deleting any old TLS certs"
+        kubectl delete secret traefik-cert-ahmn -n kube-system --ignore-not-found=true
+
+        WriteOut "Storing TLS certs as kubernetes secret"
+        kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$certfolder/tls.crt" --from-file="$certfolder/tls.key"
+    }
+
+    $ingressInternal="public"
+    $ingressExternal="onprem"
+    $publicIp=""
+
+    LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl 0 -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -publicIp $publicIp    
+
+    return $Return
+}
+
 function SetupNewNode([ValidateNotNullOrEmpty()] $baseUrl) {
     [hashtable]$Return = @{} 
 
@@ -268,5 +424,5 @@ function SetupNewNode([ValidateNotNullOrEmpty()] $baseUrl) {
 
     Write-Status "--- finished setting up node ---"
 
-    return $Return    
+    return $Return
 }

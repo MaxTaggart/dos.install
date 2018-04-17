@@ -1,4 +1,4 @@
-$version = "2018.04.16.03"
+$version = "2018.04.16.04"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -32,15 +32,19 @@ while ($userinput -ne "q") {
     Write-Host "------ Infrastructure -------"
     Write-Host "1: Create Master VM"
     Write-Host "2: Create Worker VM"
+    Write-Host "3: Create Single Node Cluster"
     Write-Host "-----------"
     Write-Host "q: Quit"
     $userinput = Read-Host "Please make a selection"
     switch ($userinput) {
         '1' {
-            SetupMaster $GITHUB_URL false
+            SetupMaster -baseUrl $GITHUB_URL -singlenode $true
         } 
         '2' {
             SetupNewNode -baseUrl $GITHUB_URL
+        } 
+        '3' {
+            SetupMaster -baseUrl $GITHUB_URL -singlenode $false
         } 
         'q' {
             return
