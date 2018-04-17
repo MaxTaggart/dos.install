@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.08"
+versioncommon="2018.04.16.09"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -235,16 +235,16 @@ function mountSharedFolder(){
 function mountSMB(){
     local saveIntoSecret=$1
 
-    while [[ -z "$pathToShare" ]]; do
+    while [[ -z "${pathToShare:-}" ]]; do
         read -p "path to SMB share (e.g., //myserver.mydomain/myshare): " pathToShare < /dev/tty    
     done  
-    while [[ -z "$domain" ]]; do
+    while [[ -z "${domain:-}" ]]; do
         read -p "domain: " domain < /dev/tty
     done  
-    while [[ -z "$username" ]]; do
+    while [[ -z "${username:-}" ]]; do
         read -p "username: " username < /dev/tty
     done  
-    while [[ -z "$password" ]]; do
+    while [[ -z "${password:-}" ]]; do
         read -p "password: " password < /dev/tty
     done  
 
@@ -254,15 +254,15 @@ function mountSMB(){
 function mountAzureFile(){
     local saveIntoSecret=$1
     
-    while [[ -z "$storageAccountName" ]]; do
+    while [[ -z "${storageAccountName:-}" ]]; do
         read -p "Storage Account Name: " storageAccountName < /dev/tty  
     done  
-    while [[ -z "$shareName" ]]; do
+    while [[ -z "${shareName:-}" ]]; do
         read -p "Storage Share Name: " shareName < /dev/tty    
     done  
     pathToShare="//${storageAccountName}.file.core.windows.net/${shareName}"
     username="$storageAccountName"
-    while [[ -z "$storageAccountKey" ]]; do
+    while [[ -z "${storageAccountKey:-}" ]]; do
         read -p "storage account key: " storageAccountKey < /dev/tty
     done
 
@@ -404,7 +404,7 @@ function JoinNodeToCluster(){
     fi    
 
     echo "-----------------------"
-    while [[ -z "$joincommand" ]]; do
+    while [[ -z "${joincommand:-}" ]]; do
         read -p "Paste kubeadm join command here: " joincommand < /dev/tty    
     done      
     echo "--- running command to join cluster ---"
