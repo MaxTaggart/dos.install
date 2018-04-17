@@ -892,8 +892,9 @@ function SetupNewNode(){
 
     # Install PowerShell
     echo "--- installing powershell ---"
-    sudo yum install -y powershell-6.0.2-1.rhel.7
-    sudo yum versionlock powershell
+    sudo yum install -y powershell
+    # sudo yum install -y powershell-6.0.2-1.rhel.7
+    # sudo yum versionlock powershell
 
     Write-Status "-- starting NTP deamon ---"
     # https://www.tecmint.com/install-ntp-server-in-centos/
