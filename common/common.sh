@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.11"
+versioncommon="2018.04.16.12"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
