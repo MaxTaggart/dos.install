@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.05"
+$versiononpremcommon = "2018.04.17.06"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -453,13 +453,10 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     sudo systemctl enable kubelet
     sudo systemctl start kubelet
 
-    # WriteOut "--- setting up iptables for kubernetes ---"
+    WriteOut "--- setting up iptables for kubernetes in k8s.conf ---"
     # # Some users on RHEL/CentOS 7 have reported issues with traffic being routed incorrectly due to iptables being bypassed
-    # cat << EOF | sudo tee /etc/sysctl.d/k8s.conf
-    # net.bridge.bridge-nf-call-ip6tables = 1
-    # net.bridge.bridge-nf-call-iptables = 1
-    # EOF
-    # sudo sysctl --system
+    sudo curl -o "/etc/sysctl.d/k8s.conf" -sSL "$baseUrl/onprem/k8s.conf"
+    sudo sysctl --system
 
     Write-Status "--- finished setting up node ---"
 
