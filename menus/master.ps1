@@ -1,4 +1,4 @@
-$version = "2018.04.17.01"
+$version = "2018.04.17.02"
 
 # This script is meant for quick & easy install via:
 #   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
@@ -32,11 +32,14 @@ $InformationPreference = "Continue"
 $userinput = ""
 while ($userinput -ne "q") {
     Write-Host "================ Health Catalyst version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
-    Write-Host "------ Infrastructure -------"
+    Write-Host "------ On-Premise -------"
     Write-Host "1: Create Master VM"
     Write-Host "2: Create Worker VM"
-    Write-Host "3: Create Single Node Cluster"
+    Write-Host "3: Create a Single Node Cluster"
     Write-Host "4: Uninstall Docker and Kubernetes"
+    Write-Host "5: Show all nodes"
+    Write-Host "6: Show status of cluster"
+    Write-Host "7: Launch Kubernetes dashboard"
     Write-Host "-----------"
     Write-Host "q: Quit"
     $userinput = Read-Host "Please make a selection"
@@ -52,6 +55,29 @@ while ($userinput -ne "q") {
         } 
         '4' {
             UninstallDockerAndKubernetes
+        } 
+        '5' {
+            Write-Host "Current cluster: $(kubectl config current-context)"
+            kubectl version --short
+            kubectl get "nodes" -o wide
+        } 
+        '6' {
+            Write-Host "Current cluster: $(kubectl config current-context)"
+            kubectl version --short
+            kubectl get "deployments,pods,services,nodes,ingress" --namespace=kube-system -o wide
+        } 
+        '7' {
+            $dnshostname=$(ReadSecret "dnshostname")
+            $myip=$(host $(hostname) | awk '/has address/ { print $4 ; exit }')
+            Write-Host "--- dns entries for c:\windows\system32\drivers\etc\hosts (if needed) ---"
+            Write-Host "${myip} ${dnshostname}"
+            Write-Host "-----------------------------------------"
+            Write-Host "You can access the kubernetes dashboard at: https://${dnshostname}/api/ or https://${myip}/api/"
+            $secretname=$(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+            $token=$(ReadSecretValue "$secretname" "token" "kube-system")
+            Write-Host "----------- Bearer Token ---------------"
+            Write-Host $token
+            Write-Host "-------- End of Bearer Token -------------"
         } 
         'q' {
             return

@@ -97,7 +97,7 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl){
     sudo firewall-cmd --reload
 
     WriteOut "--- kubelet status ---"
-    sudo systemctl status kubelet
+    sudo systemctl status kubelet -l
 
     # enable master to run containers
     # kubectl taint nodes --all node-role.kubernetes.io/master-
@@ -143,7 +143,7 @@ function ConfigureFirewall() {
     WriteOut " --- installing firewalld ---"
     # https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7
     sudo yum -y install firewalld
-    sudo systemctl status firewalld
+    sudo systemctl status firewalld -l
     WriteOut "--- removing iptables ---"
     sudo yum -y remove iptables-services
     WriteOut "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
@@ -210,7 +210,7 @@ function ConfigureFirewall() {
     WriteOut "reloading firewall"
     sudo firewall-cmd --reload
   
-    sudo systemctl status firewalld  
+    sudo systemctl status firewalld -l
   
     WriteOut "--- services enabled in firewall ---"
     sudo firewall-cmd --list-services
@@ -315,7 +315,7 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # https://www.tecmint.com/install-ntp-server-in-centos/
     sudo systemctl start ntpd
     sudo systemctl enable ntpd
-    sudo systemctl status ntpd
+    sudo systemctl status ntpd -l
 
     # Write-Status "--- stopping docker and kubectl ---"
     # $servicestatus = $(systemctl show -p SubState kubelet)
@@ -385,7 +385,7 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     WriteOut "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
 
     WriteOut "--- docker status ---"
-    sudo systemctl status docker
+    sudo systemctl status docker -l
 
     Write-Status "--- Adding kubernetes repo ---"
     sudo yum-config-manager --add-repo ${baseUrl}/onprem/kubernetes.repo
@@ -454,7 +454,7 @@ function mountSharedFolder([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
     Write-Host "3. I've already mounted a shared folder at /mnt/data/"
     Write-Host ""
 
-    Do {$mountChoice = Read-Host -Prompt "Choose a number: "} while (!$mountChoice)
+    Do {$mountChoice = Read-Host -Prompt "Choose a number"} while (!$mountChoice)
 
     if($mountChoice -eq "1"){
         mountAzureFile -saveIntoSecret $saveIntoSecret
@@ -472,16 +472,16 @@ function mountSharedFolder([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
 function mountSMB([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
     [hashtable]$Return = @{} 
 
-    Do {$pathToShare = Read-Host -Prompt "path to SMB share (e.g., //myserver.mydomain/myshare): "} while (!$pathToShare)
+    Do {$pathToShare = Read-Host -Prompt "path to SMB share (e.g., //myserver.mydomain/myshare)"} while (!$pathToShare)
 
     # convert to unix style since that's what linux mount command expects
     $pathToShare = ($pathToShare -replace "\\", "/")
  
-    Do {$domain = Read-Host -Prompt "domain: "} while (!$domain)
+    Do {$domain = Read-Host -Prompt "domain"} while (!$domain)
 
-    Do {$username = Read-Host -Prompt "username: "} while (!$username)
+    Do {$username = Read-Host -Prompt "username"} while (!$username)
 
-    Do {$password = Read-Host -Prompt "password: "} while (!$password)
+    Do {$password = Read-Host -Prompt "password"} while (!$password)
 
     mountSMBWithParams -pathToShare $pathToShare -username $username -domain $domain -password $password -saveIntoSecret$saveIntoSecret -isUNC $True
 
@@ -492,14 +492,14 @@ function mountSMB([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
 function mountAzureFile([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
     [hashtable]$Return = @{} 
     
-    Do {$storageAccountName = Read-Host -Prompt "Storage Account Name: "} while (!$storageAccountName)
+    Do {$storageAccountName = Read-Host -Prompt "Storage Account Name"} while (!$storageAccountName)
 
-    Do {$shareName = Read-Host -Prompt "Storage Share Name: "} while (!$shareName)
+    Do {$shareName = Read-Host -Prompt "Storage Share Name"} while (!$shareName)
 
     $pathToShare="//${storageAccountName}.file.core.windows.net/${shareName}"
     $username="$storageAccountName"
 
-    Do {$storageAccountKey = Read-Host -Prompt "storage account key: "} while (!$storageAccountKey)
+    Do {$storageAccountKey = Read-Host -Prompt "storage account key"} while (!$storageAccountKey)
 
     mountSMBWithParams -pathToShare $pathToShare -username $username -domain "domain" -password $storageAccountKey -saveIntoSecret $saveIntoSecret -isUNC $False
     return $Return    
