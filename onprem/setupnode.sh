@@ -1,5 +1,9 @@
 #!/bin/bash
+# from http://redsymbol.net/articles/unofficial-bash-strict-mode/
 set -e
+set -u
+set -o pipefail
+
 #
 # This script is meant for quick & easy install via:
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/setupnode.sh | bash
