@@ -4,6 +4,8 @@ $version = "2018.04.17.01"
 #   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
 #   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | pwsh -Interactive -NoExit -c -;
 
+Write-Host "--- master.ps1 version $version ---"
+
 $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()

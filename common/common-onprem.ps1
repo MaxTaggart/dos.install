@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.01"
+$versiononpremcommon = "2018.04.17.02"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -19,14 +19,14 @@ function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlen
     SetupNewNode -baseUrl $baseUrl
     SetupNewMasterNode -baseUrl $baseUrl
 
-    if ($singlenode -eq $true) {
+    if ($singlenode -eq $True) {
         WriteOut "enabling master node to run containers"
         # enable master to run containers
         # kubectl taint nodes --all node-role.kubernetes.io/master-       
         kubectl taint node --all node-role.kubernetes.io/master:NoSchedule- 
     }
     else {
-        mountSharedFolder saveIntoSecret $true
+        mountSharedFolder -saveIntoSecret $True
     }
     # cannot use tee here because it calls a ps1 file
     SetupNewLoadBalancer -baseUrl $baseUrl
@@ -36,7 +36,7 @@ function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlen
     WriteOut "--- waiting for pods to run ---"
     WaitForPodsInNamespace -namespace "kube-system" -interval 5    
 
-    if ($singlenode -eq $true) {
+    if ($singlenode -eq $True) {
         WriteOut "Finished setting up a single-node cluster"
     }
     else {
@@ -483,7 +483,7 @@ function mountSMB([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
 
     Do {$password = Read-Host -Prompt "password: "} while (!$password)
 
-    mountSMBWithParams -pathToShare $pathToShare -username $username -domain $domain -password $password -saveIntoSecret$saveIntoSecret -isUNC $true
+    mountSMBWithParams -pathToShare $pathToShare -username $username -domain $domain -password $password -saveIntoSecret$saveIntoSecret -isUNC $True
 
     return $Return    
 
@@ -501,7 +501,7 @@ function mountAzureFile([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
 
     Do {$storageAccountKey = Read-Host -Prompt "storage account key: "} while (!$storageAccountKey)
 
-    mountSMBWithParams -pathToShare $pathToShare -username $username -domain "domain" -password $storageAccountKey -saveIntoSecret $saveIntoSecret -isUNC $false
+    mountSMBWithParams -pathToShare $pathToShare -username $username -domain "domain" -password $storageAccountKey -saveIntoSecret $saveIntoSecret -isUNC $False
     return $Return    
 }
 
@@ -530,7 +530,7 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
 
     WriteOut "mounting path: $pathToShare using username: $username"
 
-    if($isUNC -eq $true){
+    if($isUNC -eq $True){
         sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm
         WriteOut "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm" | sudo tee -a /etc/fstab > /dev/null
     }
@@ -541,7 +541,7 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
 
     sudo mount -a --verbose
 
-    if( $saveIntoSecret -eq $true){
+    if( $saveIntoSecret -eq $True){
         WriteOut "saving mount information into a secret"
         $secretname="mountsharedfolder"
         $namespace="default"
