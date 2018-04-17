@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.16.01"
+$versionkubecommon = "2018.04.16.02"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -711,14 +711,15 @@ function global:FixLabelOnMaster(){
 }
 
 function global:TestFunction(){
-    param 
-    ( 
-        [string]$namespace, 
-        [string]$size
-    )     
+    param( [string]$namespace, [string]$size)     
 
-    Write-Host "namespace: $namespace"
-    Write-Host "size: $size"
+    [hashtable]$Return = @{} 
+
+    Write-Information -MessageData "namespace: $namespace"
+    Write-Information -MessageData "size: $size"
+
+    $Return.Namespace = "$namespace $size"
+    return $Return    
 }
 # --------------------
 Write-Information -MessageData "end common-kube.ps1 version $versioncommon"

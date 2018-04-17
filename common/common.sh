@@ -1065,15 +1065,17 @@ function SetupNewWorkerNode(){
 }
 
 function RunPowerShellCommand(){
+    local func=$1
+
     GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
     command="Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1 | Invoke-Expression; GetCommonKubeVersion"
 
     pwsh -Command "& {$command}"
 
-    command="Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1 | Invoke-Expression; TestFunction"
+    command="param( [string]"'$namespace'", [string]"'$size'"); echo "'$namespace'"; Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1 | Invoke-Expression; TestFunction -namespace "'$namespace'" -size "'$size'
 
-    pwsh -Command "& {$command}" -namespace fabricgoo -size foo
+    result=$(pwsh -Command "& {$command}" -namespace fabricgoo -size foo)
 }
 
 echo "--- Finished including common.sh version $versioncommon ---"
