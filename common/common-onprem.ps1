@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.07"
+$versiononpremcommon = "2018.04.17.08"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -175,6 +175,9 @@ function ConfigureFirewall() {
             sudo firewall-cmd --zone=public --add-interface "$primarynic"
             sudo firewall-cmd --permanent --zone=public --add-interface="$primarynic"
             sudo firewall-cmd --reload
+        }
+        else {
+            WriteOut "Primary network interface, $primarynic, is in $zoneforprimarynic zone"
         }
     }
 
@@ -534,7 +537,7 @@ function mountSMB([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
 
     Do {$password = Read-Host -Prompt "password"} while (!$password)
 
-    mountSMBWithParams -pathToShare $pathToShare -username $username -domain $domain -password $password -saveIntoSecret$saveIntoSecret -isUNC $True
+    mountSMBWithParams -pathToShare $pathToShare -username $username -domain $domain -password $password -saveIntoSecret $saveIntoSecret -isUNC $True
 
     return $Return    
 
@@ -607,21 +610,22 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
     # remove previous entry for this drive
     grep -v "/mnt/data" /etc/fstab | sudo tee /etc/fstab > /dev/null
 
-    WriteOut "mounting path: $pathToShare using username: $username"
-
     if ($isUNC -eq $True) {
-        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1, username=$username, domain=$domain, password=$password, dir_mode=0777, file_mode=0777, sec=ntlm
+        WriteOut "Mounting as UNC folder"
+        sudo mount --verbose -t cifs $pathToShare "/mnt/data" -o vers=2.1, username=$username, domain=$domain, password=$password, dir_mode=0777, file_mode=0777, sec=ntlm
         WriteOut "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm" | sudo tee -a /etc/fstab > /dev/null
     }
     else {
-        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1, username=$username, password=$password, dir_mode=0777, file_mode=0777, serverino
+        WriteOut "Mounting as non-UNC folder"
+        sudo mount --verbose -t cifs $pathToShare "/mnt/data" -o vers=2.1, username=$username, password=$password, dir_mode=0777, file_mode=0777, serverino
         WriteOut "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null       
     }
 
+    WriteOut "Mounting all"
     sudo mount -a --verbose
 
     if ( $saveIntoSecret -eq $True) {
-        WriteOut "saving mount information into a secret"
+        WriteOut "Saving mount information into a secret"
         $secretname = "mountsharedfolder"
         $namespace = "default"
         if ([string]::IsNullOrEmpty("$(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true)")) {
