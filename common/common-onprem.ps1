@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.04"
+$versiononpremcommon = "2018.04.17.05"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -150,11 +150,27 @@ function ConfigureFirewall() {
     sudo systemctl status firewalld -l
     WriteOut "--- removing iptables ---"
     sudo yum -y remove iptables-services
-    WriteOut "enabling ports 6443 & 10250 for kubernetes and 80 & 443 for web apps in firewalld"
+
+    WriteOut "Making sure the main network interface is in public zone"
+    $primarynic = $(route | grep default | awk '{print $NF; ext }')
+    WriteOut "Found primary network interface: $primarynic"
+    if ($primarynic) {
+        $zoneforprimarynic = $(sudo firewall-cmd --get-zone-of-interface="$primarynic")
+        if (!$zoneforprimarynic) {
+            WriteOut "Primary network interface, $primarynic, was not in any zone so adding it to public zone"
+            sudo firewall-cmd --zone=public --add-interface "$primarynic"
+            sudo firewall-cmd --permanent --zone=public --add-interface="$primarynic"
+            sudo firewall-cmd --reload
+        }
+    }
+
+    WriteOut "enabling ports in firewalld"
     # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
     # kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
     # https://github.com/coreos/coreos-kubernetes/blob/master/Documentation/kubernetes-networking.md
     # https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/rhel/installing-workers.md
+    WriteOut "opening port 22 for SSH"
+    sudo firewall-cmd --add-port=22/tcp --permanent # SSH
     WriteOut "opening port 6443 for Kubernetes API server"
     sudo firewall-cmd --add-port=6443/tcp --permanent # kubernetes API server
     WriteOut "opening ports 2379-2380 for Kubernetes API server"
@@ -176,7 +192,7 @@ function ConfigureFirewall() {
     sudo firewall-cmd --add-port=53/tcp --permanent # DNS
     sudo firewall-cmd --add-port=67/udp --permanent # DNS
     sudo firewall-cmd --add-port=68/udp --permanent # DNS
-    sudo firewall-cmd --add-port=30000-60000/udp --permanent # DNS
+    # sudo firewall-cmd --add-port=30000-60000/udp --permanent # NodePort services
     sudo firewall-cmd --add-service=dns --permanent # DNS
     WriteOut "Adding NTP service to firewall"
     sudo firewall-cmd --add-service=ntp --permanent # NTP server
@@ -303,11 +319,11 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
 
     if (!$myip) {
-        #throw "Can't parse process id for port $Port"
+        throw "Cannot access my DNS server: host $(hostname)"
         WriteOut "Cannot access my DNS server: host $(hostname)"
         WriteOut "checking if this machine can access a DNS server via host $(hostname)"
         $myip = $(hostname -I | cut -d" " -f 1)
-        if($myip){
+        if ($myip) {
             WriteOut "Found an IP via hostname -I: $myip"
         }
     }

@@ -441,6 +441,10 @@ function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $i
         $counter++
         $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
 
+        if(!$pods){
+            throw "No pods were found in namespace $namespace"
+        }
+
         foreach ($pod in $pods.Split(" ")) {
             $podstatus=$(kubectl get pods $pod -n $namespace -o jsonpath='{.status.phase}')
             if($podstatus -eq "Running"){
