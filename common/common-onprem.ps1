@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.03"
+$versiononpremcommon = "2018.04.17.04"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -46,12 +46,12 @@ function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlen
     return $Return    
 }
 
-function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl){
+function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
-    $kubernetesversion="1.9.6"
+    $kubernetesversion = "1.9.6"
 
-    $u="$(whoami)"
+    $u = "$(whoami)"
     WriteOut "User name: $u"
 
     # for calico network plugin
@@ -118,7 +118,7 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl){
     WriteOut "--- current pods ---"
     kubectl get pods -n kube-system -o wide
 
-    if(!(Test-Path C:\Windows -PathType Leaf)){
+    if (!(Test-Path C:\Windows -PathType Leaf)) {
         WriteOut "--- creating /mnt/data ---"
         sudo mkdir -p "/mnt/data"
         WriteOut "sudo chown $(id -u):$(id -g) /mnt/data"
@@ -225,7 +225,7 @@ function ConfigureFirewall() {
 
     return $Return        
 }
-function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl){
+function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
     # enable running pods on master
@@ -236,27 +236,27 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl){
     WriteOut "--- deleting existing service account for traefik ---"
     kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
 
-    $publicip=""
+    $publicip = ""
 
     AskForSecretValue -secretname "customerid" -prompt "Customer ID "
     WriteOut "reading secret from kubernetes"
-    $customerid=$(ReadSecret -secretname "customerid")
+    $customerid = $(ReadSecret -secretname "customerid")
 
-    $fullhostname=$(hostname --fqdn)
+    $fullhostname = $(hostname --fqdn)
     WriteOut "Full host name of current machine: $fullhostname"
     AskForSecretValue -secretname "dnshostname" -prompt "DNS name used to connect to the master VM (leave empty to use $fullhostname)" -namespace "default" -defaultvalue $fullhostname
-    $dnsrecordname=$(ReadSecret -secretname "dnshostname")
+    $dnsrecordname = $(ReadSecret -secretname "dnshostname")
 
-    $sslsecret=$(kubectl get secret traefik-cert-ahmn -n kube-system --ignore-not-found=true)
+    $sslsecret = $(kubectl get secret traefik-cert-ahmn -n kube-system --ignore-not-found=true)
 
-    if(!$sslsecret){
+    if (!$sslsecret) {
         $certfolder = Read-Host -Prompt "Location of SSL cert files (tls.crt and tls.key): (leave empty to use self-signed certificates) "
 
-        if(!$certfolder){
+        if (!$certfolder) {
             WriteOut "Creating self-signed SSL certificate"
             sudo yum -y install openssl
-            $u="$(whoami)"
-            $certfolder="/opt/healthcatalyst/certs"
+            $u = "$(whoami)"
+            $certfolder = "/opt/healthcatalyst/certs"
             WriteOut "Creating folder: $certfolder and giving access to $u"
             sudo mkdir -p "$certfolder"
             sudo setfacl -m u:$u:rwx "$certfolder"
@@ -283,9 +283,9 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl){
         kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$certfolder/tls.crt" --from-file="$certfolder/tls.key"
     }
 
-    $ingressInternal="public"
-    $ingressExternal="onprem"
-    $publicIp=""
+    $ingressInternal = "public"
+    $ingressExternal = "onprem"
+    $publicIp = ""
 
     LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl 0 -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -publicIp $publicIp    
 
@@ -294,6 +294,26 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl){
 
 function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
+
+    WriteOut "checking if this machine can access a DNS server via host $(hostname)"
+    WriteOut "--- /etc/resolv.conf ---"
+    sudo cat /etc/resolv.conf
+    WriteOut "-----------------------"
+
+    $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
+
+    if (!$myip) {
+        #throw "Can't parse process id for port $Port"
+        WriteOut "Cannot access my DNS server: host $(hostname)"
+        WriteOut "checking if this machine can access a DNS server via host $(hostname)"
+        $myip = $(hostname -I | cut -d" " -f 1)
+        if($myip){
+            WriteOut "Found an IP via hostname -I: $myip"
+        }
+    }
+    else {
+        WriteOut "My external IP is $myip"
+    }
 
     $dockerversion = "17.03.2.ce-1"
     $kubernetesversion = "1.9.6-0"
@@ -430,14 +450,14 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     return $Return
 }
 
-function UninstallDockerAndKubernetes(){
+function UninstallDockerAndKubernetes() {
     [hashtable]$Return = @{} 
     
-    if ("$(command -v kubeadm)"){
+    if ("$(command -v kubeadm)") {
         sudo kubeadm reset
     }    
     sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
-    if ("$(command -v docker)"){
+    if ("$(command -v docker)") {
         sudo docker system prune -f
         # sudo docker volume rm etcd
     }
@@ -449,7 +469,7 @@ function UninstallDockerAndKubernetes(){
     return $Return
 }
 
-function mountSharedFolder([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
+function mountSharedFolder([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
     [hashtable]$Return = @{} 
 
     Write-Host "DOS requires a network folder that can be accessed from all the worker VMs"
@@ -460,7 +480,7 @@ function mountSharedFolder([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
 
     Do {$mountChoice = Read-Host -Prompt "Choose a number"} while (!$mountChoice)
 
-    if($mountChoice -eq "1"){
+    if ($mountChoice -eq "1") {
         mountAzureFile -saveIntoSecret $saveIntoSecret
     }
     elseif ($mountChoice -eq "2") {
@@ -473,7 +493,7 @@ function mountSharedFolder([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
     return $Return    
 }
 
-function mountSMB([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
+function mountSMB([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
     [hashtable]$Return = @{} 
 
     Do {$pathToShare = Read-Host -Prompt "path to SMB share (e.g., //myserver.mydomain/myshare)"} while (!$pathToShare)
@@ -493,15 +513,15 @@ function mountSMB([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
 
 }
 
-function mountAzureFile([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
+function mountAzureFile([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
     [hashtable]$Return = @{} 
     
     Do {$storageAccountName = Read-Host -Prompt "Storage Account Name"} while (!$storageAccountName)
 
     Do {$shareName = Read-Host -Prompt "Storage Share Name"} while (!$shareName)
 
-    $pathToShare="//${storageAccountName}.file.core.windows.net/${shareName}"
-    $username="$storageAccountName"
+    $pathToShare = "//${storageAccountName}.file.core.windows.net/${shareName}"
+    $username = "$storageAccountName"
 
     Do {$storageAccountKey = Read-Host -Prompt "storage account key"} while (!$storageAccountKey)
 
@@ -509,9 +529,9 @@ function mountAzureFile([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
     return $Return    
 }
 
-function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [ValidateNotNullOrEmpty()][string] $username, [ValidateNotNullOrEmpty()][string] $domain, [ValidateNotNullOrEmpty()][string] $password, [ValidateNotNullOrEmpty()][bool] $saveIntoSecret, [ValidateNotNullOrEmpty()][bool] $isUNC){
+function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [ValidateNotNullOrEmpty()][string] $username, [ValidateNotNullOrEmpty()][string] $domain, [ValidateNotNullOrEmpty()][string] $password, [ValidateNotNullOrEmpty()][bool] $saveIntoSecret, [ValidateNotNullOrEmpty()][bool] $isUNC) {
     [hashtable]$Return = @{} 
-    $passwordlength=$($password.length)
+    $passwordlength = $($password.length)
     WriteOut "mounting file share with path: [$pathToShare], user: [$username], domain: [$domain], password_length: [$passwordlength] saveIntoSecret: [$saveIntoSecret], isUNC: [$isUNC]"
     # save as secret
     # secretname="sharedfolder"
@@ -534,22 +554,22 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
 
     WriteOut "mounting path: $pathToShare using username: $username"
 
-    if($isUNC -eq $True){
-        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm
+    if ($isUNC -eq $True) {
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1, username=$username, domain=$domain, password=$password, dir_mode=0777, file_mode=0777, sec=ntlm
         WriteOut "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm" | sudo tee -a /etc/fstab > /dev/null
     }
     else {
-        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1, username=$username, password=$password, dir_mode=0777, file_mode=0777, serverino
         WriteOut "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null       
     }
 
     sudo mount -a --verbose
 
-    if( $saveIntoSecret -eq $True){
+    if ( $saveIntoSecret -eq $True) {
         WriteOut "saving mount information into a secret"
-        $secretname="mountsharedfolder"
-        $namespace="default"
-        if([string]::IsNullOrEmpty("$(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true)")){
+        $secretname = "mountsharedfolder"
+        $namespace = "default"
+        if ([string]::IsNullOrEmpty("$(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true)")) {
             kubectl delete secret $secretname --namespace=$namespace
         }
         kubectl create secret generic $secretname --namespace=$namespace --from-literal=path=$pathToShare --from-literal=username=$username --from-literal=domain=$domain --from-literal=password=$password 
@@ -562,7 +582,7 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
     return $Return    
 }
 
-function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl){
+function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
     
     WriteOut "Run this command on any new node to join this cluster (this command expires in 24 hours):"
     WriteOut "---- COPY BELOW THIS LINE ----"
