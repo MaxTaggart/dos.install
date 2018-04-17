@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.16.03"
+$versionkubecommon = "2018.04.16.04"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -138,7 +138,7 @@ function global:AskForPasswordAnyCharacters ([ValidateNotNullOrEmpty()] $secretn
     return $Return
 }
 
-function global:AskForSecretValue ([ValidateNotNullOrEmpty()] $secretname, $prompt, $namespace) {
+function global:AskForSecretValue ([ValidateNotNullOrEmpty()] $secretname, [ValidateNotNullOrEmpty()] $prompt, $namespace, $defaultvalue) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
@@ -147,6 +147,11 @@ function global:AskForSecretValue ([ValidateNotNullOrEmpty()] $secretname, $prom
         $certhostname = ""
         Do {
             $certhostname = Read-host "$prompt"
+            if(!$certhostname){
+                if($defaultvalue){
+                    $certhostname = $defaultvalue
+                }
+            }
         }
         while ($certhostname.Length -lt 1 )
     

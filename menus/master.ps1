@@ -1,4 +1,4 @@
-$version = "2018.04.16.07"
+$version = "2018.04.16.08"
 
 # This script is meant for quick & easy install via:
 #   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
@@ -25,7 +25,7 @@ $InformationPreference = "Continue"
 
 $userinput = ""
 while ($userinput -ne "q") {
-    Write-Host "================ Health Catalyst version $version, common functions $(GetCommonVersion) $(GetCommonKubeVersion) ================"
+    Write-Host "================ Health Catalyst version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
     Write-Host "------ Infrastructure -------"
     Write-Host "1: Create Master VM"
     Write-Host "2: Create Worker VM"

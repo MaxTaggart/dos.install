@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.16.04"
+$versiononpremcommon = "2018.04.16.05"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -236,14 +236,14 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()] $baseUrl){
 
     $publicip=""
 
-    AskForSecretValue "customerid" "Customer ID "
+    AskForSecretValue -secretname "customerid" -prompt "Customer ID "
     WriteOut "reading secret from kubernetes"
-    $customerid=$(ReadSecret "customerid")
+    $customerid=$(ReadSecret -secretname "customerid")
 
     $fullhostname=$(hostname --fqdn)
     WriteOut "Full host name of current machine: $fullhostname"
-    AskForSecretValue "dnshostname" "DNS name used to connect to the master VM (leave empty to use $fullhostname)" "default" $fullhostname
-    $dnsrecordname=$(ReadSecret "dnshostname")
+    AskForSecretValue -secretname "dnshostname" -prompt "DNS name used to connect to the master VM (leave empty to use $fullhostname)" -namespace "default" -defaultvalue $fullhostname
+    $dnsrecordname=$(ReadSecret -secretname "dnshostname")
 
     $sslsecret=$(kubectl get secret traefik-cert-ahmn -n kube-system --ignore-not-found=true)
 
@@ -262,12 +262,12 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()] $baseUrl){
             cd "$certfolder"
             # https://gist.github.com/fntlnz/cf14feb5a46b2eda428e000157447309
             WriteOut "Generating CA cert"
-            openssl genrsa -out rootCA.key 2048
-            openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 3650 -subj /CN=HCKubernetes/O=HealthCatalyst/ -out rootCA.crt
+            sudo openssl genrsa -out rootCA.key 2048
+            sudo openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 3650 -subj /CN=HCKubernetes/O=HealthCatalyst/ -out rootCA.crt
             WriteOut "Generating certificate for $dnsrecordname"
-            openssl genrsa -out tls.key 2048
-            openssl req -new -key tls.key -subj /CN=$dnsrecordname/O=HealthCatalyst/ -out tls.csr
-            openssl x509 -req -in tls.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out tls.crt -days 3650 -sha256
+            sudo openssl genrsa -out tls.key 2048
+            sudo openssl req -new -key tls.key -subj /CN=$dnsrecordname/O=HealthCatalyst/ -out tls.csr
+            sudo openssl x509 -req -in tls.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out tls.crt -days 3650 -sha256
             cp tls.crt tls.pem
         }
 
@@ -348,6 +348,12 @@ function SetupNewNode([ValidateNotNullOrEmpty()] $baseUrl) {
     Write-Status "-- docker versions available in repo --"
     sudo yum -y --showduplicates list docker-ce
 
+    # https://saurabh-deochake.github.io/posts/2017/07/post-1/
+    Write-Status "setting selinux to disabled so kubernetes can work"
+    sudo setenforce 0
+    sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+    # sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux   
+
     Write-Status "--- Installing docker via yum --"
     WriteOut "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
     # need to pass --setpot=obsoletes=0 due to this bug: https://github.com/docker/for-linux/issues/20#issuecomment-312122325
@@ -386,12 +392,6 @@ function SetupNewNode([ValidateNotNullOrEmpty()] $baseUrl) {
     sudo yum-config-manager --add-repo ${baseUrl}/onprem/kubernetes.repo
 
     # install kubeadm
-    # https://saurabh-deochake.github.io/posts/2017/07/post-1/
-    Write-Status "setting selinux to disabled so kubernetes can work"
-    sudo setenforce 0
-    sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
-    # sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
-
     Write-Status "--- Removing previous versions of kubernetes ---"
     sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
 
