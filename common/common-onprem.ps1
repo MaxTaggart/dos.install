@@ -1,9 +1,6 @@
-$versiononpremcommon = "2018.04.16.05"
+$versiononpremcommon = "2018.04.16.06"
 
-$set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
-$randomstring += $set | Get-Random
-
-Write-Information -MessageData "Including common-onprem.ps1 version $versionkubecommon"
+Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
     return $versiononpremcommon
 }
@@ -77,7 +74,8 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()] $baseUrl){
     WriteOut "--- copying kube config to $HOME/.kube/config ---"
     mkdir -p $HOME/.kube
     sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
-    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+    WriteOut "sudo chown $(id -u):$(id -g) $HOME/.kube/config"
+    sudo chown "$(id -u):$(id -g)" $HOME/.kube/config
 
     # calico
     # from https://docs.projectcalico.org/v3.0/getting-started/kubernetes/installation/hosted/kubeadm/
