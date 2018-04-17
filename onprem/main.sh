@@ -22,16 +22,6 @@ fi
 echo "CentOS version: $(cat /etc/redhat-release | grep -o '[0-9]\.[0-9]')"
 echo "$(cat /etc/redhat-release)"
 
-
-# curl -o "${HOME}/main.sh" -sSL "${GITHUB_URL}/onprem/main.sh?p=$RANDOM"
-
-declare -i freememInBytes=10
-freememInBytes=$(free|awk '/^Mem:/{print $2}')
-freememInMB=$(($freememInBytes/1024))
-echo "Free Memory: $freememInMB MB"
-echo "Free disk"
-df -hT /home
-
 if [[ "$TERM" = "cygwin" ]]; then
     echo "Your TERM is set to cygwin.  We do not support this because it has errors in displaying text.  Please use a different SSH terminal e.g., MobaXterm"
     exit 1
@@ -43,7 +33,6 @@ source ./log4bash.sh
 
 curl -sSL -o ./common.sh "$GITHUB_URL/common/common.sh?p=$RANDOM"
 source ./common.sh
-
 
 # source <(curl -sSL "$GITHUB_URL/common/common.sh?p=$RANDOM")
 # source ./common/common.sh

@@ -1069,6 +1069,10 @@ function InstallPrerequisites(){
     sudo yum update -y
 
     echo "---- RAM ----"
+    declare -i freememInBytes=10
+    freememInBytes=$(free|awk '/^Mem:/{print $2}')
+    freememInMB=$(($freememInBytes/1024))
+    echo "Free Memory: $freememInMB MB"
     free -h
     echo "--- disk space ---"
     df -h
