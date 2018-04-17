@@ -1,4 +1,4 @@
-Write-Host "--- create-acs-cluster Version 2018.04.16.01 ----"
+Write-Host "--- create-acs-cluster Version 2018.04.16.02 ----"
 
 # stop on error
 # $ErrorActionPreference = "Stop"
@@ -331,6 +331,11 @@ if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
 #     --agent-count=3 --agent-vm-size Standard_D2 `
 #     --master-vnet-subnet-id="$mysubnetid" `
 #     --agent-vnet-subnet-id="$mysubnetid"
+
+# to get valid kubernetes versions: acs-engine orchestrators --orchestrator kubernetes
+
+Write-Host "Checking if acs-engine supports kubernetes version= $kubernetesVersion"
+acs-engine orchestrators --orchestrator kubernetes --version "$kubernetesVersion"
 
 Write-Host "Validating deployment"
 az group deployment validate `
