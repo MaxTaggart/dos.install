@@ -1,8 +1,8 @@
-$version = "2018.04.16.06"
+$version = "2018.04.16.07"
 
 # This script is meant for quick & easy install via:
-#   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
-#   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | pwsh -Interactive -NoExit -c -;
+#   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
+#   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | pwsh -Interactive -NoExit -c -;
 
 $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -12,13 +12,13 @@ $randomstring += $set | Get-Random
 Write-Host "Powershell version: $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor).$($PSVersionTable.PSVersion.Build)"
 
 function ImportModuleFromUrl($module){
-    Invoke-WebRequest -Uri $GITHUB_URL/common/${module}.ps1?f=$randomstring -OutFile ${module}.psm1
-    Import-Module -Name .\${module}.psm1 -Force
+    Invoke-WebRequest -useb -Uri "${GITHUB_URL}/common/${module}.ps1?f=$randomstring" -OutFile "${module}.psm1"
+    Import-Module -Name ".\${module}.psm1" -Force
 }
 
-ImportModuleFromUrl "common-kube"
+ImportModuleFromUrl -module "common-kube"
 
-ImportModuleFromUrl "common-onprem"
+ImportModuleFromUrl -module "common-onprem"
 
 # show Information messages
 $InformationPreference = "Continue"
