@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.09"
+versioncommon="2018.04.16.10"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -34,9 +34,9 @@ function Write-Status(){
 # }
 
 function ReadSecretValue() {
-    local secretname=${1?secretname param not set}   
-    local valueName=${2?valuename param not set}
-    local namespace=$3
+    local secretname=$1   
+    local valueName=$2
+    local namespace=${3:-}
     if [[ -z "$namespace" ]]; then 
         namespace="default"
     fi
@@ -53,13 +53,13 @@ function ReadSecretValue() {
 
 function ReadSecret() {
     local secretname=$1
-    local namespace=$2
+    local namespace=${2:-}
     ReadSecretValue $secretname "value" $namespace
 }
 
 function ReadSecretPassword() {
     local secretname=$1
-    local namespace=$2
+    local namespace=${2:-}
 
     ReadSecretValue $secretname "password" $namespace
 }
@@ -68,7 +68,7 @@ function SaveSecretValue() {
     local secretname=$1
     local valueName=$2
     local myvalue=$3
-    local namespace=$4
+    local namespace=${4:-}
 
     # secretname must be lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character
     if [[ -z "$namespace" ]]; then
@@ -104,7 +104,7 @@ function GeneratePassword() {
 function AskForPassword () {
     local secretname=$1
     local prompt=$2
-    local namespace=$3
+    local namespace=${3:-}
 
     if [[ -z "$namespace" ]]; then
         namespace="default"
@@ -131,8 +131,8 @@ function AskForPassword () {
 function AskForPasswordAnyCharacters () {
     local secretname=$1
     local prompt=$2
-    local namespace=$3
-    local defaultvalue=$4
+    local namespace=${3:-}
+    local defaultvalue=${4:-}
 
     if [[ -z "$namespace" ]]; then
         namespace="default"
@@ -158,8 +158,8 @@ function AskForPasswordAnyCharacters () {
 function AskForSecretValue () {
     local secretname=$1
     local prompt=$2
-    local namespace=$3
-    local defaultvalue=$4
+    local namespace=${3:-}
+    local defaultvalue=${4:-}
 
     if [[ -z "$namespace" ]]; then
         namespace="default"
@@ -186,8 +186,8 @@ function AskForSecretValue () {
 
 
 function WaitForPodsInNamespace(){
-    local namespace=${1?namespace param not set}
-    local interval=${2?interval param not set}
+    local namespace=$1
+    local interval=$2
 
     pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     waitingonPod="n"
@@ -213,7 +213,7 @@ function WaitForPodsInNamespace(){
 }
 
 function mountSharedFolder(){
-    local saveIntoSecret=$1
+    local saveIntoSecret=${1:false}
 
     echo "DOS requires a network folder that can be accessed from all the worker VMs"
     echo "1. Mount an existing Azure file share"
@@ -234,7 +234,7 @@ function mountSharedFolder(){
 }
 
 function mountSMB(){
-    local saveIntoSecret=$1
+    local saveIntoSecret=${1:false}
 
     while [[ -z "${pathToShare:-}" ]]; do
         read -p "path to SMB share (e.g., //myserver.mydomain/myshare): " pathToShare < /dev/tty    
@@ -253,7 +253,7 @@ function mountSMB(){
 }
 
 function mountAzureFile(){
-    local saveIntoSecret=$1
+    local saveIntoSecret=${1:false}
     
     while [[ -z "${storageAccountName:-}" ]]; do
         read -p "Storage Account Name: " storageAccountName < /dev/tty  
@@ -272,12 +272,12 @@ function mountAzureFile(){
 
 
 function mountSMBWithParams(){
-    local pathToShare=${1?pathToShare param not set}
-    local username=${2?username param not set}
-    local domain=${3?domain param not set}
-    local password=${4?password param not set}
-    local saveIntoSecret=$5
-    local isUNC=$6
+    local pathToShare=$1
+    local username=$2
+    local domain=$3
+    local password=$4
+    local saveIntoSecret=${5:false}
+    local isUNC=${6:false}
 
     passwordlength=${#password}
     echo "mounting file share with path: [$pathToShare], user: [$username], domain: [$domain], password_length: [$passwordlength] saveIntoSecret: [$saveIntoSecret], isUNC: [$isUNC]"
@@ -329,7 +329,7 @@ function mountSMBWithParams(){
 }
 
 function CleanOutNamespace(){
-    local namespace=${1?namespace param not set}
+    local namespace=$1
 
     echo "--- Cleaning out any old resources in $namespace ---"
 
@@ -350,9 +350,9 @@ function CleanOutNamespace(){
 }
 
 function InstallStack(){
-    local baseUrl=${1?baseUrl param not set}
-    local namespace=${2?namespace param not set}
-    local appfolder=${3?appfolder param not set}
+    local baseUrl=$1
+    local namespace=$2
+    local appfolder=$3
     
     echo "downloading: $baseUrl/kubernetes/installstack.ps1?p=$RANDOM"
     curl -sSL -o installstack.ps1 "$baseUrl/kubernetes/installstack.ps1?p=$RANDOM"
@@ -362,8 +362,8 @@ function InstallStack(){
 }
 
 function InstallLoadBalancerStack(){
-    local baseUrl=${1?baseUrl param not set}
-    local customerid=${2?customerid param not set}
+    local baseUrl=$1
+    local customerid=$2
     local ssl=0
     local ingressInternal="public"
     local ingressExternal="onprem"
@@ -376,7 +376,7 @@ function InstallLoadBalancerStack(){
 }
 
 function ShowCommandToJoinCluster(){
-    local baseUrl=${1?baseUrl param not set}
+    local baseUrl=$1
 
     secretname="mountsharedfolder"
     namespace="default"
@@ -414,8 +414,8 @@ function JoinNodeToCluster(){
 }
 
 function SetupMaster(){
-    local baseUrl=${1?baseUrl param not set}
-    local singlenode=$2
+    local baseUrl=$1
+    local singlenode=${2:false}
     
     SetupNewNode $baseUrl | tee setupnode.log
     SetupNewMasterNode $baseUrl | tee setupmaster.log
@@ -468,7 +468,7 @@ function UninstallDockerAndKubernetes(){
 }
 
 function TestDNS(){
-    local baseUrl=${1?baseUrl param not set}
+    local baseUrl=$1
     echo "To resolve DNS issues: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#debugging-dns-resolution"
     echo "----------- Checking if DNS pods are running -----------"
     kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o wide
@@ -509,7 +509,7 @@ function TestDNS(){
 }
 
 function ShowStatusOfAllPodsInNameSpace(){
-    local namespace=${1?namespace param not set}
+    local namespace=$1
     echo "showing status of pods in $namespace"
     pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     for pod in $pods
@@ -520,7 +520,7 @@ function ShowStatusOfAllPodsInNameSpace(){
     done    
 }
 function ShowLogsOfAllPodsInNameSpace(){
-    local namespace=${1?namespace param not set}
+    local namespace=$1
     echo "showing logs (last 20 lines) in $namespace"
     pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     for pod in $pods
@@ -676,7 +676,7 @@ function ConfigureFirewall(){
 }
 
 function SetupNewMasterNode(){
-    local baseUrl=${1?baseUrl not set}
+    local baseUrl=$1
 
     kubernetesversion="1.9.6"
 
@@ -772,7 +772,7 @@ function SetupNewMasterNode(){
 }
 
 function SetupNewLoadBalancer(){
-    local baseUrl=${1?baseUrl param not set}
+    local baseUrl=$1
 
     # enable running pods on master
     # kubectl taint node mymasternode node-role.kubernetes.io/master:NoSchedule
@@ -833,7 +833,7 @@ function SetupNewLoadBalancer(){
     InstallLoadBalancerStack $GITHUB_URL "$customerid"    
 }
 function SetupNewNode(){
-    local baseUrl=${1?baseUrl param not set}
+    local baseUrl=$1
 
     export dockerversion="17.03.2.ce-1"
     export kubernetesversion="1.9.6-0"
@@ -1023,7 +1023,7 @@ function SetupNewNode(){
 }
 
 function createShortcutFordos(){
-    local baseUrl=${1?baseUrl param not set}
+    local baseUrl=$1
 
     mkdir -p $HOME/bin
     installscript="$HOME/bin/dos"
