@@ -144,6 +144,9 @@ function ConfigureFirewall() {
     WriteOut " --- installing firewalld ---"
     # https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7
     sudo yum -y install firewalld
+    WriteOut "--- starting firewalld ---"
+    sudo systemctl start firewalld
+    sudo systemctl enable firewalld
     sudo systemctl status firewalld -l
     WriteOut "--- removing iptables ---"
     sudo yum -y remove iptables-services
