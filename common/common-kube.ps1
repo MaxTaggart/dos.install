@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.13.01"
+$versionkubecommon = "2018.04.16.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -437,16 +437,25 @@ function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $i
 
         foreach ($pod in $pods.Split(" ")) {
             $podstatus=$(kubectl get pods $pod -n $namespace -o jsonpath='{.status.phase}')
-            if($podstatus -ne "Running"){
-                # Write-Information -MessageData "${pod}: $podstatus"
-                $waitingonPod="${waitingonPod}${pod}($podstatus);"
+            if($podstatus -eq "Running"){
+                # nothing to do
             }
-            else {
+            elseif($podstatus -eq "Pending"){
+                # Write-Information -MessageData "${pod}: $podstatus"
                 $containerReady=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].ready}")
                 if($containerReady -ne "true" ){
-                    $waitingonPod="${waitingonPod}${pod}(container);"
+                    $containerStatus=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].waiting.reason}")
+                    if(![string]::IsNullOrEmpty(($containerStatus))){
+                        $waitingonPod="${waitingonPod}${pod}($containerStatus);"    
+                    }
+                    else {
+                        $waitingonPod="${waitingonPod}${pod}(container);"                        
+                    }
                     # Write-Information -MessageData "container in $pod is not ready yet: $containerReady"
                 }
+            }
+            else {
+                $waitingonPod="${waitingonPod}${pod}($podstatus);" 
             }
         }
             

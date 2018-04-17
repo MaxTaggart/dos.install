@@ -17,7 +17,7 @@ function Write-Host()
 }
 
 function Write-Status(){
-    echo $1
+    log_success $1
 }
 
 # function ReplaceText(){
@@ -219,7 +219,8 @@ function mountSharedFolder(){
     echo "1. Mount an existing Azure file share"
     echo "2. Mount an existing UNC network file share"
     echo "3. I've already mounted a shared folder at /mnt/data/"
-
+    echo ""
+    
     while [[ -z "${mountChoice:-}" ]]; do
         read -p "Choose a number: " mountChoice < /dev/tty    
     done      
