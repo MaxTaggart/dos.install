@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.16.02"
+$versioncommon = "2018.04.16.03"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -1600,7 +1600,10 @@ function global:GetConfigFile() {
                 Write-Host "$i. $($($files[$i-1]).Name)"
             }    
             Write-Host "-------------"
-            $index = Read-Host "Enter number of file to use (1 - $($files.count))"
+
+            Do { $index = Read-Host "Enter number of file to use (1 - $($files.count))"}
+            while ([string]::IsNullOrWhiteSpace($index)) 
+            
             $Return.FilePath = $($($files[$index - 1]).FullName)
             return $Return
         }
