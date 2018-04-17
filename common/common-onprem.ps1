@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.09"
+$versiononpremcommon = "2018.04.17.10"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -559,7 +559,13 @@ function mountAzureFile([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
     return $Return    
 }
 
-function MountFolderFromSecrets([ValidateNotNullOrEmpty()][string] $baseUrl){
+function MountFolderFromSecrets([ValidateNotNullOrEmpty()][string] $baseUrl) {
+    [hashtable]$Return = @{} 
+    Write-Status "--- waiting to let kubernetes come up ---"
+    Do {
+        Write-Host '.' -NoNewline;
+        Start-Sleep -Seconds 5;
+    } while (!Test-Path -Path "/etc/kubernetes/kubelet.conf")
 
     Write-Status "--- copying kube config to ${HOME}/.kube/config ---"
     mkdir -p "${HOME}/.kube"
@@ -567,24 +573,25 @@ function MountFolderFromSecrets([ValidateNotNullOrEmpty()][string] $baseUrl){
     sudo chown "$(id -u):$(id -g)" "${HOME}/.kube/config"
 
     Write-Status "--- giving read access to current user to /var/lib/kubelet/pki/kubelet-client.key ---"
-    $u="$(whoami)"
+    $u = "$(whoami)"
     sudo setfacl -m u:${u}:r "/var/lib/kubelet/pki/kubelet-client.key"
 
     Write-Status "--- reading secret for folder to mount ----"
 
-    $secretname="mountsharedfolder"
-    $namespace="default"    
-    $pathToShare=$(ReadSecretValue -secretname $secretname -valueName "path" -namespace $namespace)
-    $username=$(ReadSecretValue -secretname $secretname -valueName "username" -namespace $namespace)
-    $domain=$(ReadSecretValue -secretname $secretname -valueName "domain" -namespace $namespace)
-    $password=$(ReadSecretValue -secretname $secretname -valueName "password" -namespace $namespace)
+    $secretname = "mountsharedfolder"
+    $namespace = "default"    
+    $pathToShare = $(ReadSecretValue -secretname $secretname -valueName "path" -namespace $namespace)
+    $username = $(ReadSecretValue -secretname $secretname -valueName "username" -namespace $namespace)
+    $domain = $(ReadSecretValue -secretname $secretname -valueName "domain" -namespace $namespace)
+    $password = $(ReadSecretValue -secretname $secretname -valueName "password" -namespace $namespace)
 
-    if($username){
+    if ($username) {
         mountSMBWithParams -pathToShare $pathToShare -username $username -domain $domain -password $password -saveIntoSecret $False -isUNC $True
     }
     else {
         WriteOut "No username found in secrets"
     }
+    return $Return    
 }
 
 function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [ValidateNotNullOrEmpty()][string] $username, [ValidateNotNullOrEmpty()][string] $domain, [ValidateNotNullOrEmpty()][string] $password, [ValidateNotNullOrEmpty()][bool] $saveIntoSecret, [ValidateNotNullOrEmpty()][bool] $isUNC) {
@@ -652,7 +659,7 @@ function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
     
         WriteOut "Run this command on any new node to join this cluster (this command expires in 24 hours):"
         WriteOut "---- COPY BELOW THIS LINE ----"
-        WriteOut "curl -sSL $baseUrl/onprem/setupnode.sh?p="+'$RANDOM'+" -o setupnode.sh; bash setupnode.sh $token $masterurl $discoverytoken"
+        WriteOut "curl -sSL $baseUrl/onprem/setupnode.sh?p=`$RANDOM -o setupnode.sh; bash setupnode.sh `"$token`" `"$masterurl`" `"$discoverytoken`""
     
         # if [[ ! -z "$pathToShare" ]]; then
         #     WriteOut "curl -sSL $baseUrl/onprem/mountfolder.sh?p=$RANDOM | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
