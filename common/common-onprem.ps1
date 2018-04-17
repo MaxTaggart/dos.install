@@ -570,3 +570,6 @@ function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl){
     WriteOut ""
     WriteOut "---- COPY ABOVE THIS LINE ----"
 }
+
+# --------------------
+Write-Information -MessageData "end common-onprem.ps1 version $versiononpremcommon"

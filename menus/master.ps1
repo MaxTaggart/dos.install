@@ -12,8 +12,8 @@ $randomstring += $set | Get-Random
 Write-Host "Powershell version: $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor).$($PSVersionTable.PSVersion.Build)"
 
 function ImportModuleFromUrl($module){
-    Invoke-WebRequest -useb -Uri "${GITHUB_URL}/common/${module}.ps1?f=$randomstring" -OutFile "${module}.psm1"
-    Import-Module -Name ".\${module}.psm1" -Force
+    Invoke-WebRequest -useb -Uri "${GITHUB_URL}/common/${module}.ps1?f=$randomstring" -OutFile "${HOME}/${module}.psm1"
+    Import-Module -Name "${HOME}/${module}.psm1" -Force
 }
 
 ImportModuleFromUrl -module "common"
