@@ -44,6 +44,7 @@ then
     declare -r LOG_SUCCESS_COLOR=""
     declare -r LOG_WARN_COLOR=""
     declare -r LOG_DEBUG_COLOR=""
+    declare -r LOG_STATUS_COLOR=""
 else
     declare -r LOG_DEFAULT_COLOR="\033[0m"
     declare -r LOG_ERROR_COLOR="\033[1;31m"
@@ -51,6 +52,7 @@ else
     declare -r LOG_SUCCESS_COLOR="\033[1;32m"
     declare -r LOG_WARN_COLOR="\033[1;33m"
     declare -r LOG_DEBUG_COLOR="\033[1;34m"
+    declare -r LOG_STATUS_COLOR="\033[1;32m"
 fi
 
 # This function scrubs the output of any control characters used in colorized output
@@ -70,7 +72,7 @@ log() {
     [[ -z ${log_level} ]] && log_level="INFO";
     [[ -z ${log_color} ]] && log_color="${LOG_INFO_COLOR}";
 
-    echo -e "${log_color}[$(date +"%Y-%m-%d %H:%M:%S %Z")] [${log_level}] ${log_text} ${LOG_DEFAULT_COLOR}";
+    echo -e "${log_color}[$(date +"%Y-%m-%d %H:%M:%S %Z")] ${log_text} ${LOG_DEFAULT_COLOR}";
     return 0;
 }
 
@@ -94,6 +96,7 @@ log_speak()     {
 }
 
 log_success()   { log "$1" "SUCCESS" "${LOG_SUCCESS_COLOR}"; }
+log_status()   { log "$1" "STATUS" "${LOG_STATUS_COLOR}"; }
 log_error()     { log "$1" "ERROR" "${LOG_ERROR_COLOR}"; log_speak "$1"; }
 log_warning()   { log "$1" "WARNING" "${LOG_WARN_COLOR}"; }
 log_debug()     { log "$1" "DEBUG" "${LOG_DEBUG_COLOR}"; }

@@ -17,7 +17,7 @@ function Write-Host()
 }
 
 function Write-Status(){
-    log_success "$1";
+    log_status "$1";
 }
 
 # function ReplaceText(){
