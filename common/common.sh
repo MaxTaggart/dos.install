@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.06"
+versioncommon="2018.04.16.07"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -13,6 +13,10 @@ function Write-Output()
 
 function Write-Host()
 {
+    echo $1
+}
+
+function Write-Status(){
     echo $1
 }
 
@@ -420,7 +424,7 @@ function SetupMaster(){
         # kubectl taint nodes --all node-role.kubernetes.io/master-       
         kubectl taint node --all node-role.kubernetes.io/master:NoSchedule- 
     else
-        mountSharedFolder true 2>&1 | tee mountsharedfolder.log
+        mountSharedFolder true | tee mountsharedfolder.log
     fi
     # cannot use tee here because it calls a ps1 file
     SetupNewLoadBalancer $baseUrl
@@ -854,7 +858,7 @@ function SetupNewNode(){
     u="$(whoami)"
     echo "User name: $u"
 
-    echo "updating yum packages"
+    Write-Status "--- updating yum packages ---"
     sudo yum update -y
 
     echo "---- RAM ----"
@@ -862,7 +866,7 @@ function SetupNewNode(){
     echo "--- disk space ---"
     df -h
 
-    echo "installing yum-utils and other packages"
+    Write-Status "installing yum-utils and other packages"
     # yum-version: lock yum packages so they don't update automatically
     # yum-utils: for yum-config-manager
     # net-tools: for DNS tools
@@ -875,11 +879,11 @@ function SetupNewNode(){
 
     sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof ntp nano bind-utils
 
-    echo "removing unneeded packages"
+    Write-Status "removing unneeded packages"
     # https://www.tecmint.com/remove-unwanted-services-in-centos-7/
     sudo yum -y remove postfix chrony
 
-    echo "turning off swap"
+    Write-Status "turning off swap"
     # https://blog.alexellis.io/kubernetes-in-10-minutes/
     sudo swapoff -a
     echo "removing swap from /etc/fstab"
@@ -891,13 +895,13 @@ function SetupNewNode(){
     ConfigureFirewall
     # ConfigureIpTables
 
-    echo "-- starting NTP deamon ---"
+    Write-Status "-- starting NTP deamon ---"
     # https://www.tecmint.com/install-ntp-server-in-centos/
     sudo systemctl start ntpd
     sudo systemctl enable ntpd
     sudo systemctl status ntpd
 
-    echo "--- stopping docker and kubectl ---"
+    Write-Status "--- stopping docker and kubectl ---"
     servicestatus=$(systemctl show -p SubState kubelet)
     if [[ $servicestatus = *"running"* ]]; then
     echo "stopping kubelet"
@@ -906,7 +910,7 @@ function SetupNewNode(){
 
     # remove older versions
     # sudo systemctl stop docker 2>/dev/null
-    echo "--- Removing previous versions of kubernetes and docker --"
+    Write-Status "--- Removing previous versions of kubernetes and docker --"
     if [ -x "$(command -v kubeadm)" ]; then
     sudo kubeadm reset
     fi
@@ -927,42 +931,42 @@ function SetupNewNode(){
                     
     # sudo rm -rf /var/lib/docker
 
-    echo "--- Adding docker repo --"
+    Write-Status "--- Adding docker repo --"
     sudo yum-config-manager \
         --add-repo \
         https://download.docker.com/linux/centos/docker-ce.repo
 
-    echo " --- current repo list ---"
+    Write-Status " --- current repo list ---"
     sudo yum -y repolist
 
-    echo "-- docker versions available in repo --"
+    Write-Status "-- docker versions available in repo --"
     sudo yum -y --showduplicates list docker-ce
 
-    echo "--- Installing docker via yum --"
+    Write-Status "--- Installing docker via yum --"
     echo "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
     # need to pass --setpot=obsoletes=0 due to this bug: https://github.com/docker/for-linux/issues/20#issuecomment-312122325
     sudo yum install -y --setopt=obsoletes=0 docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos
-    echo "--- Locking version of docker so it does not get updated via yum update --"
+    Write-Status "--- Locking version of docker so it does not get updated via yum update --"
     sudo yum versionlock docker-ce
     sudo yum versionlock docker-ce-selinux
 
     # https://kubernetes.io/docs/setup/independent/install-kubeadm/
     # log rotation for docker: https://docs.docker.com/config/daemon/
     # https://docs.docker.com/config/containers/logging/json-file/
-    echo "--- Configuring docker to use systemd and set logs to max size of 10MB and 5 days --"
+    Write-Status "--- Configuring docker to use systemd and set logs to max size of 10MB and 5 days --"
     sudo mkdir -p /etc/docker
     sudo curl -sSL -o /etc/docker/daemon.json ${baseUrl}/onprem/daemon.json?p=$RANDOM
     
-    echo "--- Starting docker service --"
+    Write-Status "--- Starting docker service --"
     sudo systemctl enable docker && sudo systemctl start docker
 
     if [ $u != "root" ]; then
-        echo "--- Giving permission to $u to interact with docker ---"
+        Write-Status "--- Giving permission to $u to interact with docker ---"
         sudo usermod -aG docker $u
         # reload permissions without requiring a logout
         # from https://superuser.com/questions/272061/reload-a-linux-users-group-assignments-without-logging-out
         # https://man.cx/newgrp(1)
-        echo "--- Reloading permissions via newgrp ---"
+        Write-Status "--- Reloading permissions via newgrp ---"
         newgrp docker
     fi
 
@@ -971,37 +975,37 @@ function SetupNewNode(){
     echo "--- docker status ---"
     sudo systemctl status docker
 
-    echo "--- Adding kubernetes repo ---"
+    Write-Status "--- Adding kubernetes repo ---"
     sudo yum-config-manager \
         --add-repo \
         ${baseUrl}/onprem/kubernetes.repo
 
     # install kubeadm
     # https://saurabh-deochake.github.io/posts/2017/07/post-1/
-    echo "disabling selinux"
+    Write-Status "setting selinux to disabled so kubernetes can work"
     sudo setenforce 0
     sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
     # sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
 
-    echo "--- Removing previous versions of kubernetes ---"
+    Write-Status "--- Removing previous versions of kubernetes ---"
     sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
 
-    echo "--- checking to see if port 10250 is still busy ---"
+    Write-Status "--- checking to see if port 10250 is still busy ---"
     sudo lsof -i -P -n | grep LISTEN
 
-    echo "--- kubernetes versions available in repo ---"
+    Write-Status "--- kubernetes versions available in repo ---"
     sudo yum -y --showduplicates list kubelet kubeadm kubectl kubernetes-cni
 
-    echo "--- installing kubernetes ---"
+    Write-Status "--- installing kubernetes ---"
     echo "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
     sudo yum install -y "kubelet-${kubernetesversion}" "kubeadm-${kubernetesversion}" "kubectl-${kubernetesversion}" "kubernetes-cni-${kubernetescniversion}"
-    echo "--- locking versions of kubernetes so they don't get updated by yum update ---"
+    Write-Status "--- locking versions of kubernetes so they don't get updated by yum update ---"
     sudo yum versionlock kubelet
     sudo yum versionlock kubeadm
     sudo yum versionlock kubectl
     sudo yum versionlock kubernetes-cni
 
-    echo "--- starting kubernetes service ---"
+    Write-Status "--- starting kubernetes service ---"
     sudo systemctl enable kubelet && sudo systemctl start kubelet
 
     # echo "--- setting up iptables for kubernetes ---"
@@ -1012,7 +1016,7 @@ function SetupNewNode(){
     # EOF
     # sudo sysctl --system
 
-    echo "--- finished setting up node ---"
+    Write-Status "--- finished setting up node ---"
 
 }
 
