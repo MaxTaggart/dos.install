@@ -470,6 +470,8 @@ function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $i
     while (![string]::IsNullOrEmpty($waitingonPod) -and ($counter -lt 30) )
 
     kubectl get pods -n $namespace -o wide
+
+    kubectl get events -n $namespace | grep "Warning" | tail     
     return $Return    
 }
 

@@ -268,7 +268,7 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()] $baseUrl){
             sudo openssl genrsa -out tls.key 2048
             sudo openssl req -new -key tls.key -subj /CN=$dnsrecordname/O=HealthCatalyst/ -out tls.csr
             sudo openssl x509 -req -in tls.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out tls.crt -days 3650 -sha256
-            cp tls.crt tls.pem
+            sudo cp tls.crt tls.pem
         }
 
         ls -al "$certfolder"
@@ -423,6 +423,25 @@ function SetupNewNode([ValidateNotNullOrEmpty()] $baseUrl) {
     # sudo sysctl --system
 
     Write-Status "--- finished setting up node ---"
+
+    return $Return
+}
+
+function UninstallDockerAndKubernetes(){
+    [hashtable]$Return = @{} 
+    
+    if ("$(command -v kubeadm)"){
+        sudo kubeadm reset
+    }    
+    sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
+    if ("$(command -v docker)"){
+        sudo docker system prune -f
+        # sudo docker volume rm etcd
+    }
+    sudo rm -rf /var/etcd/backups/*
+    sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
+    sudo yum -y remove docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux
+    sudo yum -y remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine    
 
     return $Return
 }

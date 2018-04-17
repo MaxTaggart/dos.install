@@ -1,4 +1,4 @@
-$version = "2018.04.16.08"
+$version = "2018.04.16.09"
 
 # This script is meant for quick & easy install via:
 #   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
@@ -16,6 +16,8 @@ function ImportModuleFromUrl($module){
     Import-Module -Name ".\${module}.psm1" -Force
 }
 
+ImportModuleFromUrl -module "common"
+
 ImportModuleFromUrl -module "common-kube"
 
 ImportModuleFromUrl -module "common-onprem"
@@ -30,6 +32,7 @@ while ($userinput -ne "q") {
     Write-Host "1: Create Master VM"
     Write-Host "2: Create Worker VM"
     Write-Host "3: Create Single Node Cluster"
+    Write-Host "4: Uninstall Docker and Kubernetes"
     Write-Host "-----------"
     Write-Host "q: Quit"
     $userinput = Read-Host "Please make a selection"
@@ -42,6 +45,9 @@ while ($userinput -ne "q") {
         } 
         '3' {
             SetupMaster -baseUrl $GITHUB_URL -singlenode $true
+        } 
+        '4' {
+            UninstallDockerAndKubernetes
         } 
         'q' {
             return
