@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.02"
+$versiononpremcommon = "2018.04.17.03"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -120,9 +120,10 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl){
 
     if(!(Test-Path C:\Windows -PathType Leaf)){
         WriteOut "--- creating /mnt/data ---"
-        sudo mkdir -p /mnt/data
-        sudo chown $(id -u):$(id -g) /mnt/data
-        sudo chmod -R 777 /mnt/data
+        sudo mkdir -p "/mnt/data"
+        WriteOut "sudo chown $(id -u):$(id -g) /mnt/data"
+        sudo chown "$(id -u):$(id -g)" "/mnt/data"
+        sudo chmod -R 777 "/mnt/data"
     }
 
     WriteOut "opening port 6661 for mirth"
