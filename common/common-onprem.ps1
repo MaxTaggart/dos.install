@@ -267,6 +267,7 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl){
             sudo openssl req -new -key tls.key -subj /CN=$dnsrecordname/O=HealthCatalyst/ -out tls.csr
             sudo openssl x509 -req -in tls.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out tls.crt -days 3650 -sha256
             sudo cp tls.crt tls.pem
+            cd "~"
         }
 
         ls -al "$certfolder"
