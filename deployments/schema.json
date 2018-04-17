@@ -11,7 +11,7 @@
                 "version": {
                     "$id": "/properties/kubectl/properties/version",
                     "type": "string",
-                    "title": "The Version Schema ",
+                    "title": "Version of kubectl to install locally",
                     "default": "",
                     "examples": [
                         ""
@@ -19,6 +19,21 @@
                 }
             }
         },
+        "kubernetes": {
+            "$id": "/properties/kubernetes",
+            "type": "object",
+            "properties": {
+                "version": {
+                    "$id": "/properties/kubernetes/properties/version",
+                    "type": "string",
+                    "title": "Version of kubernetes server to install in Azure",
+                    "default": "",
+                    "examples": [
+                        ""
+                    ]
+                }
+            }
+        },        
         "azcli": {
             "$id": "/properties/azcli",
             "type": "object",
@@ -88,7 +103,25 @@
                             ]
                         }
                     }
-                }
+                },
+                "masterVMSize": {
+                    "$id": "/properties/azure/properties/masterVMSize",
+                    "type": "string",
+                    "title": "masterVMSize",
+                    "default": "Standard_DS2_v2",
+                    "examples": [
+                        "Standard_DS2_v2"
+                    ]
+                },
+                "workerVMSize": {
+                    "$id": "/properties/azure/properties/workerVMSize",
+                    "type": "string",
+                    "title": "workerVMSize",
+                    "default": "Standard_DS2_v2",
+                    "examples": [
+                        "Standard_DS2_v2"
+                    ]
+                }                                
             }
         },
         "service_principal": {

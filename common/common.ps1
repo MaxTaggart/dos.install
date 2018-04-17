@@ -1,11 +1,13 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.16.01"
+$versioncommon = "2018.04.16.02"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
     return $versioncommon
 }
+
+function global:Coalesce($a, $b) { if ($a -ne $null) { $a } else { $b } }
 
 function global:DeleteAzureFileShare([ValidateNotNullOrEmpty()] $sharename, [ValidateNotNullOrEmpty()] $storageAccountConnectionString) {
     [hashtable]$Return = @{} 

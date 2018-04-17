@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.10"
+versioncommon="2018.04.16.11"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -1036,6 +1036,32 @@ function createShortcutFordos(){
         # from http://web.archive.org/web/20120621035133/http://www.ibb.net/~anne/keyboard/keyboard.html
         # curl -o ~/.inputrc "$GITHUB_URL/kubernetes/inputrc"
     fi    
+}
+
+function SetupNewWorkerNode(){
+    local baseUrl=$1
+
+    Write-Status "--- copying kube config to $HOME/.kube/config ---"
+    mkdir -p $HOME/.kube
+    sudo cp -f /etc/kubernetes/kubelet.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config    
+
+    Write-Status "--- giving read access to current user to /var/lib/kubelet/pki/kubelet-client.key ---"
+    u="$(whoami)"
+    sudo setfacl -m u:$u:r "/var/lib/kubelet/pki/kubelet-client.key"
+
+    Write-Status "--- reading secret for folder to mount ----"
+
+    secretname="mountsharedfolder"
+    namespace="default"    
+    local pathToShare=$(ReadSecretValue $secretname "path" $namespace)
+    local username=$(ReadSecretValue $secretname "username" $namespace)
+    local domain=$(ReadSecretValue $secretname "domain" $namespace)
+    local password=$(ReadSecretValue $secretname "password" $namespace)
+
+    if [[ ! -z "$username" ]]; then
+        mountSMBWithParams $pathToShare $username $domain $password false true
+    fi
 }
 
 echo "--- Finished including common.sh version $versioncommon ---"

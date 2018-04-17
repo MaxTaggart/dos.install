@@ -1,4 +1,4 @@
-Write-Host "--- create-acs-cluster Version 2018.04.13.01 ----"
+Write-Host "--- create-acs-cluster Version 2018.04.16.01 ----"
 
 # stop on error
 # $ErrorActionPreference = "Stop"
@@ -244,8 +244,15 @@ else {
 
 # subnet CIDR to mask
 # https://doc.m0n0.ch/quickstartpc/intro-CIDR.html
+$kubernetesVersion=$(Coalesce $($config.kubernetes) "1.9")
+$masterVMSize=$(Coalesce $($config.azure.masterVMSize) "Standard_DS2_v2")
+$workerVMSize=$(Coalesce $($config.azure.workerVMSize) "Standard_DS2_v2")
+
 $WINDOWS_PASSWORD = "replacepassword1234$"
 Write-Host "replacing values in the acs.json file"
+Write-Host "KUBERNETES-VERSION: $kubernetesVersion"
+Write-Host "MASTER_VMSIZE: $masterVMSize"
+Write-Host "WORKER-VMSIZE: $workerVMSize"
 Write-Host "AKS_SSH_KEY: $AKS_SSH_KEY"
 Write-Host "AKS_SERVICE_PRINCIPAL_CLIENTID: $AKS_SERVICE_PRINCIPAL_CLIENTID"
 Write-Host "AKS_SERVICE_PRINCIPAL_CLIENTSECRET: $AKS_SERVICE_PRINCIPAL_CLIENTSECRET"
@@ -255,6 +262,9 @@ Write-Host "FIRST STATIC IP: $AKS_FIRST_STATIC_IP"
 Write-Host "WINDOWS PASSWORD: $WINDOWS_PASSWORD"
 Write-Host "AKS_SUBNET_CIDR: $AKS_SUBNET_CIDR"
 $MyFile = (Get-Content $output) | 
+    Foreach-Object {$_ -replace 'REPLACE-KUBERNETES-VERSION', "${kubernetesVersion}"}  | 
+    Foreach-Object {$_ -replace 'REPLACE-MASTER_VMSIZE', "${masterVMSize}"}  | 
+    Foreach-Object {$_ -replace 'REPLACE-WORKER-VMSIZE', "${workerVMSize}"}  | 
     Foreach-Object {$_ -replace 'REPLACE-SSH-KEY', "${AKS_SSH_KEY}"}  | 
     Foreach-Object {$_ -replace 'REPLACE-CLIENTID', "${AKS_SERVICE_PRINCIPAL_CLIENTID}"}  | 
     Foreach-Object {$_ -replace 'REPLACE-CLIENTSECRET', "${AKS_SERVICE_PRINCIPAL_CLIENTSECRET}"}  | 

@@ -6,7 +6,7 @@ set -e
 #
 #
 
-version="2018.04.16.02"
+version="2018.04.16.03"
 echo "---- setupnode version $version ----"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
@@ -20,5 +20,7 @@ source ./common.sh
 createShortcutFordos $GITHUB_URL
 
 SetupNewNode $GITHUB_URL
+
+SetupNewWorkerNode $GITHUB_URL
 
 echo "---- finish setupnode version $version ----"
