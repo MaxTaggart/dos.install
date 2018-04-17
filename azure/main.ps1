@@ -1,4 +1,4 @@
-$version = "2018.04.02.02"
+$version = "2018.04.16.02"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -374,9 +374,22 @@ while ($userinput -ne "q") {
             Start-Process -FilePath "http://$loadBalancerIP/nlpweb";
         } 
         '43' {
-            Write-Host "MySql root password: $(ReadSecretPassword -secretname mysqlrootpassword -namespace fabricnlp)"
-            Write-Host "MySql NLP_APP_USER password: $(ReadSecretPassword -secretname mysqlpassword -namespace fabricnlp)"
-            Write-Host "SendGrid SMTP Relay key: $(ReadSecretPassword -secretname smtprelaypassword -namespace fabricnlp)"
+            $namespace="fabricnlp"
+            $secretname="mysqlrootpassword"
+            $secretvalue=$(ReadSecretPassword -secretname $secretname -namespace $namespace)
+            Write-Host "MySql root password: $secretvalue"
+            Write-Host "To recreate the secret:"
+            Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
+            $secretname="mysqlpassword"
+            $secretvalue=$(ReadSecretPassword -secretname $secretname -namespace $namespace)            
+            Write-Host "MySql NLP_APP_USER password: $secretvalue"
+            Write-Host "To recreate the secret:"
+            Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
+            $secretname="smtprelaypassword"
+            $secretvalue=$(ReadSecretPassword -secretname $secretname -namespace $namespace)             
+            Write-Host "SendGrid SMTP Relay key: $secretvalue"
+            Write-Host "To recreate the secret:"
+            Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
         } 
         '44' {
             $pods = $(kubectl get pods -n fabricnlp -o jsonpath='{.items[*].metadata.name}')

@@ -6,14 +6,19 @@
     "azcli": {
         "version": "2.0.27"
     },
+    "kubernetes": {
+        "version": "1.10.0"
+    },    
     "azure": {
         "resourceGroup": "Prod-Kub-HCUT-RG",
         "location": "westus",
         "create_windows_containers": false,
         "use_azure_networking": true,
         "acs_engine": {
-            "version": "0.14.6"
-        }
+            "version": "0.15.0"
+        },
+        "masterVMSize": "Standard_DS2_v2",
+        "workerVMSize": "Standard_DS2_v2"
     },
     "service_principal": {
         "name": "prod-kub-hcut-rg2",
