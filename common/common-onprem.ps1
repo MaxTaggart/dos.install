@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.16.06"
+$versiononpremcommon = "2018.04.17.01"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -13,7 +13,7 @@ function Write-Status($txt) {
     Write-Information -MessageData "$txt"
 }
 
-function SetupMaster([ValidateNotNullOrEmpty()] $baseUrl, $singlenode) {
+function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlenode) {
     [hashtable]$Return = @{} 
     
     SetupNewNode -baseUrl $baseUrl
@@ -26,7 +26,7 @@ function SetupMaster([ValidateNotNullOrEmpty()] $baseUrl, $singlenode) {
         kubectl taint node --all node-role.kubernetes.io/master:NoSchedule- 
     }
     else {
-        mountSharedFolder true
+        mountSharedFolder saveIntoSecret $true
     }
     # cannot use tee here because it calls a ps1 file
     SetupNewLoadBalancer -baseUrl $baseUrl
@@ -46,7 +46,7 @@ function SetupMaster([ValidateNotNullOrEmpty()] $baseUrl, $singlenode) {
     return $Return    
 }
 
-function SetupNewMasterNode([ValidateNotNullOrEmpty()] $baseUrl){
+function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl){
     [hashtable]$Return = @{} 
 
     $kubernetesversion="1.9.6"
@@ -221,7 +221,7 @@ function ConfigureFirewall() {
 
     return $Return        
 }
-function SetupNewLoadBalancer([ValidateNotNullOrEmpty()] $baseUrl){
+function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl){
     [hashtable]$Return = @{} 
 
     # enable running pods on master
@@ -287,7 +287,7 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()] $baseUrl){
     return $Return
 }
 
-function SetupNewNode([ValidateNotNullOrEmpty()] $baseUrl) {
+function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
     $dockerversion = "17.03.2.ce-1"
@@ -442,4 +442,131 @@ function UninstallDockerAndKubernetes(){
     sudo yum -y remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine    
 
     return $Return
+}
+
+function mountSharedFolder([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
+    [hashtable]$Return = @{} 
+
+    Write-Host "DOS requires a network folder that can be accessed from all the worker VMs"
+    Write-Host "1. Mount an existing Azure file share"
+    Write-Host "2. Mount an existing UNC network file share"
+    Write-Host "3. I've already mounted a shared folder at /mnt/data/"
+    Write-Host ""
+
+    Do {$mountChoice = Read-Host -Prompt "Choose a number: "} while (!$mountChoice)
+
+    if($mountChoice -eq "1"){
+        mountAzureFile -saveIntoSecret $saveIntoSecret
+    }
+    elseif ($mountChoice -eq "2") {
+        mountSMB -saveIntoSecret $saveIntoSecret
+    }
+    else {
+        WriteOut "User will mount a shared folder manually"
+    }
+
+    return $Return    
+}
+
+function mountSMB([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
+    [hashtable]$Return = @{} 
+
+    Do {$pathToShare = Read-Host -Prompt "path to SMB share (e.g., //myserver.mydomain/myshare): "} while (!$pathToShare)
+
+    # convert to unix style since that's what linux mount command expects
+    $pathToShare = ($pathToShare -replace "\\", "/")
+ 
+    Do {$domain = Read-Host -Prompt "domain: "} while (!$domain)
+
+    Do {$username = Read-Host -Prompt "username: "} while (!$username)
+
+    Do {$password = Read-Host -Prompt "password: "} while (!$password)
+
+    mountSMBWithParams -pathToShare $pathToShare -username $username -domain $domain -password $password -saveIntoSecret$saveIntoSecret -isUNC $true
+
+    return $Return    
+
+}
+
+function mountAzureFile([ValidateNotNullOrEmpty()][bool] $saveIntoSecret){
+    [hashtable]$Return = @{} 
+    
+    Do {$storageAccountName = Read-Host -Prompt "Storage Account Name: "} while (!$storageAccountName)
+
+    Do {$shareName = Read-Host -Prompt "Storage Share Name: "} while (!$shareName)
+
+    $pathToShare="//${storageAccountName}.file.core.windows.net/${shareName}"
+    $username="$storageAccountName"
+
+    Do {$storageAccountKey = Read-Host -Prompt "storage account key: "} while (!$storageAccountKey)
+
+    mountSMBWithParams -pathToShare $pathToShare -username $username -domain "domain" -password $storageAccountKey -saveIntoSecret $saveIntoSecret -isUNC $false
+    return $Return    
+}
+
+function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [ValidateNotNullOrEmpty()][string] $username, [ValidateNotNullOrEmpty()][string] $domain, [ValidateNotNullOrEmpty()][string] $password, [ValidateNotNullOrEmpty()][bool] $saveIntoSecret, [ValidateNotNullOrEmpty()][bool] $isUNC){
+    [hashtable]$Return = @{} 
+    $passwordlength=$($password.length)
+    WriteOut "mounting file share with path: [$pathToShare], user: [$username], domain: [$domain], password_length: [$passwordlength] saveIntoSecret: [$saveIntoSecret], isUNC: [$isUNC]"
+    # save as secret
+    # secretname="sharedfolder"
+    # namespace="default"
+    # if [[ ! -z  "$(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true)" ]]; then
+    #     kubectl delete secret $secretname -n $namespace
+    # fi
+
+    # kubectl create secret generic $secretname --namespace=$namespace --from-literal=path=$pathToShare --from-literal=username=$username --from-literal=password=$password
+
+    # from: https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux
+    sudo yum -y install samba-client samba-common cifs-utils 
+
+    sudo mkdir -p /mnt/data
+
+    # sudo mount -t cifs $pathToShare /mnt/data -o vers=2.1,username=<storage-account-name>,password=<storage-account-key>,dir_mode=0777,file_mode=0777,serverino
+
+    # remove previous entry for this drive
+    grep -v "/mnt/data" /etc/fstab | sudo tee /etc/fstab > /dev/null
+
+    WriteOut "mounting path: $pathToShare using username: $username"
+
+    if($isUNC -eq $true){
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm
+        WriteOut "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm" | sudo tee -a /etc/fstab > /dev/null
+    }
+    else {
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino
+        WriteOut "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null       
+    }
+
+    sudo mount -a --verbose
+
+    if( $saveIntoSecret -eq $true){
+        WriteOut "saving mount information into a secret"
+        $secretname="mountsharedfolder"
+        $namespace="default"
+        if([string]::IsNullOrEmpty("$(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true)")){
+            kubectl delete secret $secretname --namespace=$namespace
+        }
+        kubectl create secret generic $secretname --namespace=$namespace --from-literal=path=$pathToShare --from-literal=username=$username --from-literal=domain=$domain --from-literal=password=$password 
+    }
+
+    touch "/mnt/data/$(hostname).txt"
+
+    WriteOut "Listing files in shared folder"
+    ls -al /mnt/data
+    return $Return    
+}
+
+function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl){
+    
+    WriteOut "Run this command on any new node to join this cluster (this command expires in 24 hours):"
+    WriteOut "---- COPY BELOW THIS LINE ----"
+    WriteOut "curl -sSL $baseUrl/onprem/setupnode.sh?p="'$RANDOM'" | bash"
+    
+    # if [[ ! -z "$pathToShare" ]]; then
+    #     WriteOut "curl -sSL $baseUrl/onprem/mountfolder.sh?p=$RANDOM | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
+    # fi
+    WriteOut "sudo $(sudo kubeadm token create --print-join-command)"
+    WriteOut ""
+    WriteOut "---- COPY ABOVE THIS LINE ----"
 }
