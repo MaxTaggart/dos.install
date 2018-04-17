@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.16.12"
+versioncommon="2018.04.17.01"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -1083,9 +1083,9 @@ function InstallPrerequisites(){
     Write-Status "--- updating yum packages ---"
     sudo yum update -y
 
-    WriteOut "---- RAM ----"
+    echo "---- RAM ----"
     free -h
-    WriteOut "--- disk space ---"
+    echo "--- disk space ---"
     df -h
 
     Write-Status "installing yum-utils and other packages"
@@ -1108,19 +1108,19 @@ function InstallPrerequisites(){
     Write-Status "turning off swap"
     # https://blog.alexellis.io/kubernetes-in-10-minutes/
     sudo swapoff -a
-    WriteOut "removing swap from /etc/fstab"
+    echo "removing swap from /etc/fstab"
     grep -v "swap" /etc/fstab | sudo tee /etc/fstab
-    WriteOut "--- current swap files ---"
+    echo "--- current swap files ---"
     sudo cat /proc/swaps
     
     # Register the Microsoft RedHat repository
-    WriteOut "--- adding microsoft repo for powershell ---"
+    echo "--- adding microsoft repo for powershell ---"
     sudo yum-config-manager --add-repo https://packages.microsoft.com/config/rhel/7/prod.repo
 
     # curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
 
     # Install PowerShell
-    WriteOut "--- installing powershell ---"
+    echo "--- installing powershell ---"
     sudo yum install -y powershell
     # sudo yum install -y powershell-6.0.2-1.rhel.7
     # sudo yum versionlock powershell    
