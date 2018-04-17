@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.08"
+$versiononpremcommon = "2018.04.17.09"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -652,7 +652,7 @@ function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
     
         WriteOut "Run this command on any new node to join this cluster (this command expires in 24 hours):"
         WriteOut "---- COPY BELOW THIS LINE ----"
-        WriteOut "curl -sSL $baseUrl/onprem/setupnode.sh?p="'$RANDOM'" -o setupnode.sh; bash setupnode.sh $token $masterurl $discoverytoken"
+        WriteOut "curl -sSL $baseUrl/onprem/setupnode.sh?p="+'$RANDOM'+" -o setupnode.sh; bash setupnode.sh $token $masterurl $discoverytoken"
     
         # if [[ ! -z "$pathToShare" ]]; then
         #     WriteOut "curl -sSL $baseUrl/onprem/mountfolder.sh?p=$RANDOM | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
