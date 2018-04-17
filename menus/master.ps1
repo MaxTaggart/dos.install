@@ -1,4 +1,4 @@
-$version = "2018.04.16.09"
+$version = "2018.04.17.01"
 
 # This script is meant for quick & easy install via:
 #   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
@@ -10,6 +10,8 @@ $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
 
 Write-Host "Powershell version: $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor).$($PSVersionTable.PSVersion.Build)"
+
+mkdir -p ${HOME}
 
 function ImportModuleFromUrl($module){
     Invoke-WebRequest -useb -Uri "${GITHUB_URL}/common/${module}.ps1?f=$randomstring" -OutFile "${HOME}/${module}.psm1"
