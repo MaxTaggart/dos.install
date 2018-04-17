@@ -8,7 +8,7 @@ set -o pipefail
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.16.04"
+version="2018.04.16.05"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -189,7 +189,7 @@ while [[ "$input" != "q" ]]; do
     esac
 
 echo ""
-if [[ "$input" -eq "q" ]]; then
+if [[ "$input" == "q" ]]; then
     exit
 fi
 read -p "[Press Enter to Continue]" < /dev/tty 
