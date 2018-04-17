@@ -10,7 +10,7 @@ set -o pipefail
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh -o main.sh; bash main.sh
 #   curl https://bit.ly/2GOPcyX | bash
 #
-version="2018.04.17.02"
+version="2018.04.17.03"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -32,10 +32,10 @@ echo "Free Memory: $freememInMB MB"
 echo "Free disk"
 df -hT /home
 
-if [[ "$TERM" = "cygwin" ]]; then
-    echo "Your TERM is set to cygwin.  We do not support this because it has errors in displaying text.  Please use a different SSH terminal e.g., MobaXterm"
-    exit 1
-fi
+# if [[ "$TERM" = "cygwin" ]]; then
+#     echo "Your TERM is set to cygwin.  We do not support this because it has errors in displaying text.  Please use a different SSH terminal e.g., MobaXterm"
+#     exit 1
+# fi
 
 # logging based on https://github.com/fredpalmer/log4bash
 curl -sSL -o ./log4bash.sh "$GITHUB_URL/common/log4bash.sh?p=$RANDOM"
