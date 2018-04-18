@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.11"
+$versiononpremcommon = "2018.04.17.12"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -592,6 +592,7 @@ function MountFolderFromSecrets([ValidateNotNullOrEmpty()][string] $baseUrl) {
     }
     else {
         WriteOut "No username found in secrets"
+        mountSMB -saveIntoSecret $False
     }
     return $Return    
 }

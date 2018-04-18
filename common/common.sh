@@ -1066,7 +1066,7 @@ function RunPowerShellCommand(){
 
 function InstallPrerequisites(){
     Write-Status "--- updating yum packages ---"
-    sudo yum update -y
+    sudo yum update -y -q -e 0
 
     echo "---- RAM ----"
     declare -i freememInBytes=10
@@ -1088,7 +1088,7 @@ function InstallPrerequisites(){
     # nano: simple editor
     # bind-utils: for dig, host
 
-    sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof ntp nano bind-utils
+    sudo yum -y install yum-versionlock yum-utils net-tools nmap curl lsof ntp nano bind-utils 
 
     Write-Status "removing unneeded packages"
     # https://www.tecmint.com/remove-unwanted-services-in-centos-7/
