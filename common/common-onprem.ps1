@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.18.06"
+$versiononpremcommon = "2018.04.18.07"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -10,7 +10,7 @@ function WriteToLog($txt) {
 }
 
 function WriteToConsole($txt) {
-    Write-Information -MessageData "$txt"
+    # Write-Information -MessageData "$txt"
     Write-Host "$txt"
 }
 
@@ -434,7 +434,8 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     WriteToLog "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
     # need to pass --setpot=obsoletes=0 due to this bug: https://github.com/docker/for-linux/issues/20#issuecomment-312122325
     # sudo yum install -y --setopt=obsoletes=0 docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos
-    installYumPackages "docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos" -lockversion $true
+    installYumPackages "docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos"
+    lockPackageVersion "docker-ce docker-ce-selinux"
 
     # https://kubernetes.io/docs/setup/independent/install-kubeadm/
     # log rotation for docker: https://docs.docker.com/config/daemon/
@@ -474,6 +475,7 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     WriteToConsole "--- installing kubernetes ---"
     WriteToLog "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
     installYumPackages "kubelet-${kubernetesversion} kubeadm-${kubernetesversion} kubectl-${kubernetesversion} kubernetes-cni-${kubernetescniversion}"
+    lockPackageVersion "kubelet kubeadm kubectl kubernetes-cni"
     WriteToConsole "--- locking versions of kubernetes so they don't get updated by yum update ---"
     # sudo yum versionlock add kubelet
     # sudo yum versionlock add kubeadm
@@ -504,6 +506,7 @@ function UninstallDockerAndKubernetes() {
     WriteToConsole "Uninstalling docker and kubernetes"
    
     if ("$(command -v kubeadm)") {
+        WriteToLog "resetting kubeadm"
         sudo kubeadm reset
     }    
     removeYumPackages "kubelet kubeadm kubectl kubernetes-cni"
@@ -537,16 +540,23 @@ function removeYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
     }
 }
 
-function installYumPackages([ValidateNotNullOrEmpty()][string]$packagelist, [ValidateNotNullOrEmpty()][bool] $lockversion) {
+function installYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
     $packages = $packagelist.Split(" ");
     foreach ($name in $packages) {
         sudo yum list installed $name 2>&1 >> yum.log
         if (!($?)) {
             WriteToLog "Installing package $name"
             sudo yum -y install $name 2>&1 >> yum.log
-            if($lockversion){
-                sudo yum versionlock delete $name 2>&1 >> yum.log
-            }
+        }
+    }
+}
+
+function lockPackageVersion([ValidateNotNullOrEmpty()][string]$packagelist) {
+    $packages = $packagelist.Split(" ");
+    foreach ($name in $packages) {
+        sudo yum list installed $name 2>&1 >> yum.log
+        if (!($?)) {
+            sudo yum versionlock delete $name 2>&1 >> yum.log
         }
     }
 }
