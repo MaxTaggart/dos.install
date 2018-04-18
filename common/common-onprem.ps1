@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.17"
+$versiononpremcommon = "2018.04.17.18"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -677,7 +677,7 @@ function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
     $joinCommand = $(sudo kubeadm token create --print-join-command)
     if ($joinCommand) {
         $parts = $joinCommand.Split(' ');
-        $masterurl = $parts[3];
+        $masterurl = $parts[2];
         $token = $parts[4];
         $discoverytoken = $parts[6];
     
