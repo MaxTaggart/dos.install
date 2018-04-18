@@ -1,5 +1,5 @@
 
-versioncommon="2018.04.17.01"
+versioncommon="2018.04.17.02"
 
 echo "--- Including common.sh version $versioncommon ---"
 function GetCommonVersion() {
@@ -1122,7 +1122,8 @@ function createShortcutFordos(){
     installscript="$HOME/bin/dos"
     if [[ ! -f "$installscript" ]]; then
         echo "#!/bin/bash" > $installscript
-        echo "curl -sSL $baseUrl/"'onprem/main.sh?p=$RANDOM -o main.sh; bash main.sh' >> $installscript
+        echo curl -o "${HOME}/master.ps1" -sSL "${GITHUB_URL}/menus/master.ps1?p="'$RANDOM' >> $installscript
+        echo pwsh -f "${HOME}/master.ps1" >> $installscript
         chmod +x $installscript
         echo "NOTE: Next time just type 'dos' to bring up this menu"
 

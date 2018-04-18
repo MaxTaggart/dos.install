@@ -51,10 +51,6 @@ createShortcutFordos $GITHUB_URL
 echo "--- installing prerequisites ---"
 InstallPrerequisites
 
-echo "--- download master.ps1 ---"
-curl -o "${HOME}/master.ps1" -sSL "${GITHUB_URL}/menus/master.ps1?p=$RANDOM"
-
-echo "--- running master.ps1 ---"
-pwsh -f "${HOME}/master.ps1"
+dos
 
 echo " --- end of main.sh $version ---"
