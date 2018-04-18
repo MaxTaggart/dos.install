@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.18.05"
+$versiononpremcommon = "2018.04.18.06"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -18,7 +18,7 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
     [hashtable]$Return = @{} 
     
     # Set-PSDebug -Trace 1   
-    $logfile="$(get-date -f yyyy-MM-dd-HH-mm)-setupworker.txt"
+    $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-setupworker.txt"
     WriteToConsole "Logging to $logfile"
     Start-Transcript -Path "$logfile"
 
@@ -47,7 +47,7 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
 function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlenode) {
     [hashtable]$Return = @{} 
 
-    $logfile="$(get-date -f yyyy-MM-dd-HH-mm)-setupmaster.txt"
+    $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-setupmaster.txt"
     WriteToConsole "Logging to $logfile"
     Start-Transcript -Path "$logfile"
     
@@ -188,13 +188,13 @@ function ConfigureFirewall() {
 
     WriteToLog " --- installing firewalld ---"
     # https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7
-    sudo yum -y install firewalld
+    installYumPackages "firewalld"
     WriteToLog "--- starting firewalld ---"
     sudo systemctl start firewalld
     sudo systemctl enable firewalld
     sudo systemctl status firewalld -l
     WriteToLog "--- removing iptables ---"
-    sudo yum -y remove iptables-services
+    removeYumPackages iptables-services
 
     WriteToLog "Making sure the main network interface is in public zone"
     $primarynic = $(route | grep default | awk '{print $NF; ext }')
@@ -318,7 +318,7 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
         if (!$certfolder) {
             WriteToLog "Creating self-signed SSL certificate"
-            sudo yum -y install openssl
+            installYumPackages "openssl"
             $u = "$(whoami)"
             $certfolder = "/opt/healthcatalyst/certs"
             WriteToLog "Creating folder: $certfolder and giving access to $u"
@@ -413,19 +413,8 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # fi
 
     # remove older versions
-    # sudo systemctl stop docker 2>/dev/null
-    WriteToConsole "--- Removing previous versions of kubernetes and docker --"
-    if (![string]::IsNullOrEmpty($(command -v kubeadm))) {
-        sudo kubeadm reset
-    }
-
-    sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
-    sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
-    sudo yum -y remove docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux
-    sudo yum -y remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine
+    UninstallDockerAndKubernetes
                     
-    # sudo rm -rf /var/lib/docker
-
     WriteToConsole "--- Adding docker repo --"
     sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
@@ -444,10 +433,8 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     WriteToConsole "--- Installing docker via yum --"
     WriteToLog "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
     # need to pass --setpot=obsoletes=0 due to this bug: https://github.com/docker/for-linux/issues/20#issuecomment-312122325
-    sudo yum install -y --setopt=obsoletes=0 docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos
-    WriteToConsole "--- Locking version of docker so it does not get updated via yum update --"
-    sudo yum versionlock add docker-ce
-    sudo yum versionlock add docker-ce-selinux
+    # sudo yum install -y --setopt=obsoletes=0 docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos
+    installYumPackages "docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos" -lockversion $true
 
     # https://kubernetes.io/docs/setup/independent/install-kubeadm/
     # log rotation for docker: https://docs.docker.com/config/daemon/
@@ -478,10 +465,6 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     WriteToConsole "--- Adding kubernetes repo ---"
     sudo yum-config-manager --add-repo ${baseUrl}/onprem/kubernetes.repo
 
-    # install kubeadm
-    WriteToConsole "--- Removing previous versions of kubernetes ---"
-    sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
-
     WriteToConsole "--- checking to see if port 10250 is still busy ---"
     sudo lsof -i -P -n | grep LISTEN
 
@@ -490,12 +473,12 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
     WriteToConsole "--- installing kubernetes ---"
     WriteToLog "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
-    sudo yum install -y "kubelet-${kubernetesversion}" "kubeadm-${kubernetesversion}" "kubectl-${kubernetesversion}" "kubernetes-cni-${kubernetescniversion}"
+    installYumPackages "kubelet-${kubernetesversion} kubeadm-${kubernetesversion} kubectl-${kubernetesversion} kubernetes-cni-${kubernetescniversion}"
     WriteToConsole "--- locking versions of kubernetes so they don't get updated by yum update ---"
-    sudo yum versionlock add kubelet
-    sudo yum versionlock add kubeadm
-    sudo yum versionlock add kubectl
-    sudo yum versionlock add kubernetes-cni
+    # sudo yum versionlock add kubelet
+    # sudo yum versionlock add kubeadm
+    # sudo yum versionlock add kubectl
+    # sudo yum versionlock add kubernetes-cni
 
     WriteToConsole "--- starting kubernetes service ---"
     sudo systemctl enable kubelet
@@ -514,38 +497,58 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
 function UninstallDockerAndKubernetes() {
     [hashtable]$Return = @{} 
 
-    $logfile="$(get-date -f yyyy-MM-dd-HH-mm)-uninstall.txt"
+    $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-uninstall.txt"
     WriteToConsole "Logging to $logfile"
     Start-Transcript -Path "$logfile"
 
     WriteToConsole "Uninstalling docker and kubernetes"
-
-    sudo yum versionlock delete docker-ce
-    sudo yum versionlock delete docker-ce-selinux
-
-    sudo yum versionlock delete kubelet
-    sudo yum versionlock delete kubeadm
-    sudo yum versionlock delete kubectl
-    sudo yum versionlock delete kubernetes-cni
-    
+   
     if ("$(command -v kubeadm)") {
         sudo kubeadm reset
     }    
-    sudo yum remove -y kubelet kubeadm kubectl kubernetes-cni
+    removeYumPackages "kubelet kubeadm kubectl kubernetes-cni"
+
     if ("$(command -v docker)") {
         sudo docker system prune -f
         # sudo docker volume rm etcd
     }
     sudo rm -rf /var/etcd/backups/*
-    sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
-    sudo yum -y remove docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux
-    sudo yum -y remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine    
+    removeYumPackages "docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine"
+    removeYumPackages "docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux"
+    removeYumPackages "docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine"
 
     WriteToConsole "Successfully uninstalled docker and kubernetes"
 
     Stop-Transcript
-    
+
     return $Return
+}
+
+
+function removeYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
+    $packages = $packagelist.Split(" ");
+    foreach ($name in $packages) {
+        sudo yum list installed $name 2>&1 >> yum.log
+        if ($?) {
+            WriteToLog "Remove package $name"
+            sudo yum versionlock delete $name 2>&1 >> yum.log
+            sudo yum -y remove $name 2>&1 >> yum.log
+        }
+    }
+}
+
+function installYumPackages([ValidateNotNullOrEmpty()][string]$packagelist, [ValidateNotNullOrEmpty()][bool] $lockversion) {
+    $packages = $packagelist.Split(" ");
+    foreach ($name in $packages) {
+        sudo yum list installed $name 2>&1 >> yum.log
+        if (!($?)) {
+            WriteToLog "Installing package $name"
+            sudo yum -y install $name 2>&1 >> yum.log
+            if($lockversion){
+                sudo yum versionlock delete $name 2>&1 >> yum.log
+            }
+        }
+    }
 }
 
 function mountSharedFolder([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
@@ -660,7 +663,7 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
     # kubectl create secret generic $secretname --namespace=$namespace --from-literal=path=$pathToShare --from-literal=username=$username --from-literal=password=$password
 
     # from: https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux
-    sudo yum -y install samba-client samba-common cifs-utils 
+    installYumPackages "samba-client samba-common cifs-utils"
 
     sudo mkdir -p /mnt/data
 
