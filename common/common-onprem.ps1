@@ -28,8 +28,9 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
     SetupNewNode -baseUrl $baseUrl
 
     Write-Status "--- joining cluster ---"
-    WriteOut "$joincommand"
-    Invoke-Expression $joincommand
+    WriteOut "sudo $joincommand"
+    Invoke-Expression "sudo $joincommand"
+    
     # sudo kubeadm join --token $token $masterurl --discovery-token-ca-cert-hash $discoverytoken
 
     Write-Status "--- mounting network folder ---"
