@@ -17,6 +17,8 @@ function Write-Status($txt) {
 function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $token, [ValidateNotNullOrEmpty()][string] $masterurl, [ValidateNotNullOrEmpty()][string] $discoverytoken) {
     [hashtable]$Return = @{} 
     
+    Set-PSDebug -Trace 1
+        
     Start-Transcript -Path setupworker.txt
 
     Write-Status "--- setting up new node ---"
