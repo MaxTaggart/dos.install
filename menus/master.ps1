@@ -46,16 +46,16 @@ while ($userinput -ne "q") {
     $userinput = Read-Host "Please make a selection"
     switch ($userinput) {
         '1' {
-            SetupMaster -baseUrl $GITHUB_URL -singlenode $false
+            SetupMaster -baseUrl $GITHUB_URL -singlenode $false > $null
         } 
         '2' {
-            SetupNewNode -baseUrl $GITHUB_URL
+            SetupNewNode -baseUrl $GITHUB_URL > $null
         } 
         '3' {
-            SetupMaster -baseUrl $GITHUB_URL -singlenode $true
+            SetupMaster -baseUrl $GITHUB_URL -singlenode $true > $null
         } 
         '4' {
-            UninstallDockerAndKubernetes
+            UninstallDockerAndKubernetes > $null
         } 
         '5' {
             Write-Host "Current cluster: $(kubectl config current-context)"
