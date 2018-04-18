@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.18.03"
+$versiononpremcommon = "2018.04.18.04"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -19,7 +19,7 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
     
     # Set-PSDebug -Trace 1   
 
-    Start-Transcript -Path setupworker.txt
+    Start-Transcript -Path "$(get-date -f yyyy-MM-dd-HH-mm)-setupworker.txt"
 
     Write-Status "--- cleaning up old stuff ---"
     UninstallDockerAndKubernetes
@@ -30,22 +30,31 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
     Write-Status "--- joining cluster ---"
     WriteOut "sudo $joincommand"
     Invoke-Expression "sudo $joincommand"
-    
+
     # sudo kubeadm join --token $token $masterurl --discovery-token-ca-cert-hash $discoverytoken
 
     Write-Status "--- mounting network folder ---"
     MountFolderFromSecrets -baseUrl $baseUrl
 
+    Write-Status "This node has successfully joined the cluster"
+    
     Stop-Transcript
+
+    return $Return    
 }
 
 function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlenode) {
     [hashtable]$Return = @{} 
 
+    Start-Transcript -Path "$(get-date -f yyyy-MM-dd-HH-mm)-setupmaster.txt"
+    
     Write-Status "--- cleaning up old stuff ---"
     UninstallDockerAndKubernetes
     
+    Write-Status "--- setting up new node ---"
     SetupNewNode -baseUrl $baseUrl
+
+    Write-Status "--- setting up new master node ---"
     SetupNewMasterNode -baseUrl $baseUrl
 
     if ($singlenode -eq $True) {
@@ -57,12 +66,14 @@ function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlen
     else {
         mountSharedFolder -saveIntoSecret $True
     }
-    # cannot use tee here because it calls a ps1 file
+    
+    Write-Status "--- setting up load balancer ---"   
     SetupNewLoadBalancer -baseUrl $baseUrl
 
+    Write-Status "--- setting up kubernetes dashboard ---"   
     InstallStack -baseUrl $baseUrl -namespace "kube-system" -appfolder "dashboard"
     # clear
-    WriteOut "--- waiting for pods to run ---"
+    WriteOut "--- waiting for pods to run in kube-system ---"
     WaitForPodsInNamespace -namespace "kube-system" -interval 5    
 
     if ($singlenode -eq $True) {
@@ -71,6 +82,8 @@ function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlen
     else {
         ShowCommandToJoinCluster $baseUrl    
     }
+
+    Stop-Transcript
 
     return $Return    
 }
