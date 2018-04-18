@@ -17,7 +17,7 @@ function Write-Status($txt) {
 function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $token, [ValidateNotNullOrEmpty()][string] $masterurl, [ValidateNotNullOrEmpty()][string] $discoverytoken) {
     [hashtable]$Return = @{} 
     
-    Set-PSDebug -Trace 1
+    # Set-PSDebug -Trace 1
 
     Start-Transcript -Path setupworker.txt
 
@@ -628,17 +628,17 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
 
     if ($isUNC -eq $True) {
         WriteOut "Mounting as UNC folder"
-        WriteOut "sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1, username=$username, domain=$domain, password=$password, dir_mode=0777, file_mode=0777, sec=ntlm"
-        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1, username=$username, domain=$domain, password=$password, dir_mode=0777, file_mode=0777, sec=ntlm
+        WriteOut "sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm"
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o "vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm"
         WriteOut "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm" | sudo tee -a /etc/fstab > /dev/null
     }
     else {
         WriteOut "Mounting as non-UNC folder"
-        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1, username=$username, password=$password, dir_mode=0777, file_mode=0777, serverino
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o "vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino"
         WriteOut "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null       
     }
 
-    WriteOut "Mounting all"
+    WriteOut "--- Mounting all shares ---"
     sudo mount -a --verbose
 
     if ( $saveIntoSecret -eq $True) {
