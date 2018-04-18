@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.16"
+$versiononpremcommon = "2018.04.17.17"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -677,8 +677,8 @@ function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
     $joinCommand = $(sudo kubeadm token create --print-join-command)
     if ($joinCommand) {
         $parts = $joinCommand.Split(' ');
-        $token = $parts[3];
-        $masterurl = $parts[4];
+        $masterurl = $parts[3];
+        $token = $parts[4];
         $discoverytoken = $parts[6];
     
         WriteOut "Run this command on any new node to join this cluster (this command expires in 24 hours):"
