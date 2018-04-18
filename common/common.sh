@@ -1066,7 +1066,8 @@ function RunPowerShellCommand(){
 
 function InstallPrerequisites(){
     Write-Status "--- updating yum packages ---"
-    sudo yum update -y -q -e 0
+    #sudo yum update -y -q -e 0
+    sudo yum update -y
 
     echo "---- RAM ----"
     declare -i freememInBytes=10
