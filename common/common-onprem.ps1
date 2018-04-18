@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.18.02"
+$versiononpremcommon = "2018.04.18.03"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -29,7 +29,7 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
 
     Write-Status "--- joining cluster ---"
     WriteOut "$joincommand"
-    $($joincommand)
+    Invoke-Expression $joincommand
     # sudo kubeadm join --token $token $masterurl --discovery-token-ca-cert-hash $discoverytoken
 
     Write-Status "--- mounting network folder ---"
