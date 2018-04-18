@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.18.01"
+$versionkubecommon = "2018.04.18.02"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -737,7 +737,7 @@ function global:TestFunction(){
 function ShowStatusOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namespace){
     Write-Information -MessageData "showing status of pods in $namespace"
     $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
-    foreach($pod in $pods){
+    foreach($pod in $pods.Split(" ")){
         Write-Information -MessageData "=============== Describe Pod: $pod ================="
         kubectl describe pods $pod -n $namespace
     }
@@ -745,7 +745,7 @@ function ShowStatusOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $name
 function ShowLogsOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namespace){
     Write-Information -MessageData "showing logs (last 30 lines) in $namespace"
     $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
-    foreach($pod in $pods){
+    foreach($pod in $pods.Split(" ")){
         Write-Information -MessageData "=============== Describe Pod: $pod ================="
         kubectl logs --tail=30 $pod -n $namespace
     }   

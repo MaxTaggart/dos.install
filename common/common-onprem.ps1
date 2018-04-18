@@ -533,7 +533,7 @@ function removeYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
     foreach ($name in $packages) {
         sudo yum list installed $name 2>&1 >> yum.log
         if ($?) {
-            WriteToLog "Remove package $name"
+            WriteToLog "Removing package $name"
             sudo yum versionlock delete $name 2>&1 >> yum.log
             sudo yum -y remove $name 2>&1 >> yum.log
         }
