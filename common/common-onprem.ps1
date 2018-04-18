@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.12"
+$versiononpremcommon = "2018.04.17.13"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -17,6 +17,8 @@ function Write-Status($txt) {
 function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $token, [ValidateNotNullOrEmpty()][string] $masterurl, [ValidateNotNullOrEmpty()][string] $discoverytoken) {
     [hashtable]$Return = @{} 
     
+    Start-Transcript -Path setupworker.txt
+
     Write-Status "--- setting up new node ---"
     SetupNewNode -baseUrl $baseUrl
 
@@ -25,6 +27,8 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
 
     Write-Status "--- mounting network folder ---"
     MountFolderFromSecrets -baseUrl $baseUrl
+
+    Stop-Transcript
 }
 
 function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlenode) {
