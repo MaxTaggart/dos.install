@@ -35,5 +35,5 @@ ImportModuleFromUrl -module "common-onprem"
 # show Information messages
 $InformationPreference = "Continue"
 
-SetupWorker -baseUrl $GITHUB_URL -joincommand $joincommand
+SetupWorker -baseUrl $GITHUB_URL -joincommand "$joincommand"
 
