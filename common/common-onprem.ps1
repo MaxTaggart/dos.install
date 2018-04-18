@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.15"
+$versiononpremcommon = "2018.04.17.16"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -17,9 +17,12 @@ function Write-Status($txt) {
 function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $token, [ValidateNotNullOrEmpty()][string] $masterurl, [ValidateNotNullOrEmpty()][string] $discoverytoken) {
     [hashtable]$Return = @{} 
     
-    # Set-PSDebug -Trace 1
+    # Set-PSDebug -Trace 1   
 
     Start-Transcript -Path setupworker.txt
+
+    Write-Status "--- cleaning up old stuff ---"
+    UninstallDockerAndKubernetes
 
     Write-Status "--- setting up new node ---"
     SetupNewNode -baseUrl $baseUrl
@@ -35,6 +38,9 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
 
 function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlenode) {
     [hashtable]$Return = @{} 
+
+    Write-Status "--- cleaning up old stuff ---"
+    UninstallDockerAndKubernetes
     
     SetupNewNode -baseUrl $baseUrl
     SetupNewMasterNode -baseUrl $baseUrl
@@ -421,8 +427,8 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # need to pass --setpot=obsoletes=0 due to this bug: https://github.com/docker/for-linux/issues/20#issuecomment-312122325
     sudo yum install -y --setopt=obsoletes=0 docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos
     Write-Status "--- Locking version of docker so it does not get updated via yum update --"
-    sudo yum versionlock docker-ce
-    sudo yum versionlock docker-ce-selinux
+    sudo yum versionlock add docker-ce
+    sudo yum versionlock add docker-ce-selinux
 
     # https://kubernetes.io/docs/setup/independent/install-kubeadm/
     # log rotation for docker: https://docs.docker.com/config/daemon/
@@ -467,10 +473,10 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     WriteOut "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
     sudo yum install -y "kubelet-${kubernetesversion}" "kubeadm-${kubernetesversion}" "kubectl-${kubernetesversion}" "kubernetes-cni-${kubernetescniversion}"
     Write-Status "--- locking versions of kubernetes so they don't get updated by yum update ---"
-    sudo yum versionlock kubelet
-    sudo yum versionlock kubeadm
-    sudo yum versionlock kubectl
-    sudo yum versionlock kubernetes-cni
+    sudo yum versionlock add kubelet
+    sudo yum versionlock add kubeadm
+    sudo yum versionlock add kubectl
+    sudo yum versionlock add kubernetes-cni
 
     Write-Status "--- starting kubernetes service ---"
     sudo systemctl enable kubelet
@@ -488,6 +494,14 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
 function UninstallDockerAndKubernetes() {
     [hashtable]$Return = @{} 
+    
+    sudo yum versionlock delete docker-ce
+    sudo yum versionlock delete docker-ce-selinux
+
+    sudo yum versionlock delete kubelet
+    sudo yum versionlock delete kubeadm
+    sudo yum versionlock delete kubectl
+    sudo yum versionlock delete kubernetes-cni
     
     if ("$(command -v kubeadm)") {
         sudo kubeadm reset
@@ -674,7 +688,7 @@ function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
         # if [[ ! -z "$pathToShare" ]]; then
         #     WriteOut "curl -sSL $baseUrl/onprem/mountfolder.sh?p=$RANDOM | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
         # fi
-        WriteOut "sudo $(sudo kubeadm token create --print-join-command)"
+        # WriteOut "sudo $(sudo kubeadm token create --print-join-command)"
         WriteOut ""
         WriteOut "---- COPY ABOVE THIS LINE ----"
     }
