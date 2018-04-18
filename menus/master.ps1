@@ -1,4 +1,4 @@
-$version = "2018.04.17.03"
+$version = "2018.04.18.01"
 
 # This script is meant for quick & easy install via:
 #   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
@@ -26,6 +26,8 @@ ImportModuleFromUrl -module "common-kube"
 
 ImportModuleFromUrl -module "common-onprem"
 
+ImportModuleFromUrl -module "realtime-menu"
+
 # show Information messages
 $InformationPreference = "Continue"
 
@@ -42,6 +44,7 @@ while ($userinput -ne "q") {
     Write-Host "7: Launch Kubernetes dashboard"
     Write-Host "8: Show command to join another node to this cluster"
     Write-Host "-----------"
+    Write-Host "40: Fabric Realtime Menu"
     Write-Host "q: Quit"
     $userinput = Read-Host "Please make a selection"
     switch ($userinput) {
@@ -83,7 +86,9 @@ while ($userinput -ne "q") {
         '8' {
             ShowCommandToJoinCluster -baseUrl $GITHUB_URL
         } 
-        
+        '40' {
+            showRealtimeMenu
+        } 
         'q' {
             return
         }
