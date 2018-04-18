@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.14"
+$versiononpremcommon = "2018.04.17.15"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -69,7 +69,7 @@ function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlen
 function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
-    $kubernetesversion = "1.9.6"
+    $kubernetesversion = "1.10.0"
 
     $u = "$(whoami)"
     WriteOut "User name: $u"
@@ -355,7 +355,7 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     }
 
     $dockerversion = "17.03.2.ce-1"
-    $kubernetesversion = "1.9.6-0"
+    $kubernetesversion = "1.10.0-0"
     $kubernetescniversion = "0.6.0-0"
 
     # $(export dockerversion="17.03.2.ce-1")
