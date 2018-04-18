@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.13"
+$versiononpremcommon = "2018.04.17.14"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -18,7 +18,7 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
     [hashtable]$Return = @{} 
     
     Set-PSDebug -Trace 1
-        
+
     Start-Transcript -Path setupworker.txt
 
     Write-Status "--- setting up new node ---"
@@ -628,12 +628,13 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
 
     if ($isUNC -eq $True) {
         WriteOut "Mounting as UNC folder"
-        sudo mount --verbose -t cifs $pathToShare "/mnt/data" -o vers=2.1, username=$username, domain=$domain, password=$password, dir_mode=0777, file_mode=0777, sec=ntlm
+        WriteOut "sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1, username=$username, domain=$domain, password=$password, dir_mode=0777, file_mode=0777, sec=ntlm"
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1, username=$username, domain=$domain, password=$password, dir_mode=0777, file_mode=0777, sec=ntlm
         WriteOut "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm" | sudo tee -a /etc/fstab > /dev/null
     }
     else {
         WriteOut "Mounting as non-UNC folder"
-        sudo mount --verbose -t cifs $pathToShare "/mnt/data" -o vers=2.1, username=$username, password=$password, dir_mode=0777, file_mode=0777, serverino
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o vers=2.1, username=$username, password=$password, dir_mode=0777, file_mode=0777, serverino
         WriteOut "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null       
     }
 
