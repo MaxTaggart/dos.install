@@ -10,16 +10,12 @@ set -o pipefail
 #
 #
 
-version="2018.04.16.03"
+version="2018.04.18.01"
 echo "---- setupnode version $version ----"
 
-token=$1
-masterurl=$2
-discoverytoken=$3
+joincommand=$1
 
-echo "token: $token"
-echo "masterurl: $masterurl"
-echo "discoverytoken: $discoverytoken"
+echo "joincommand: $joincommand"
 
 GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
@@ -50,6 +46,6 @@ echo "--- download setupworker.ps1 ---"
 curl -o "${HOME}/setupworker.ps1" -sSL "${GITHUB_URL}/onprem/setupworker.ps1?p=$RANDOM"
 
 echo "--- running setupworker.ps1 ---"
-pwsh -f "${HOME}/setupworker.ps1" -baseUrl $GITHUB_URL -token $token -masterurl $masterurl -discoverytoken $discoverytoken
+pwsh -f "${HOME}/setupworker.ps1" -baseUrl $GITHUB_URL -joincommand $joincommand
 
 echo "---- finish setupnode version $version ----"

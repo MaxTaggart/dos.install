@@ -1,11 +1,9 @@
-param([string]$baseUrl,[string] $token, [string] $masterurl, [string] $discoverytoken)
+param([string]$baseUrl,[string] $joincommand)
 # the above MUST be the first line
 Write-Output "setupworker.ps1 version 2018.04.17.01"
 Write-Output "Received parameters:"
 Write-Output "baseUrl:$baseUrl"
-Write-Output "token:$token"
-Write-Output "masterurl:$masterurl"
-Write-Output "discoverytoken:$discoverytoken"
+Write-Output "joincommand:$joincommand"
 Write-Output "----"
 
 # This script is meant for quick & easy install via:
@@ -37,5 +35,5 @@ ImportModuleFromUrl -module "common-onprem"
 # show Information messages
 $InformationPreference = "Continue"
 
-SetupWorker -baseUrl $GITHUB_URL -token $token -masterurl $masterurl -discoverytoken $discoverytoken
+SetupWorker -baseUrl $GITHUB_URL -joincommand $joincommand
 

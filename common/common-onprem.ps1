@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.17.18"
+$versiononpremcommon = "2018.04.18.01"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -14,7 +14,7 @@ function Write-Status($txt) {
 }
 
 
-function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $token, [ValidateNotNullOrEmpty()][string] $masterurl, [ValidateNotNullOrEmpty()][string] $discoverytoken) {
+function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $joincommand) {
     [hashtable]$Return = @{} 
     
     # Set-PSDebug -Trace 1   
@@ -28,7 +28,9 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
     SetupNewNode -baseUrl $baseUrl
 
     Write-Status "--- joining cluster ---"
-    sudo kubeadm join --token $token $masterurl --discovery-token-ca-cert-hash $discoverytoken
+    WriteOut "$joincommand"
+    $(joincommand)
+    # sudo kubeadm join --token $token $masterurl --discovery-token-ca-cert-hash $discoverytoken
 
     Write-Status "--- mounting network folder ---"
     MountFolderFromSecrets -baseUrl $baseUrl
@@ -676,14 +678,14 @@ function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
     
     $joinCommand = $(sudo kubeadm token create --print-join-command)
     if ($joinCommand) {
-        $parts = $joinCommand.Split(' ');
-        $masterurl = $parts[2];
-        $token = $parts[4];
-        $discoverytoken = $parts[6];
+        # $parts = $joinCommand.Split(' ');
+        # $masterurl = $parts[2];
+        # $token = $parts[4];
+        # $discoverytoken = $parts[6];
     
         WriteOut "Run this command on any new node to join this cluster (this command expires in 24 hours):"
         WriteOut "---- COPY BELOW THIS LINE ----"
-        WriteOut "curl -sSL $baseUrl/onprem/setupnode.sh?p=`$RANDOM -o setupnode.sh; bash setupnode.sh `"$token`" `"$masterurl`" `"$discoverytoken`""
+        WriteOut "curl -sSL $baseUrl/onprem/setupnode.sh?p=`$RANDOM -o setupnode.sh; bash setupnode.sh `"$joinCommand`""
     
         # if [[ ! -z "$pathToShare" ]]; then
         #     WriteOut "curl -sSL $baseUrl/onprem/mountfolder.sh?p=$RANDOM | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
