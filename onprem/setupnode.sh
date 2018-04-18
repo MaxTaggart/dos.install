@@ -10,7 +10,7 @@ set -o pipefail
 #
 #
 
-version="2018.04.18.01"
+version="2018.04.18.02"
 echo "---- setupnode version $version ----"
 
 joincommand=$1
@@ -46,6 +46,6 @@ echo "--- download setupworker.ps1 ---"
 curl -o "${HOME}/setupworker.ps1" -sSL "${GITHUB_URL}/onprem/setupworker.ps1?p=$RANDOM"
 
 echo "--- running setupworker.ps1 ---"
-pwsh -f "${HOME}/setupworker.ps1" -baseUrl $GITHUB_URL -joincommand \"$joincommand\"
+pwsh -f "${HOME}/setupworker.ps1" -baseUrl $GITHUB_URL -joincommand "$joincommand"
 
 echo "---- finish setupnode version $version ----"
