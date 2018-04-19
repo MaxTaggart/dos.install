@@ -108,7 +108,7 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # WriteToLog "--- running kubeadm init for flannel ---"
     # for flannel network plugin
     # sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
-    sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16
+    sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --skip-token-print --apiserver-cert-extra-sans $(hostname --fqdn)
 
     WriteToLog "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
 
@@ -285,8 +285,8 @@ function ConfigureFirewall() {
     sudo firewall-cmd --add-port=22/tcp --permanent # SSH
     WriteToLog "opening port 6443 for Kubernetes API server"
     sudo firewall-cmd --add-port=6443/tcp --permanent # kubernetes API server
-    WriteToLog "opening port 8443 for Kubernetes API server external access"
-    sudo firewall-cmd --add-port=8443/tcp --permanent # kubernetes API server
+    # WriteToLog "opening port 8443 for Kubernetes API server external access"
+    # sudo firewall-cmd --add-port=8443/tcp --permanent # kubernetes API server
     WriteToLog "opening ports 2379-2380 for Kubernetes API server"
     sudo firewall-cmd --add-port=2379-2380/tcp --permanent 
     WriteToLog "opening port 8472,8285 and 4789 for Flannel networking"

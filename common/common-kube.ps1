@@ -774,11 +774,11 @@ function GenerateKubeConfigFile(){
     $user="admin-user"
     # https://stackoverflow.com/questions/47770676/how-to-create-a-kubectl-config-file-for-serviceaccount
     $secretname=$(kubectl -n kube-system get secret | grep $user | awk '{print $1}')
-    $ca=$(ReadSecretValue "$secretname" "ca.crt" "kube-system")
+    $ca=$(kubectl get secret $name -n kube-system -o jsonpath='{.data.ca\.crt}') # ca doesn't use base64 encoding
     $token=$(ReadSecretValue "$secretname" "token" "kube-system")
     $namespace=$(ReadSecretValue "$secretname" "namespace" "kube-system")
-    $server="$(ReadSecret -secretname "dnshostname" -namespace "default"):8443"
-    $serverurl="https://${server}:8443"
+    $server=$(ReadSecret -secretname "dnshostname" -namespace "default")
+    $serverurl="https://${server}:6443"
 
     # the multiline string below HAS to start at the beginning of the line per powershell
     # https://www.kongsli.net/2012/05/03/powershell-gotchas-getting-multiline-string-literals-correct/
