@@ -147,8 +147,8 @@ function global:AskForSecretValue ([ValidateNotNullOrEmpty()] $secretname, [Vali
         $certhostname = ""
         Do {
             $certhostname = Read-host "$prompt"
-            if(!$certhostname){
-                if($defaultvalue){
+            if (!$certhostname) {
+                if ($defaultvalue) {
                     $certhostname = $defaultvalue
                 }
             }
@@ -173,8 +173,8 @@ function global:ReadYamlAndReplaceCustomer([ValidateNotNullOrEmpty()] $baseUrl, 
         $content = $response | Select-Object -Expand Content | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"}
     }
     else {
-        $content=$(Get-Content -Path "$baseUrl/$templateFile" `
-            | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"})
+        $content = $(Get-Content -Path "$baseUrl/$templateFile" `
+                | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"})
     }
 
     $Return.Content = $content
@@ -426,46 +426,46 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
     return $Return
 }
 
-function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $interval){
+function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $interval) {
     [hashtable]$Return = @{} 
 
-    $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
-    $waitingonPod="n"
+    $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+    $waitingonPod = "n"
 
     $counter = 0
     Do {
-        $waitingonPod=""
+        $waitingonPod = ""
         Write-Information -MessageData "---- waiting until all pods are running in namespace $namespace ---"
 
         Start-Sleep -Seconds $interval
         $counter++
-        $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+        $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
 
-        if(!$pods){
+        if (!$pods) {
             throw "No pods were found in namespace $namespace"
         }
 
         foreach ($pod in $pods.Split(" ")) {
-            $podstatus=$(kubectl get pods $pod -n $namespace -o jsonpath='{.status.phase}')
-            if($podstatus -eq "Running"){
+            $podstatus = $(kubectl get pods $pod -n $namespace -o jsonpath='{.status.phase}')
+            if ($podstatus -eq "Running") {
                 # nothing to do
             }
-            elseif($podstatus -eq "Pending"){
+            elseif ($podstatus -eq "Pending") {
                 # Write-Information -MessageData "${pod}: $podstatus"
-                $containerReady=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].ready}")
-                if($containerReady -ne "true" ){
-                    $containerStatus=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].state.waiting.reason}")
-                    if(![string]::IsNullOrEmpty(($containerStatus))){
-                        $waitingonPod="${waitingonPod}${pod}($containerStatus);"    
+                $containerReady = $(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].ready}")
+                if ($containerReady -ne "true" ) {
+                    $containerStatus = $(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].state.waiting.reason}")
+                    if (![string]::IsNullOrEmpty(($containerStatus))) {
+                        $waitingonPod = "${waitingonPod}${pod}($containerStatus);"    
                     }
                     else {
-                        $waitingonPod="${waitingonPod}${pod}(container);"                        
+                        $waitingonPod = "${waitingonPod}${pod}(container);"                        
                     }
                     # Write-Information -MessageData "container in $pod is not ready yet: $containerReady"
                 }
             }
             else {
-                $waitingonPod="${waitingonPod}${pod}($podstatus);" 
+                $waitingonPod = "${waitingonPod}${pod}($podstatus);" 
             }
         }
             
@@ -475,7 +475,10 @@ function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $i
 
     kubectl get pods -n $namespace -o wide
 
-    kubectl get events -n $namespace | grep "Warning" | tail     
+    if ($counter -gt 29) {
+        Write-Information -MessageData "--- warnings in kubenetes event log ---"
+        kubectl get events -n $namespace | grep "Warning" | tail    
+    } 
     return $Return    
 }
 
@@ -709,11 +712,11 @@ function Merge-Tokens($template, $tokens) {
         })
 }
 
-function global:FixLabelOnMaster(){
+function global:FixLabelOnMaster() {
     # for some reaosn ACS doesn't set this label on the master correctly and we need it to target pods to the master
     Write-Information -MessageData "Looking for node with label [kubernetes.io/role=master]"
-    $masternodename=$(kubectl get nodes -l kubernetes.io/role=master -o jsonpath="{.items[0].metadata.name}")
-    if(![string]::IsNullOrEmpty($masternodename)){
+    $masternodename = $(kubectl get nodes -l kubernetes.io/role=master -o jsonpath="{.items[0].metadata.name}")
+    if (![string]::IsNullOrEmpty($masternodename)) {
         Write-Information -MessageData "Setting label [node-role.kubernetes.io/master] on node [$masternodename]"
         kubectl label nodes $masternodename node-role.kubernetes.io/master=""
     }
@@ -722,7 +725,7 @@ function global:FixLabelOnMaster(){
     }
 }
 
-function global:TestFunction(){
+function global:TestFunction() {
     param( [string]$namespace, [string]$size)     
 
     [hashtable]$Return = @{} 
@@ -734,37 +737,78 @@ function global:TestFunction(){
     return $Return    
 }
 
-function ShowStatusOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namespace){
+function ShowStatusOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namespace) {
     Write-Information -MessageData "showing status of pods in $namespace"
-    $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
-    foreach($pod in $pods.Split(" ")){
+    $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+    foreach ($pod in $pods.Split(" ")) {
         Write-Information -MessageData "=============== Describe Pod: $pod ================="
         kubectl describe pods $pod -n $namespace
     }
 }
-function ShowLogsOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namespace){
+function ShowLogsOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namespace) {
     Write-Information -MessageData "showing logs (last 30 lines) in $namespace"
-    $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
-    foreach($pod in $pods.Split(" ")){
+    $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+    foreach ($pod in $pods.Split(" ")) {
         Write-Information -MessageData "=============== Describe Pod: $pod ================="
         kubectl logs --tail=30 $pod -n $namespace
     }   
 }
 
-function ShowStatusOfCluster(){
+function ShowStatusOfCluster() {
     WriteToConsole "Current cluster: $(kubectl config current-context)"
     kubectl version --short
     kubectl get "deployments,pods,services,nodes,ingress,secrets" --namespace=kube-system -o wide    
 }
 
-function ShowNodes(){
+function ShowNodes() {
     Write-Host "Current cluster: $(kubectl config current-context)"
-            kubectl version --short
-            kubectl get "nodes" -o wide
+    kubectl version --short
+    kubectl get "nodes" -o wide
 }
 
-function ShowLoadBalancerLogs(){
+function ShowLoadBalancerLogs() {
     kubectl logs --namespace=kube-system -l k8s-app=traefik-ingress-lb-onprem --tail=100
 }
+
+function GenerateKubeConfigFile(){
+    $user="admin-user"
+    # https://stackoverflow.com/questions/47770676/how-to-create-a-kubectl-config-file-for-serviceaccount
+    $secretname=$(kubectl -n kube-system get secret | grep $user | awk '{print $1}')
+    $ca=$(ReadSecretValue "$secretname" "ca.crt" "kube-system")
+    $token=$(ReadSecretValue "$secretname" "token" "kube-system")
+    $namespace=$(ReadSecretValue "$secretname" "namespace" "kube-system")
+    $server="$(ReadSecret -secretname "dnshostname" -namespace "default"):8443"
+    $serverurl="https://${server}:8443"
+
+    # the multiline string below HAS to start at the beginning of the line per powershell
+    # https://www.kongsli.net/2012/05/03/powershell-gotchas-getting-multiline-string-literals-correct/
+    $kubeconfig =
+@"
+apiVersion: v1
+kind: Config
+clusters:
+- name: ${server}
+  cluster:
+    certificate-authority-data: ${ca}
+    server: ${serverurl}
+contexts:
+- name: default-context
+  context:
+    cluster: ${server}
+    namespace: ${namespace}
+    user: ${admin-user}
+current-context: default-context
+users:
+- name: ${admin-user}
+  user:
+    token: ${token}
+"@
+
+    WriteToConsole "------ CUT HERE -----"
+    WriteToConsole $kubeconfig
+    WriteToConsole "------ END CUT HERE ---"
+
+}
+
 # --------------------
 Write-Information -MessageData "end common-kube.ps1 version $versionkubecommon"

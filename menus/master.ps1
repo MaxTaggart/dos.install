@@ -45,6 +45,7 @@ while ($userinput -ne "q") {
     Write-Host "6: Show status of cluster"
     Write-Host "8: Show command to join another node to this cluster"
     Write-Host "9: Mount folder"
+    Write-Host "10: Create kubeconfig"
     Write-Host "-----------"
     Write-Host "20: Troubleshooting Menu"
     Write-Host "-----------"
@@ -75,6 +76,9 @@ while ($userinput -ne "q") {
         } 
         '9' {
             mountSharedFolder -saveIntoSecret $true
+        } 
+        '10' {
+            GenerateKubeConfigFile
         } 
         '20' {
             showTroubleshootingMenu -baseUrl $GITHUB_URL

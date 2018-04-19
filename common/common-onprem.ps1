@@ -910,5 +910,6 @@ function ShowKubernetesServiceStatus(){
     sudo journalctl -xe --priority 0..3
     sudo journalctl -u kube-apiserve
 }
+
 # --------------------
 Write-Information -MessageData "end common-onprem.ps1 version $versiononpremcommon"
