@@ -264,13 +264,13 @@ function ConfigureFirewall() {
 
     WriteToLog " installing firewalld"
     # https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7
-    installYumPackages "firewalld"
+    sudo yum -y install "firewalld"
     WriteToLog "starting firewalld"
     sudo systemctl start firewalld
     sudo systemctl enable firewalld
     sudo systemctl status firewalld -l
     WriteToLog "removing iptables"
-    removeYumPackages iptables-services
+    sudo yum -y remove iptables-services
 
     WriteToLog "Making sure the main network interface is in public zone"
     $primarynic = $(route | grep default | awk '{print $NF; ext }')
@@ -389,7 +389,7 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
         if (!$certfolder) {
             WriteToLog "Creating self-signed SSL certificate"
-            installYumPackages "openssl"
+            sudo yum -y install "openssl"
             $u = "$(whoami)"
             $certfolder = "/opt/healthcatalyst/certs"
             WriteToLog "Creating folder: $certfolder and giving access to $u"
@@ -542,7 +542,7 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
     WriteToConsole "installing kubernetes"
     WriteToLog "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
-    installYumPackages "kubelet-${kubernetesversion} kubeadm-${kubernetesversion} kubectl-${kubernetesversion} kubernetes-cni-${kubernetescniversion}"
+    sudo yum -y install "kubelet-${kubernetesversion} kubeadm-${kubernetesversion} kubectl-${kubernetesversion} kubernetes-cni-${kubernetescniversion}"
     lockPackageVersion "kubelet kubeadm kubectl kubernetes-cni"
     WriteToConsole "locking versions of kubernetes so they don't get updated by yum update"
     # sudo yum versionlock add kubelet
@@ -577,7 +577,7 @@ function UninstallDockerAndKubernetes() {
         WriteToLog "resetting kubeadm"
         sudo kubeadm reset
     }    
-    removeYumPackages "kubelet kubeadm kubectl kubernetes-cni"
+    sudo yum -y remove "kubelet kubeadm kubectl kubernetes-cni"
     unlockPackageVersion "kubelet kubeadm kubectl kubernetes-cni"
 
     if ("$(command -v docker)") {
@@ -585,9 +585,9 @@ function UninstallDockerAndKubernetes() {
         # sudo docker volume rm etcd
     }
     sudo rm -rf /var/etcd/backups/*
-    removeYumPackages "docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine"
-    removeYumPackages "docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux container-selinux"
-    removeYumPackages "docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine"
+    sudo yum -y remove "docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine"
+    sudo yum -y remove "docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux container-selinux"
+    sudo yum -y remove "docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine"
     unlockPackageVersion "docker-ce docker-ce-selinux"
 
     WriteToConsole "Successfully uninstalled docker and kubernetes"
@@ -595,24 +595,6 @@ function UninstallDockerAndKubernetes() {
     Stop-Transcript
 
     return $Return
-}
-
-
-function removeYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
-    sudo yum -y remove "$packagelist"
-}
-
-function installYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
-    sudo yum -y install "$packagelist"
-    # $foundPackages = $false
-    # $packages = $packagelist.Split(" ");
-    # foreach ($name in $packages) {
-    #     sudo yum list installed $name 
-    #     if (!($?)) {
-    #         WriteToLog "Installing package $name"
-    #         sudo yum -y install $name 
-    #     }
-    # }
 }
 
 function lockPackageVersion([ValidateNotNullOrEmpty()][string]$packagelist) {
@@ -743,7 +725,7 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
     # kubectl create secret generic $secretname --namespace=$namespace --from-literal=path=$pathToShare --from-literal=username=$username --from-literal=password=$password
 
     # from: https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux
-    installYumPackages "samba-client samba-common cifs-utils"
+    sudo yum -y install "samba-client samba-common cifs-utils"
 
     sudo mkdir -p /mnt/data
 
