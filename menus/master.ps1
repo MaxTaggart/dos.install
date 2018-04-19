@@ -43,7 +43,6 @@ while ($userinput -ne "q") {
     Write-Host "4: Uninstall Docker and Kubernetes"
     Write-Host "5: Show all nodes"
     Write-Host "6: Show status of cluster"
-    Write-Host "7: Launch Kubernetes dashboard"
     Write-Host "8: Show command to join another node to this cluster"
     Write-Host "9: Mount folder"
     Write-Host "-----------"
@@ -70,9 +69,6 @@ while ($userinput -ne "q") {
         } 
         '6' {
             ShowStatusOfCluster
-        } 
-        '7' {
-            OpenKubernetesDashboard
         } 
         '8' {
             ShowCommandToJoinCluster -baseUrl $GITHUB_URL

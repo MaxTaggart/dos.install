@@ -73,7 +73,7 @@ function showRealtimeMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
                 return
             }
         }
-        $userinput = Read-Host -Prompt "Press Enter to continue or q to exit"
+        $userinput = Read-Host -Prompt "Press Enter to continue or q to go back to top menu"
         if ($userinput -eq "q") {
             return
         }

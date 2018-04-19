@@ -896,6 +896,14 @@ function OpenKubernetesDashboard(){
     WriteToConsole $token
     WriteToConsole "-------- End of Bearer Token -------------"
 }
+function OpenTraefikDashboard(){
+    $dnshostname=$(ReadSecret "dnshostname")
+    $myip=$(host $(hostname) | awk '/has address/ { print $4 ; exit }')
+    WriteToConsole "--- dns entries for c:\windows\system32\drivers\etc\hosts (if needed) ---"
+    WriteToConsole "${myip} ${dnshostname}"
+    WriteToConsole "-----------------------------------------"
+    WriteToConsole "You can access the traefik dashboard at: https://${dnshostname}/dashboard/ or https://${myip}/dashboard/"
+}
 
 function ShowKubernetesServiceStatus(){
     sudo systemctl status kubelet -l
