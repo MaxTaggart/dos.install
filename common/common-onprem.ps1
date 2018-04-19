@@ -5,7 +5,7 @@ function global:GetCommonOnPremVersion() {
     return $versiononpremcommon
 }
 
-$dockerversion = "17.06.2.ce-1" #"17.03.2.ce-1"
+$dockerversion = "17.03.2.ce-1"
 $kubernetesversion = "1.10.0-0"
 $kubernetescniversion = "0.6.0-0"
 $kubernetesserverversion = "1.10.0"
@@ -490,6 +490,7 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
     WriteToConsole "docker versions available in repo "
     sudo yum -y --showduplicates list docker-ce
+    sudo yum -y --showduplicates list docker-ce-selinux
 
     # https://saurabh-deochake.github.io/posts/2017/07/post-1/
     WriteToConsole "setting selinux to disabled so kubernetes can work"
@@ -598,11 +599,11 @@ function UninstallDockerAndKubernetes() {
 
 
 function removeYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
-    sudo yum -y remove $packagelist 
+    sudo yum -y remove "$packagelist"
 }
 
 function installYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
-    sudo yum -y install $packagelist
+    sudo yum -y install "$packagelist"
     # $foundPackages = $false
     # $packages = $packagelist.Split(" ");
     # foreach ($name in $packages) {
