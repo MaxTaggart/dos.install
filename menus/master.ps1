@@ -54,16 +54,16 @@ while ($userinput -ne "q") {
     $userinput = Read-Host "Please make a selection"
     switch ($userinput) {
         '1' {
-            SetupMaster -baseUrl $GITHUB_URL -singlenode $false > $null
+            SetupMaster -baseUrl $GITHUB_URL -singlenode $false 
         } 
         '2' {
-            SetupNewNode -baseUrl $GITHUB_URL > $null
+            SetupNewNode -baseUrl $GITHUB_URL
         } 
         '3' {
-            SetupMaster -baseUrl $GITHUB_URL -singlenode $true > $null
+            SetupMaster -baseUrl $GITHUB_URL -singlenode $true 
         } 
         '4' {
-            UninstallDockerAndKubernetes > $null
+            UninstallDockerAndKubernetes
         } 
         '5' {
             ShowNodes
