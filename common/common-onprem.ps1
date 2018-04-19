@@ -725,7 +725,7 @@ function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
     
         WriteToLog "Run this command on any new node to join this cluster (this command expires in 24 hours):"
         WriteToLog "---- COPY BELOW THIS LINE ----"
-        WriteToLog "curl -sSL $baseUrl/onprem/setupnode.sh?p=`$RANDOM -o setupnode.sh; bash setupnode.sh `"$joinCommand`""
+        WriteToLog "curl -sSL $baseUrl/onprem/setupworker.sh?p=`$RANDOM -o setupworker.sh; bash setupworker.sh `"$joinCommand`""
     
         # if [[ ! -z "$pathToShare" ]]; then
         #     WriteToLog "curl -sSL $baseUrl/onprem/mountfolder.sh?p=$RANDOM | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
