@@ -246,9 +246,12 @@ function ConfigureIpTables(){
   }
   
 function AddFirewallPort($port, $name){
-    if($(sudo firewall-cmd --query-port=${port}) -eq "no"){
+    if("$(sudo firewall-cmd --query-port=${port})" -ne "yes"){
         WriteToLog "opening port $port for $name"
         sudo firewall-cmd --add-port={${port}} --permanent
+    }
+    else{
+        WriteToLog "Port $port for $name is already open"
     }
 }
 function ConfigureFirewall() {
