@@ -11,7 +11,7 @@ function WriteToLog($txt) {
 
 function WriteToConsole($txt) {
     # Write-Information -MessageData "$txt"
-    Write-Host "$txt"
+    Write-Host "$txt" -ForegroundColor "Magenta"
 }
 
 function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $joincommand) {
