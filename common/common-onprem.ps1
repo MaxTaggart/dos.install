@@ -244,7 +244,7 @@ function ConfigureIpTables() {
     # sudo iptables-save
     # WriteToConsole "restarting iptables"
     # sudo systemctl restart iptables
-    WriteToConsole "status of iptables --"
+    WriteToConsole "status of iptables "
     sudo systemctl status iptables
     WriteToConsole "current iptables rules"
     sudo iptables -t nat -L
@@ -433,7 +433,7 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     WriteToLog "checking if this machine can access a DNS server via host $(hostname)"
     WriteToLog "/etc/resolv.conf"
     sudo cat /etc/resolv.conf
-    WriteToLog "---"
+    WriteToLog "----------------------------"
 
     $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
 
@@ -482,13 +482,13 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # remove older versions
     UninstallDockerAndKubernetes
                     
-    WriteToConsole "Adding docker repo --"
+    WriteToConsole "Adding docker repo "
     sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
     WriteToConsole " current repo list"
     sudo yum -y repolist
 
-    WriteToConsole "docker versions available in repo --"
+    WriteToConsole "docker versions available in repo "
     sudo yum -y --showduplicates list docker-ce
 
     # https://saurabh-deochake.github.io/posts/2017/07/post-1/
@@ -497,7 +497,7 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
     # sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux   
 
-    WriteToConsole "Installing docker via yum --"
+    WriteToConsole "Installing docker via yum "
     WriteToLog "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
     # need to pass --setpot=obsoletes=0 due to this bug: https://github.com/docker/for-linux/issues/20#issuecomment-312122325
     sudo yum install -y --setopt=obsoletes=0 docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos
@@ -507,11 +507,11 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # https://kubernetes.io/docs/setup/independent/install-kubeadm/
     # log rotation for docker: https://docs.docker.com/config/daemon/
     # https://docs.docker.com/config/containers/logging/json-file/
-    WriteToConsole "Configuring docker to use systemd and set logs to max size of 10MB and 5 days --"
+    WriteToConsole "Configuring docker to use systemd and set logs to max size of 10MB and 5 days "
     sudo mkdir -p /etc/docker
     sudo curl -sSL -o /etc/docker/daemon.json ${baseUrl}/onprem/daemon.json?p=$RANDOM
     
-    WriteToConsole "Starting docker service --"
+    WriteToConsole "Starting docker service "
     sudo systemctl enable docker
     sudo systemctl start docker
 
@@ -821,7 +821,7 @@ function TroubleshootNetworking() {
     # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
     WriteToConsole " open ports " 
     sudo nmap 127.0.0.1
-    WriteToConsole "network interfaces --"
+    WriteToConsole "network interfaces "
     sudo ip link show
     WriteToConsole "services enabled in firewall"
     sudo firewall-cmd --list-services
