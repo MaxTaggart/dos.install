@@ -594,26 +594,33 @@ function UninstallDockerAndKubernetes() {
 
 
 function removeYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
+    $foundPackages = $false
     $packages = $packagelist.Split(" ");
     foreach ($name in $packages) {
-        sudo yum list installed $name 
-        if ($?) {
-            WriteToLog "Removing package $name"
-            sudo yum versionlock delete $name 
-            sudo yum -y remove $name 
-        }
+        sudo yum versionlock delete $name 2>&1 >> yum.log
+        # sudo yum list installed $name 
+        # if ($?) {
+        #     $foundPackages = $true
+        #     WriteToLog "Removing package $name"
+        #     sudo yum versionlock delete $name 2>&1 >> yum.log
+        # }
+    }
+    if($foundPackages){
+        sudo yum -y remove $packagelist 
     }
 }
 
 function installYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
-    $packages = $packagelist.Split(" ");
-    foreach ($name in $packages) {
-        sudo yum list installed $name 
-        if (!($?)) {
-            WriteToLog "Installing package $name"
-            sudo yum -y install $name 
-        }
-    }
+    sudo yum -y install $packagelist
+    # $foundPackages = $false
+    # $packages = $packagelist.Split(" ");
+    # foreach ($name in $packages) {
+    #     sudo yum list installed $name 
+    #     if (!($?)) {
+    #         WriteToLog "Installing package $name"
+    #         sudo yum -y install $name 
+    #     }
+    # }
 }
 
 function lockPackageVersion([ValidateNotNullOrEmpty()][string]$packagelist) {
