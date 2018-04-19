@@ -796,10 +796,10 @@ contexts:
   context:
     cluster: ${server}
     namespace: ${namespace}
-    user: ${admin-user}
+    user: ${user}
 current-context: default-context
 users:
-- name: ${admin-user}
+- name: ${user}
   user:
     token: ${token}
 "@
