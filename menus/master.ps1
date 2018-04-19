@@ -28,6 +28,8 @@ ImportModuleFromUrl -module "common-onprem"
 
 ImportModuleFromUrl -module "realtime-menu"
 
+ImportModuleFromUrl -module "troubleshooting-menu"
+
 # show Information messages
 $InformationPreference = "Continue"
 
@@ -43,6 +45,9 @@ while ($userinput -ne "q") {
     Write-Host "6: Show status of cluster"
     Write-Host "7: Launch Kubernetes dashboard"
     Write-Host "8: Show command to join another node to this cluster"
+    Write-Host "9: Mount folder"
+    Write-Host "-----------"
+    Write-Host "20: Troubleshooting Menu"
     Write-Host "-----------"
     Write-Host "40: Fabric Realtime Menu"
     Write-Host "q: Quit"
@@ -61,14 +66,10 @@ while ($userinput -ne "q") {
             UninstallDockerAndKubernetes > $null
         } 
         '5' {
-            Write-Host "Current cluster: $(kubectl config current-context)"
-            kubectl version --short
-            kubectl get "nodes" -o wide
+            ShowNodes
         } 
         '6' {
-            Write-Host "Current cluster: $(kubectl config current-context)"
-            kubectl version --short
-            kubectl get "deployments,pods,services,nodes,ingress" --namespace=kube-system -o wide
+            ShowStatusOfCluster
         } 
         '7' {
             $dnshostname=$(ReadSecret "dnshostname")
@@ -86,8 +87,14 @@ while ($userinput -ne "q") {
         '8' {
             ShowCommandToJoinCluster -baseUrl $GITHUB_URL
         } 
+        '9' {
+            mountSharedFolder -saveIntoSecret $true
+        } 
+        '20' {
+            showTroubleshootingMenu -baseUrl $GITHUB_URL
+        } 
         '40' {
-            showRealtimeMenu
+            showRealtimeMenu -baseUrl $GITHUB_URL
         } 
         'q' {
             return

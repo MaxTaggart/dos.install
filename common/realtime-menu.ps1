@@ -5,7 +5,7 @@ function global:GetCommonMenuVersion() {
     return $versionmenucommon
 }
 
-function showRealtimeMenu(){
+function showRealtimeMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
     $userinput = ""
     while ($userinput -ne "q") {
         Write-Host "================ Health Catalyst version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
@@ -24,7 +24,7 @@ function showRealtimeMenu(){
         $userinput = Read-Host "Please make a selection"
         switch ($userinput) {
             '1' {
-                InstallStack $GITHUB_URL "fabricrealtime" "realtime"
+                InstallStack $baseUrl "fabricrealtime" "realtime"
             } 
             '2' {
                 kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=fabricrealtime -o wide

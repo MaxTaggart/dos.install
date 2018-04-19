@@ -736,5 +736,107 @@ function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
     }
 }
 
+function OptimizeCentosForHyperv() {
+    # from https://www.altaro.com/hyper-v/centos-linux-hyper-v/
+    WriteToConsole "installing hyperv-daemons package"
+    sudo yum install -y hyperv-daemons bind-utils
+    WriteToConsole "turning off disk optimization in centos since Hyper-V already does disk optimization"
+    WriteToConsole "noop" | sudo tee /sys/block/sda/queue/scheduler
+    $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
+    WriteToConsole "You can connect to this machine via SSH: ssh $(whoami)@${myip}"
+    # grep -v "$(hostname)" /etc/hosts | sudo tee /etc/hosts > /dev/null
+    # WriteToConsole "127.0.0.1 $(hostname)" | sudo tee -a /etc/hosts > /dev/null    
+}
+
+function TroubleshootNetworking() {
+    # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
+    WriteToConsole "---- open ports ----" 
+    sudo nmap 127.0.0.1
+    WriteToConsole "--- network interfaces --"
+    sudo ip link show
+    WriteToConsole "--- services enabled in firewall ---"
+    sudo firewall-cmd --list-services
+    WriteToConsole "--- ports enabled in firewall ---"
+    sudo firewall-cmd --list-ports
+    WriteToConsole "--- active zones ---"
+    sudo firewall-cmd --get-active-zones
+    WriteToConsole "--- available services to enable ---"
+    sudo firewall-cmd --get-services
+    WriteToConsole "--- all rules in firewall ---"
+    sudo firewall-cmd --list-all
+    sudo firewall-cmd --zone trusted --list-all
+    WriteToConsole "--- iptables --list ---"
+    sudo iptables --list
+    WriteToConsole "--- checking DNS server ----"
+    $ipfordnsservice = $(kubectl get svc kube-dns -n kube-system -o jsonpath="{.spec.clusterIP}")
+    sudo dig "@${ipfordnsservice}" kubernetes.default.svc.cluster.local +noall +answer
+    sudo dig "@${ipfordnsservice}" ptr 1.0.96.10.in-addr.arpa. +noall +answer
+    WriteToConsole "--- recent rejected packets ----"
+    sudo tail --lines 1000 /var/log/messages | grep REJECT
+}
+
+function TestDNS([ValidateNotNullOrEmpty()][string] $baseUrl) {
+    WriteToConsole "To resolve DNS issues: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#debugging-dns-resolution"
+    WriteToConsole "----------- Checking if DNS pods are running -----------"
+    kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o wide
+    WriteToConsole "----------- Details about DNS pods -----------"
+    kubectl describe pods --namespace=kube-system -l k8s-app=kube-dns    
+    WriteToConsole "----------- Details about flannel pods -----------"
+    kubectl logs --namespace kube-system -l app=flannel
+    WriteToConsole "----------- Checking if DNS service is running -----------"
+    kubectl get svc --namespace=kube-system
+    WriteToConsole "----------- Checking if DNS endpoints are exposed ------------"
+    kubectl get ep kube-dns --namespace=kube-system
+    WriteToConsole "----------- Checking logs for DNS service -----------"
+    # kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name)
+    kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c kubedns
+    kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c dnsmasq
+    kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c sidecar        
+    WriteToConsole "----------- Creating a busybox pod to test DNS -----------"
+    Do {
+        WriteToConsole "Waiting for busybox to terminate"
+        WriteToConsole "."
+        Start-Sleep 5
+    } while ($(kubectl get pods busybox -n default -o jsonpath='{.status.phase}' --ignore-not-found=true))
+
+    kubectl create -f $baseUrl/kubernetes/test/busybox.yaml
+    Do {    
+        WriteToConsole "."
+        Start-Sleep 5
+    } while ("$(kubectl get pods busybox -n default -o jsonpath='{.status.phase}')" -ne "Running")
+    WriteToConsole "---- resolve.conf ----"
+    kubectl exec busybox cat /etc/resolv.conf
+    WriteToConsole "--- testing if we can access internal (pod) network ---"
+    kubectl exec busybox nslookup kubernetes.default
+    WriteToConsole "--- testing if we can access external network ---"
+    kubectl exec busybox wget www.google.com
+    kubectl delete -f $baseUrl/kubernetes/test/busybox.yaml    
+    WriteToConsole "--- firewall logs ---"
+    sudo systemctl status firewalld -l
+}
+
+function ShowContentsOfSharedFolder(){
+    ls -al /mnt/data
+}
+
+function OpenKubernetesDashboard(){
+    $dnshostname=$(ReadSecret "dnshostname")
+    $myip=$(host $(hostname) | awk '/has address/ { print $4 ; exit }')
+    WriteToConsole "--- dns entries for c:\windows\system32\drivers\etc\hosts (if needed) ---"
+    WriteToConsole "${myip} ${dnshostname}"
+    WriteToConsole "-----------------------------------------"
+    WriteToConsole "You can access the kubernetes dashboard at: https://${dnshostname}/api/ or https://${myip}/api/"
+    $secretname=$(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+    $token=$(ReadSecretValue "$secretname" "token" "kube-system")
+    WriteToConsole "----------- Bearer Token ---------------"
+    WriteToConsole $token
+    WriteToConsole "-------- End of Bearer Token -------------"
+}
+
+function ShowKubernetesServiceStatus(){
+    sudo systemctl status kubelet -l
+    sudo journalctl -xe --priority 0..3
+    sudo journalctl -u kube-apiserve
+}
 # --------------------
 Write-Information -MessageData "end common-onprem.ps1 version $versiononpremcommon"

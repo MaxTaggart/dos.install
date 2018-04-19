@@ -751,5 +751,20 @@ function ShowLogsOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namesp
     }   
 }
 
+function ShowStatusOfCluster(){
+    WriteToConsole "Current cluster: $(kubectl config current-context)"
+    kubectl version --short
+    kubectl get "deployments,pods,services,nodes,ingress,secrets" --namespace=kube-system -o wide    
+}
+
+function ShowNodes(){
+    Write-Host "Current cluster: $(kubectl config current-context)"
+            kubectl version --short
+            kubectl get "nodes" -o wide
+}
+
+function ShowLoadBalancerLogs(){
+    kubectl logs --namespace=kube-system -l k8s-app=traefik-ingress-lb-onprem --tail=100
+}
 # --------------------
 Write-Information -MessageData "end common-kube.ps1 version $versionkubecommon"
