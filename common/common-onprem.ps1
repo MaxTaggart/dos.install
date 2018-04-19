@@ -183,6 +183,70 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     return $Return    
 }
 
+function ConfigureIpTables(){
+    WriteToConsole "switching from firewalld to iptables"
+    # iptables-services: for iptables firewall  
+    sudo yum -y install iptables-services
+    # https://www.digitalocean.com/community/tutorials/how-to-migrate-from-firewalld-to-iptables-on-centos-7
+    sudo systemctl stop firewalld
+    sudo systemctl start iptables; 
+    # sudo systemctl start ip6tables
+    # sudo firewall-cmd --state
+    sudo systemctl disable firewalld
+    sudo systemctl enable iptables
+    # sudo systemctl enable ip6tables
+  
+    WriteToConsole "--- removing firewalld ---"
+    sudo yum -y remove firewalld
+    
+    WriteToConsole "setting up iptables rules"
+    # https://www.digitalocean.com/community/tutorials/iptables-essentials-common-firewall-rules-and-commands
+    WriteToConsole "fixing kubedns"
+    sudo iptables -P FORWARD ACCEPT
+    sudo iptables -I INPUT -p tcp -m tcp --dport 8472 -j ACCEPT
+    sudo iptables -I INPUT -p tcp -m tcp --dport 6443 -j ACCEPT
+    sudo iptables -I INPUT -p tcp -m tcp --dport 9898 -j ACCEPT
+    sudo iptables -I INPUT -p tcp -m tcp --dport 10250 -j ACCEPT  
+    sudo iptables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT  
+    sudo iptables -I INPUT -p tcp -m tcp --dport 8081 -j ACCEPT  
+    # WriteToConsole "allow all outgoing connections"
+    # sudo iptables -I OUTPUT -o eth0 -d 0.0.0.0/0 -j ACCEPT
+    WriteToConsole "allowing loopback connections"
+    sudo iptables -A INPUT -i lo -j ACCEPT
+    sudo iptables -A OUTPUT -o lo -j ACCEPT
+    WriteToConsole "allowing established and related incoming connections"
+    sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+    WriteToConsole "allowing established outgoing connections"
+    sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
+    WriteToConsole "allowing docker containers to access the external network"
+    sudo iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+    sudo iptables -A FORWARD -i docker0 -o eth0 -j ACCEPT
+    WriteToConsole "allow all incoming ssh"
+    sudo iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+    sudo iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+    # reject an IP address
+    # sudo iptables -A INPUT -s 15.15.15.51 -j REJECT
+    WriteToConsole "allow incoming HTTP"
+    sudo iptables -A INPUT -p tcp --dport 80 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+    sudo iptables -A OUTPUT -p tcp --sport 80 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+    WriteToConsole "allow incoming HTTPS"
+    sudo iptables -A INPUT -p tcp --dport 443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+    sudo iptables -A OUTPUT -p tcp --sport 443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+    #WriteToConsole "block outgoing SMTP Mail"
+    #sudo iptables -A OUTPUT -p tcp --dport 25 -j REJECT
+    
+    WriteToConsole "--- reloading iptables ---"
+    sudo systemctl reload iptables
+    # WriteToConsole "--- saving iptables ---"
+    # sudo iptables-save
+    # WriteToConsole "--- restarting iptables ---"
+    # sudo systemctl restart iptables
+    WriteToConsole "--- status of iptables --"
+    sudo systemctl status iptables
+    WriteToConsole "---- current iptables rules ---"
+    sudo iptables -t nat -L
+  }
+  
 function ConfigureFirewall() {
     [hashtable]$Return = @{} 
 
@@ -351,7 +415,7 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
     $ingressExternal = "onprem"
     $publicIp = ""
 
-    LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl 0 -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -publicIp $publicIp    
+    LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl 1 -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -publicIp $publicIp    
 
     return $Return
 }
