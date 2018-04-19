@@ -1,4 +1,4 @@
-$version = "2018.04.16.03"
+$version = "2018.04.18.01"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -284,6 +284,13 @@ while ($userinput -ne "q") {
         '24' {
             # restart VMs
             $AKS_PERS_RESOURCE_GROUP = ReadSecretValue -secretname azure-secret -valueName resourcegroup
+
+            if ([string]::IsNullOrWhiteSpace($AKS_PERS_RESOURCE_GROUP)) {
+                Do { 
+                    $AKS_PERS_RESOURCE_GROUP = Read-Host "Resource Group:"
+                }
+                while ([string]::IsNullOrWhiteSpace($AKS_PERS_RESOURCE_GROUP))
+            }            
             # UpdateOSInVMs -resourceGroup $AKS_PERS_RESOURCE_GROUP
             RestartVMsInResourceGroup -resourceGroup $AKS_PERS_RESOURCE_GROUP
             SetHostFileInVms -resourceGroup $AKS_PERS_RESOURCE_GROUP
