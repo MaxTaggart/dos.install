@@ -30,7 +30,8 @@
         },
         "ingress": {
             "http": [
-                "dashboard.yaml"
+                "apidashboard.yaml",
+                "traefikdashboard.yaml"                
             ],
             "tcp": []
         }

@@ -60,15 +60,7 @@
             ]
         },
         "ingress": {
-            "http": [{
-                    "name": "dashboard.ssl.yaml",
-                    "ssl": true
-                },
-                {
-                    "name": "dashboard.yaml",
-                    "ssl": false
-                }
-            ],
+            "http": [],
             "tcp": []
         }
     }

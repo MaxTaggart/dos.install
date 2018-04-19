@@ -72,17 +72,7 @@ while ($userinput -ne "q") {
             ShowStatusOfCluster
         } 
         '7' {
-            $dnshostname=$(ReadSecret "dnshostname")
-            $myip=$(host $(hostname) | awk '/has address/ { print $4 ; exit }')
-            Write-Host "--- dns entries for c:\windows\system32\drivers\etc\hosts (if needed) ---"
-            Write-Host "${myip} ${dnshostname}"
-            Write-Host "-----------------------------------------"
-            Write-Host "You can access the kubernetes dashboard at: https://${dnshostname}/api/ or https://${myip}/api/"
-            $secretname=$(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
-            $token=$(ReadSecretValue "$secretname" "token" "kube-system")
-            Write-Host "----------- Bearer Token ---------------"
-            Write-Host $token
-            Write-Host "-------- End of Bearer Token -------------"
+            OpenKubernetesDashboard
         } 
         '8' {
             ShowCommandToJoinCluster -baseUrl $GITHUB_URL
