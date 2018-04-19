@@ -5,6 +5,11 @@ function global:GetCommonOnPremVersion() {
     return $versiononpremcommon
 }
 
+$dockerversion = "17.06.2.ce-1" #"17.03.2.ce-1"
+$kubernetesversion = "1.10.0-0"
+$kubernetescniversion = "0.6.0-0"
+$kubernetesserverversion = "1.10.0"
+
 function WriteToLog($txt) {
     Write-Information -MessageData "$txt"
 }
@@ -94,8 +99,6 @@ function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlen
 function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
-    $kubernetesversion = "1.10.0"
-
     $u = "$(whoami)"
     WriteToLog "User name: $u"
 
@@ -108,7 +111,7 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # WriteToLog "--- running kubeadm init for flannel ---"
     # for flannel network plugin
     # sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
-    sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --skip-token-print --apiserver-cert-extra-sans $(hostname --fqdn)
+    sudo kubeadm init --kubernetes-version=v${kubernetesserverversion} --pod-network-cidr=10.244.0.0/16 --skip-token-print --apiserver-cert-extra-sans $(hostname --fqdn)
 
     WriteToLog "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
 
@@ -445,10 +448,6 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
         WriteToLog "My external IP is $myip"
     }
 
-    $dockerversion = "17.03.2.ce-1"
-    $kubernetesversion = "1.10.0-0"
-    $kubernetescniversion = "0.6.0-0"
-
     # $(export dockerversion="17.03.2.ce-1")
     # $(export kubernetesversion="1.9.6-0")
     # 1.9.3-0
@@ -583,7 +582,7 @@ function UninstallDockerAndKubernetes() {
     }
     sudo rm -rf /var/etcd/backups/*
     removeYumPackages "docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine"
-    removeYumPackages "docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux"
+    removeYumPackages "docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux container-selinux"
     removeYumPackages "docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine"
 
     WriteToConsole "Successfully uninstalled docker and kubernetes"
