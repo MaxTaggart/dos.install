@@ -171,12 +171,10 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
         sudo chmod -R 777 "/mnt/data"
     }
 
-    WriteToLog "opening port 6661 for mirth"
-    sudo firewall-cmd --add-port=6661/tcp --permanent
-    WriteToLog "opening port 5671 for rabbitmq"
-    sudo firewall-cmd --add-port=5671/tcp --permanent  # flannel networking
-    WriteToLog "opening port 3307 for mysql"
-    sudo firewall-cmd --add-port 3307/tcp --permanent
+    AddFirewallPort -port "6661/tcp" -name "Mirth"
+    AddFirewallPort -port "5671/tcp" -name "RabbitMq"
+    AddFirewallPort -port "3307/tcp" -name "MySql"
+
     WriteToLog "reloading firewall"
     sudo firewall-cmd --reload
     
@@ -247,6 +245,12 @@ function ConfigureIpTables(){
     sudo iptables -t nat -L
   }
   
+function AddFirewallPort($port, $name){
+    if($(sudo firewall-cmd --query-port=${port}) -eq "no"){
+        WriteToLog "opening port $port for $name"
+        sudo firewall-cmd --add-port={${port}} --permanent
+    }
+}
 function ConfigureFirewall() {
     [hashtable]$Return = @{} 
 
@@ -281,34 +285,27 @@ function ConfigureFirewall() {
     # kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
     # https://github.com/coreos/coreos-kubernetes/blob/master/Documentation/kubernetes-networking.md
     # https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/rhel/installing-workers.md
-    WriteToLog "opening port 22 for SSH"
-    sudo firewall-cmd --add-port=22/tcp --permanent # SSH
-    WriteToLog "opening port 6443 for Kubernetes API server"
-    sudo firewall-cmd --add-port=6443/tcp --permanent # kubernetes API server
-    # WriteToLog "opening port 8443 for Kubernetes API server external access"
-    # sudo firewall-cmd --add-port=8443/tcp --permanent # kubernetes API server
-    WriteToLog "opening ports 2379-2380 for Kubernetes API server"
-    sudo firewall-cmd --add-port=2379-2380/tcp --permanent 
-    WriteToLog "opening port 8472,8285 and 4789 for Flannel networking"
-    sudo firewall-cmd --add-port=8472/udp --permanent  # flannel networking
-    sudo firewall-cmd --add-port=8285/udp --permanent  # flannel networking
-    sudo firewall-cmd --add-port 4789/udp --permanent
-    WriteToLog "opening ports 10250,10251,10252 and 10255 for Kubelet API"
-    sudo firewall-cmd --add-port=10250/tcp --permanent  # Kubelet API
-    sudo firewall-cmd --add-port=10251/tcp --permanent 
-    sudo firewall-cmd --add-port=10252/tcp --permanent 
-    sudo firewall-cmd --add-port=10255/tcp --permanent # Read-only Kubelet API
-    WriteToLog "opening ports 80 and 443 for HTTP and HTTPS"
-    sudo firewall-cmd --add-port=80/tcp --permanent # HTTP
-    sudo firewall-cmd --add-port=443/tcp --permanent # HTTPS
-    WriteToLog "Opening port 53 for internal DNS"
-    sudo firewall-cmd --add-port=53/udp --permanent # DNS
-    sudo firewall-cmd --add-port=53/tcp --permanent # DNS
-    sudo firewall-cmd --add-port=67/udp --permanent # DNS
-    sudo firewall-cmd --add-port=68/udp --permanent # DNS
-    # sudo firewall-cmd --add-port=30000-60000/udp --permanent # NodePort services
-    sudo firewall-cmd --add-service=dns --permanent # DNS
-    WriteToLog "Adding NTP service to firewall"
+    AddFirewallPort -port "22/tcp" -name "SSH"
+    AddFirewallPort -port "6443/tcp" -name "Kubernetes API server"
+    AddFirewallPort -port "80/tcp" -name "HTTP"
+    AddFirewallPort -port "443/tcp" -name "HTTPS"
+    AddFirewallPort -port "2379-2380/tcp" -name "Flannel networking"
+    AddFirewallPort -port "8472/udp" -name "Flannel networking"
+    AddFirewallPort -port "8285/udp" -name "Flannel networking"
+    AddFirewallPort -port "4789/udp" -name "Flannel networking"
+    AddFirewallPort -port "10250-10255/tcp" -name "Kubelet API"
+    # WriteToLog "Opening port 53 for internal DNS"
+    # AddFirewallPort -port "443/tcp" -name "DNS"
+    # sudo firewall-cmd --add-port=53/udp --permanent # DNS
+    # AddFirewallPort -port "443/tcp" -name "HTTPS"
+    # sudo firewall-cmd --add-port=53/tcp --permanent # DNS
+    # AddFirewallPort -port "443/tcp" -name "HTTPS"
+    # sudo firewall-cmd --add-port=67/udp --permanent # DNS
+    # AddFirewallPort -port "443/tcp" -name "HTTPS"
+    # sudo firewall-cmd --add-port=68/udp --permanent # DNS
+    # # sudo firewall-cmd --add-port=30000-60000/udp --permanent # NodePort services
+    # sudo firewall-cmd --add-service=dns --permanent # DNS
+    # WriteToLog "Adding NTP service to firewall"
     sudo firewall-cmd --add-service=ntp --permanent # NTP server
     WriteToLog "enable all communication between pods"
     # sudo firewall-cmd --zone=trusted --add-interface eth0
