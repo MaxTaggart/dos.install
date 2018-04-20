@@ -16,5 +16,5 @@ spec:
         paths:
         - path: /dashboard
           backend:
-            serviceName: traefik-dashboard
+            serviceName: traefik-ingress-lb-onprem
             servicePort: 443  

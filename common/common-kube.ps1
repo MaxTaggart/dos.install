@@ -621,7 +621,7 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
             DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
         }
         else {
-            $files = "ingress-azure.yaml ingress-azure.internal.yaml"
+            $files = "ingress-azure.external.yaml ingress-azure.internal.yaml"
             DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
         }    
     }

@@ -15,5 +15,5 @@ spec:
       paths:
       - path: /api
         backend:
-          serviceName: api-dashboard
+          serviceName: kubernetes-dashboard
           servicePort: 443

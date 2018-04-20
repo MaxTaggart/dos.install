@@ -10,6 +10,9 @@
         "dns": [],
         "configmaps": [],
         "roles": [
+            "dashboard-minimalrole.yaml",
+            "dashboard-minimalrolebinding.yaml",
+            "dashboard-serviceaccount.yaml",
             "heapster-rbac.yaml",
             "dashboard-user.yaml"
         ],
