@@ -323,7 +323,7 @@ function global:CleanSecrets([ValidateNotNullOrEmpty()] $namespace) {
     return $Return
 }
 
-function global:DeployYamlFiles([ValidateNotNullOrEmpty()][string] $namespace, [ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $appfolder, [ValidateNotNullOrEmpty()][string] $folder, [ValidateNotNullOrEmpty()][hashtable] $tokens, [ValidateNotNullOrEmpty()][string] $resources) {
+function global:DeployYamlFiles([ValidateNotNullOrEmpty()][string] $namespace, [ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $appfolder, [ValidateNotNullOrEmpty()][string] $folder, [ValidateNotNullOrEmpty()][hashtable] $tokens, [ValidateNotNullOrEmpty()] $resources) {
     [hashtable]$Return = @{} 
 
     if ($resources) {
@@ -591,11 +591,11 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     $folder = "configmaps"
     if ($ssl) {
         $files = "config.ssl.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
     else {
         $files = "config.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
 
     $kubectlversion = $(kubectl version --short=true)[1]
@@ -606,7 +606,7 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
         Write-Information -MessageData "Deploying roles"
         $folder = "roles"
         $files = "ingress-roles.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
 
     Write-Information -MessageData "Deploying pods"
@@ -614,39 +614,39 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
 
     if ($ingressExternal -eq "onprem" ) {
         $files = "ingress-onprem.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
     elseif ($ingressInternal -eq "public" ) {
         $files = "ingress-azure.both.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
     else {
         if ($ssl) {
             $files = "ingress-azure.ssl.yaml ingress-azure.internal.ssl.yaml"
-            DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+            DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
         }
         else {
             $files = "ingress-azure.yaml ingress-azure.internal.yaml"
-            DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+            DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
         }    
     }
 
     Write-Information -MessageData "Deploying services"
     $folder = "services/cluster"
     $files = "dashboard.yaml dashboard-internal.yaml apidashboard.yaml"
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
 
     Write-Information -MessageData "Deploying http ingress"
     $folder = "ingress/http"
     $files = "apidashboard.yaml"
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
 
     $folder = "services/external"
 
     if ($ingressExternal -eq "onprem" ) {
         Write-Information -MessageData "Setting up external load balancer"
         $files = "loadbalancer.onprem.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }    
     elseif ("$ingressExternal" -ne "vnetonly") {
         Write-Information -MessageData "Setting up a public load balancer"
@@ -655,12 +655,12 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
 
         Write-Information -MessageData "Setting up external load balancer"
         $files = "loadbalancer.external.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
     else {
         Write-Information -MessageData "Setting up an external load balancer"
         $files = "loadbalancer.external.restricted.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
 
 
@@ -674,7 +674,7 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
         Write-Information -MessageData "Setting up an internal load balancer"
         $files = "loadbalancer.internal.yaml"
     }
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
 
     WaitForPodsInNamespace -namespace kube-system -interval 5
 
