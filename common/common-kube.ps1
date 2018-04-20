@@ -807,7 +807,7 @@ function troubleshootIngress([ValidateNotNullOrEmpty()][string] $namespace) {
         Write-Host "Ingress Host: $ingressHost"
         Write-Host "Ingress Type: $ingressType"
         Write-Host "Ingress Rule Type: $ingressRuleType"
-        WritressServiceName = $(kubectl get ing $ingress -n $namespace -o jsonpath="{.spec.rules[].http.paths[].backend.serviceName}")
+        $ingressServiceName = $(kubectl get ing $ingress -n $namespace -o jsonpath="{.spec.rules[].http.paths[].backend.serviceName}")
         $ingressServicePort = $(kubectl get ing $ingress -n $namespace -o jsonpath="{.spec.rules[].http.paths[].backend.servicePort}")
         Write-Host "Service: $ingressServiceName port: $ingressServicePort"
         $servicePort = $(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.ports[].port}")
