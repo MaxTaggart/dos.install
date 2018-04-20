@@ -742,7 +742,7 @@ function ShowLogsOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namesp
 function ShowStatusOfCluster() {
     WriteToConsole "Current cluster: $(kubectl config current-context)"
     kubectl version --short
-    kubectl get "deployments,pods,services,nodes,ingress,secrets" --namespace=kube-system -o wide    
+    kubectl get "deployments,pods,services,nodes,ingress" --namespace=kube-system -o wide    
 }
 
 function ShowNodes() {

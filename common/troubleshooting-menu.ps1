@@ -9,6 +9,7 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
     $userinput = ""
     while ($userinput -ne "q") {
         Write-Host "================ Health Catalyst version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
+        Write-Host "0: Show status of cluster"        
         Write-Host "-----  Kubernetes ------"
         Write-Host "1: Open Kubernetes dashboard"
         Write-Host "2: Troubleshoot networking"
@@ -26,6 +27,9 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
         Write-Host "q: Quit"
         $userinput = Read-Host "Please make a selection"
         switch ($userinput) {
+            '0' {
+                ShowStatusOfCluster
+            }                 
             '1' {
                 OpenKubernetesDashboard
             } 
