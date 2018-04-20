@@ -329,7 +329,7 @@ function global:DeployYamlFiles([ValidateNotNullOrEmpty()][string] $namespace, [
     if ($resources) {
         Write-Information -MessageData "-- Deploying $folder --"
         foreach ($file in $resources) {
-            $(ReadYamlAndReplaceCustomer -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -tokens $tokens).Content | kubectl apply -f -
+            $(ReadYamlAndReplaceTokens -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -tokens $tokens).Content | kubectl apply -f -
         }
     }
     return $Return
