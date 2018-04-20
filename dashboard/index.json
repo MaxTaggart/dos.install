@@ -28,10 +28,12 @@
             "kubernetes-dashboard.yaml"
         ],
         "services": {
-            "cluster": [],
-            "external": [
-                "dashboard.yaml"
-            ]
+            "cluster": [
+                "apidashboard.yaml",
+                "dashboard.internal.yaml",
+                "dashboard.external.yaml"
+            ],
+            "external": []
         },
         "ingress": {
             "http": [

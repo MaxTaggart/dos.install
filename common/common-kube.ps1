@@ -621,7 +621,7 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     }
     else {
         if ($ssl) {
-            $files = "ingress-azure.ssl.yaml ingress-azure.internal.ssl.yaml"
+            $files = "ingress-azure.external.ssl.yaml ingress-azure.internal.ssl.yaml"
             DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
         }
         else {

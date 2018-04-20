@@ -16,7 +16,8 @@ spec:
       labels:
         k8s-app: traefik-ingress-lb
         name: traefik-ingress-lb
-        k8s-traefik: traefik          
+        k8s-traefik: traefik
+        expose-external: true
     spec:
       serviceAccountName: traefik-ingress-serviceaccount
       terminationGracePeriodSeconds: 60
