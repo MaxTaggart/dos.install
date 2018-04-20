@@ -15,6 +15,7 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
         Write-Host "3: Test DNS"
         Write-Host "4: Show contents of shared folder"
         Write-Host "5: Show kubernetes service status"
+        Write-Host "6: Troubleshoot Ingresses"
         Write-Host "-----  Traefik reverse proxy ------"
         Write-Host "11: Open Traefik dashboard"
         Write-Host "12: Show load balancer logs"
@@ -39,6 +40,9 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
             } 
             '5' {
                 ShowKubernetesServiceStatus
+            } 
+            '6' {
+                troubleshootIngress "kube-system"
             } 
             '11' {
                 OpenTraefikDashboard
