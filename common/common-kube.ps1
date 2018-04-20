@@ -817,7 +817,7 @@ function troubleshootIngress([ValidateNotNullOrEmpty()][string] $namespace){
         $ingressServicePort=$(kubectl get ing $ingress -n $namespace -o jsonpath="{.spec.rules[].http.paths[].backend.servicePort}")
         Write-Host "Service: $ingressServiceName port: $ingressServicePort"
         $servicePort=$(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.ports[].port}")
-        $targetPort=$(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.ports[].port}")
+        $targetPort=$(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.ports[].targetPort}")
         Write-Host "Service Port: $servicePort target Port: $targetPort"
         $servicePodSelector=$(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.selector}")
         $servicePodSelectorItems=$servicePodSelector.Replace("map[","").Replace("]","").Split(":")
@@ -828,8 +828,10 @@ function troubleshootIngress([ValidateNotNullOrEmpty()][string] $namespace){
         Write-Host "Pod name: $pod"
         $podstatus=$(kubectl get pod $pod -n $namespace -n kube-system -o jsonpath="{.status.phase}")
         Write-Host "Pod status: $podstatus"
+        $containerImage=$(kubectl get pod $pod -n $namespace -o jsonpath="{.spec.containers[0].image}")
+        Write-Host "Container image: $containerImage"
         $containerPort=$(kubectl get pod $pod -n $namespace -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
-        Write-Host "Pod Port: $containerPort"
+        Write-Host "Container Port: $containerPort"
     }   
 }
 # --------------------
