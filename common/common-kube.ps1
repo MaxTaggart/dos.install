@@ -647,7 +647,7 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     $folder = "loadbalancer/ingress"
 
     if ($ssl ) {
-        $files = "dashboard.ssl.yaml"
+        $files = "dashboard.yaml"
         DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
     }
     else {

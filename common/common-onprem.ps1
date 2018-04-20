@@ -363,6 +363,7 @@ function ConfigureFirewall() {
 function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
+    WriteToConsole "deleting any old resources"
     # enable running pods on master
     # kubectl taint node mymasternode node-role.kubernetes.io/master:NoSchedule
     WriteToLog "deleting existing resources with label traefik"
