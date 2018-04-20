@@ -311,7 +311,11 @@ function global:CleanKubConfig() {
     return $Return
 }
 
-function global:DeployYamlFiles([ValidateNotNullOrEmpty()][string] $namespace, [ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $appfolder, [ValidateNotNullOrEmpty()][string] $folder, [ValidateNotNullOrEmpty()][hashtable] $tokens, [ValidateNotNullOrEmpty()] $resources) {
+
+function global:DeployYamlFiles([ValidateNotNullOrEmpty()][string] $namespace, [ValidateNotNullOrEmpty()][string] $baseUrl, `
+                                [ValidateNotNullOrEmpty()][string] $appfolder, [ValidateNotNullOrEmpty()][string] $folder, `
+                                [ValidateNotNullOrEmpty()][hashtable] $tokens, $resources) {
+    # $resources can be null
     [hashtable]$Return = @{} 
 
     if ($resources) {
