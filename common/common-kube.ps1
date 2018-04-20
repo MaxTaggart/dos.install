@@ -649,12 +649,12 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
         Write-Information -MessageData "Using Public IP: [$publicip]"
 
         Write-Information -MessageData "Setting up external load balancer"
-        $files = "loadbalancer.external.yaml"
+        $files = "loadbalancer.external.public.yaml"
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
     else {
         Write-Information -MessageData "Setting up an external load balancer"
-        $files = "loadbalancer.external.restricted.yaml"
+        $files = "loadbalancer.external.vnetonly.yaml"
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
 
@@ -663,11 +663,11 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     }
     elseif ("$ingressInternal" -eq "public") {
         Write-Information -MessageData "Setting up an internal load balancer"
-        $files = "loadbalancer.internal.open.yaml"
+        $files = "loadbalancer.internal.public.yaml"
     }
     else {
         Write-Information -MessageData "Setting up an internal load balancer"
-        $files = "loadbalancer.internal.yaml"
+        $files = "loadbalancer.internal.vnetonly.yaml"
     }
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
 
