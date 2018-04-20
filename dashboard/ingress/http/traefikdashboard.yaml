@@ -17,4 +17,4 @@ spec:
         - path: /dashboard
           backend:
             serviceName: traefik-dashboard
-            servicePort: 80  
+            servicePort: 443  

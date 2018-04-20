@@ -23,7 +23,7 @@ echo "CentOS version: $(cat /etc/redhat-release | grep -o '[0-9]\.[0-9]')"
 echo "$(cat /etc/redhat-release)"
 
 if [[ "$TERM" = "cygwin" ]]; then
-    echo "Your TERM is set to cygwin.  We do not support this because it has errors in displaying text.  Please use a different SSH terminal e.g., MobaXterm"
+    echo "Your TERM is set to cygwin.  We do not support this because it has issues in displaying text.  Please use a different SSH terminal e.g., MobaXterm"
     exit 1
 fi
 
