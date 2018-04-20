@@ -640,20 +640,13 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
 
     Write-Information -MessageData "Deploying services"
     $folder = "loadbalancer/services/cluster"
-    $files = "dashboard.yaml dashboard-internal.yaml"
+    $files = "dashboard.yaml dashboard-internal.yaml apidashboard.yaml"
     DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
 
     Write-Information -MessageData "Deploying ingress"
     $folder = "loadbalancer/ingress"
-
-    if ($ssl ) {
-        $files = "dashboard.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
-    }
-    else {
-        $files = "dashboard.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
-    }
+    $files = "apidashboard.yaml"
+    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
 
     $folder = "loadbalancer/services/external"
 
