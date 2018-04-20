@@ -26,20 +26,7 @@
             "azure": []
         },
         "volumeclaims": [],
-        "pods": [{
-                "name": "ingress-azure.both.yaml",
-                "access": "allpublic"
-            },
-            {
-                "name": "ingress-azure.ssl.yaml ingress-azure.internal.ssl.yaml",
-                "ssl": true,
-                "access": "normal"
-            },
-            {
-                "name": "ingress-azure.yaml ingress-azure.internal.yaml",
-                "ssl": false,
-                "access": "normal"
-            }
+        "pods": [
         ],
         "services": {
             "cluster": [

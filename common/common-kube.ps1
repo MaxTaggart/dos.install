@@ -311,18 +311,6 @@ function global:CleanKubConfig() {
     return $Return
 }
 
-function global:CleanSecrets([ValidateNotNullOrEmpty()] $namespace) {
-    [hashtable]$Return = @{} 
-
-    kubectl delete secret mysqlrootpassword -n $namespace --ignore-not-found=true
-    kubectl delete secret mysqlpassword -n $namespace --ignore-not-found=true
-    kubectl delete secret certhostname -n $namespace --ignore-not-found=true
-    kubectl delete secret certpassword -n $namespace --ignore-not-found=true
-    kubectl delete secret rabbitmqmgmtuipassword -n $namespace --ignore-not-found=true    
-
-    return $Return
-}
-
 function global:DeployYamlFiles([ValidateNotNullOrEmpty()][string] $namespace, [ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $appfolder, [ValidateNotNullOrEmpty()][string] $folder, [ValidateNotNullOrEmpty()][hashtable] $tokens, [ValidateNotNullOrEmpty()] $resources) {
     [hashtable]$Return = @{} 
 
@@ -560,7 +548,9 @@ function global:DeploySimpleServices([ValidateNotNullOrEmpty()] $namespace, [Val
     return $Return
 }
 
-function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, [ValidateNotNullOrEmpty()] [string]$ingressInternal, [ValidateNotNullOrEmpty()] [string]$ingressExternal, [ValidateNotNullOrEmpty()] [string]$customerid, [string]$publicIp) {
+function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, [ValidateNotNullOrEmpty()] [string]$ingressInternal, `
+                                        [ValidateNotNullOrEmpty()] [string]$ingressExternal, [ValidateNotNullOrEmpty()] [string]$customerid, `
+                                        [ValidateNotNullOrEmpty()][bool] $isOnPrem, [string]$publicIp) {
     [hashtable]$Return = @{} 
 
     # delete existing containers
@@ -580,9 +570,14 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     # setting up traefik
     # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
 
+    $runOnMaster = ""
+
+    # $traefiklabels = "external,internal"
+
     [hashtable]$tokens = @{ 
         "CUSTOMERID" = $customerid;
-        "PUBLICIP" = "$publicip"
+        "PUBLICIP" = "$publicip";
+        "#REPLACE-RUNMASTER" = "$runOnMaster";
     }    
 
     $namespace="kube-system"

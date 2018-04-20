@@ -423,7 +423,7 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
     $ingressExternal = "onprem"
     $publicIp = ""
 
-    LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl 1 -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -publicIp $publicIp    
+    LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl 1 -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -isOnPrem $true -publicIp $publicIp    
 
     return $Return
 }
