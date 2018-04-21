@@ -811,10 +811,10 @@ function troubleshootIngress([ValidateNotNullOrEmpty()][string] $namespace) {
         $targetPort = $(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.ports[].targetPort}")
         Write-Host "Service Port: $servicePort target Port: $targetPort"
         $servicePodSelectorMap = $(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.selector}")
-        $servicePodSelectors = $servicePodSelectorMap.Split(" ")
+        $servicePodSelectors = $servicePodSelectorMap.Replace("map[", "").Replace("]", "").Split(" ")
         $servicePodSelectorsList = ""
         foreach($servicePodSelector in $servicePodSelectors){
-            $servicePodSelectorItems = $servicePodSelector.Replace("map[", "").Replace("]", "").Split(":")
+            $servicePodSelectorItems = $servicePodSelector.Split(":")
             $servicePodSelectorKey = $($servicePodSelectorItems[0])
             $servicePodSelectorValue = $($servicePodSelectorItems[1])
             $servicePodSelectorsList += " -l ${servicePodSelectorKey}=${servicePodSelectorValue}"
