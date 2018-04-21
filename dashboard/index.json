@@ -29,6 +29,9 @@
         ],
         "services": {
             "cluster": [
+                "influxdb.yaml",
+                "heapster.yaml",
+                "grafana.yaml",
                 "apidashboard.yaml",
                 "dashboard.internal.yaml",
                 "dashboard.external.yaml"
