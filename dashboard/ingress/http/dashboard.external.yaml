@@ -2,7 +2,7 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: traefik-dashboard-route
+  name: traefik-dashboard-route-external
   namespace: kube-system
   labels:
     k8s-traefik: traefik
@@ -14,7 +14,7 @@ spec:
   rules:
     - http:
         paths:
-        - path: /dashboard
+        - path: /external
           backend:
-            serviceName: traefik-ingress-lb-onprem
+            serviceName: traefik-dashboard-external
             servicePort: 443  
