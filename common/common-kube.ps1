@@ -612,20 +612,20 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     $folder = "pods"
 
     if ($ingressExternal -eq "onprem" ) {
-        $files = "ingress-onprem.yaml"
+        $files = "traefik-onprem.yaml"
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
     elseif ($ingressInternal -eq "public" ) {
-        $files = "ingress-azure.both.yaml"
+        $files = "traefik-azure.both.yaml"
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
     else {
         if ($ssl) {
-            $files = "ingress-azure.external.ssl.yaml ingress-azure.internal.ssl.yaml"
+            $files = "traefik-azure.external.ssl.yaml traefik-azure.internal.ssl.yaml"
             DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
         }
         else {
-            $files = "ingress-azure.external.yaml ingress-azure.internal.yaml"
+            $files = "traefik-azure.external.yaml traefik-azure.internal.yaml"
             DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
         }    
     }
