@@ -819,8 +819,8 @@ function troubleshootIngress([ValidateNotNullOrEmpty()][string] $namespace) {
             $servicePodSelectorValue = $($servicePodSelectorItems[1])
             $servicePodSelectorsList += " -l ${servicePodSelectorKey}=${servicePodSelectorValue}"
         }
-        Write-Host "Pod Selector: $servicePodSelectorKey = $servicePodSelectorValue"
-        $pod = $(kubectl get pod $servicePodSelectorsList -n $namespace -o jsonpath='{.items[*].metadata.name}')
+        Write-Host "Pod Selector: $servicePodSelectorsList"
+        $pod = $(Invoke-Expression("kubectl get pod $servicePodSelectorsList -n $namespace -o jsonpath='{.items[*].metadata.name}'"))
         Write-Host "Pod name: $pod"
         $podstatus = $(kubectl get pod $pod -n $namespace -n kube-system -o jsonpath="{.status.phase}")
         Write-Host "Pod status: $podstatus"
