@@ -30,7 +30,6 @@
         ],
         "services": {
             "cluster": [
-                "dashboard-internal.yaml"
             ],
             "external": [
             ]

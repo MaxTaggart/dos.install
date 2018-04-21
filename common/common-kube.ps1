@@ -631,9 +631,6 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     }
 
     Write-Information -MessageData "Deploying services"
-    $folder = "services/cluster"
-    $files = "dashboard.yaml dashboard-internal.yaml apidashboard.yaml"
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
 
     # Write-Information -MessageData "Deploying http ingress"
     # $folder = "ingress/http"
