@@ -17,9 +17,11 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
         Write-Host "4: Show contents of shared folder"
         Write-Host "5: Show kubernetes service status"
         Write-Host "6: Troubleshoot Ingresses"
+        Write-Host "7: Show logs of all pods in kube-system"
         Write-Host "-----  Traefik reverse proxy ------"
         Write-Host "11: Open Traefik dashboard"
         Write-Host "12: Show load balancer logs"
+        Write-Host "----- Reinstall ------"
         Write-Host "13: Reinstall Load Balancer"
         Write-Host "14: Reinstall Traefik Dashboard"
         Write-Host "--- helpers ---"
@@ -48,6 +50,9 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
             '6' {
                 troubleshootIngress "kube-system"
             } 
+            '7' {
+                ShowLogsOfAllPodsInNameSpace "kube-system"
+            }            
             '11' {
                 OpenTraefikDashboard
             } 
