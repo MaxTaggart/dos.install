@@ -810,12 +810,17 @@ function troubleshootIngress([ValidateNotNullOrEmpty()][string] $namespace) {
         $servicePort = $(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.ports[].port}")
         $targetPort = $(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.ports[].targetPort}")
         Write-Host "Service Port: $servicePort target Port: $targetPort"
-        $servicePodSelector = $(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.selector}")
-        $servicePodSelectorItems = $servicePodSelector.Replace("map[", "").Replace("]", "").Split(":")
-        $servicePodSelectorKey = $($servicePodSelectorItems[0])
-        $servicePodSelectorValue = $($servicePodSelectorItems[1])
+        $servicePodSelectorMap = $(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.selector}")
+        $servicePodSelectors = $servicePodSelectorMap.Split(" ")
+        $servicePodSelectorsList = ""
+        foreach($servicePodSelector in $servicePodSelectors){
+            $servicePodSelectorItems = $servicePodSelector.Replace("map[", "").Replace("]", "").Split(":")
+            $servicePodSelectorKey = $($servicePodSelectorItems[0])
+            $servicePodSelectorValue = $($servicePodSelectorItems[1])
+            $servicePodSelectorsList += " -l ${servicePodSelectorKey}=${servicePodSelectorValue}"
+        }
         Write-Host "Pod Selector: $servicePodSelectorKey = $servicePodSelectorValue"
-        $pod = $(kubectl get pod -l "${servicePodSelectorKey}=${servicePodSelectorValue}" -n $namespace -o jsonpath='{.items[*].metadata.name}')
+        $pod = $(kubectl get pod $servicePodSelectorsList -n $namespace -o jsonpath='{.items[*].metadata.name}')
         Write-Host "Pod name: $pod"
         $podstatus = $(kubectl get pod $pod -n $namespace -n kube-system -o jsonpath="{.status.phase}")
         Write-Host "Pod status: $podstatus"
