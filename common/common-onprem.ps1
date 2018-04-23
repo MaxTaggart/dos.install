@@ -45,6 +45,8 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
     MountFolderFromSecrets -baseUrl $baseUrl
 
     WriteToConsole "This node has successfully joined the cluster"
+
+    kubectl get nodes
     
     Stop-Transcript
 
