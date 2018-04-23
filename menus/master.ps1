@@ -1,15 +1,15 @@
-param([ValidateNotNullOrEmpty()][string]$baseUrl, [string]$prereleaseflag)    
+param([ValidateNotNullOrEmpty()][string]$baseUrl, [string]$prerelease)    
 Write-Host "--- master.ps1 version $version ---"
 $version = "2018.04.18.01"
 Write-Host "baseUrl = $baseUrl"
-Write-Host "prerelease flag: $prereleaseflag"
+Write-Host "prerelease flag: $prerelease"
 
-if("$prereleaseflag" -eq "-prerelease"){
-    $prerelease = $true
-    Write-Host "prerelease: true"
+if("$prerelease" -eq "yes"){
+    $isPrerelease = $true
+    Write-Host "prerelease: yes"
 }
 else{
-    $prerelease = $false
+    $isPrerelease = $false
 }
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
@@ -76,7 +76,7 @@ while ($userinput -ne "q") {
             ShowStatusOfCluster
         } 
         '8' {
-            ShowCommandToJoinCluster -baseUrl $baseUrl -prerelease $prerelease
+            ShowCommandToJoinCluster -baseUrl $baseUrl -prerelease $isPrerelease
         } 
         '9' {
             mountSharedFolder -saveIntoSecret $true
