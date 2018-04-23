@@ -41,15 +41,11 @@ $userinput = ""
 while ($userinput -ne "q") {
     Write-Host "================ Health Catalyst version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
     Write-Host "------ On-Premise -------"
-    Write-Host "1: Create Master VM"
-    Write-Host "2: Create Worker VM"
-    Write-Host "3: Create a Single Node Cluster"
-    Write-Host "4: Uninstall Docker and Kubernetes"
-    Write-Host "5: Show all nodes"
-    Write-Host "6: Show status of cluster"
-    Write-Host "8: Show command to join another node to this cluster"
-    Write-Host "9: Mount folder"
-    Write-Host "10: Create kubeconfig"
+    Write-Host "1: Setup Master VM"
+    Write-Host "2: Show command to join another node to this cluster"
+    Write-Host "3: Uninstall Docker and Kubernetes"
+    Write-Host "4: Show all nodes"
+    Write-Host "5: Show status of cluster"
     Write-Host "-----------"
     Write-Host "20: Troubleshooting Menu"
     Write-Host "-----------"
@@ -61,28 +57,16 @@ while ($userinput -ne "q") {
             SetupMaster -baseUrl $baseUrl -singlenode $false 
         } 
         '2' {
-            SetupNewNode -baseUrl $baseUrl
-        } 
-        '3' {
-            SetupMaster -baseUrl $baseUrl -singlenode $true 
-        } 
-        '4' {
-            UninstallDockerAndKubernetes
-        } 
-        '5' {
-            ShowNodes
-        } 
-        '6' {
-            ShowStatusOfCluster
-        } 
-        '8' {
             ShowCommandToJoinCluster -baseUrl $baseUrl -prerelease $isPrerelease
         } 
-        '9' {
-            mountSharedFolder -saveIntoSecret $true
+        '3' {
+            UninstallDockerAndKubernetes
         } 
-        '10' {
-            GenerateKubeConfigFile
+        '4' {
+            ShowNodes
+        } 
+        '5' {
+            ShowStatusOfCluster
         } 
         '20' {
             showTroubleshootingMenu -baseUrl $baseUrl
