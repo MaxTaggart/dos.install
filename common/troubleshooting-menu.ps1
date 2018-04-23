@@ -24,8 +24,12 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
         Write-Host "----- Reinstall ------"
         Write-Host "13: Reinstall Load Balancer"
         Write-Host "14: Reinstall Traefik Dashboard"
+        Write-Host "------ Other tasks ---- "
+        Write-Host "31: Create a Single Node Cluster"
+        Write-Host "32: Mount folder"
+        Write-Host "33: Create kubeconfig"
         Write-Host "--- helpers ---"
-        Write-Host "21: Optimize Centos under Hyper-V"
+        Write-Host "41: Optimize Centos under Hyper-V"
         Write-Host "q: Quit"
         $userinput = Read-Host "Please make a selection"
         switch ($userinput) {
@@ -65,7 +69,17 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
             '14' {
                 InstallStack $baseUrl "kube-system" "dashboard"
             } 
-            '21' {
+            '31' {
+                SetupMaster -baseUrl $baseUrl -singlenode $true 
+            } 
+            '32' {
+                mountSharedFolder -saveIntoSecret $true
+            } 
+            '33' {
+                GenerateKubeConfigFile
+            } 
+                
+            '41' {
                 OptimizeCentosForHyperv
             } 
             'q' {
