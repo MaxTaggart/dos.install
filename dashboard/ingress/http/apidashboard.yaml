@@ -13,7 +13,7 @@ spec:
   rules:
   - http:
       paths:
-      - path: /dashboard
+      - path: /api
         backend:
           serviceName: kubernetes-dashboard
-          servicePort: 80
+          servicePort: 443

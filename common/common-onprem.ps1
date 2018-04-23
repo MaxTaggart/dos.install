@@ -892,7 +892,8 @@ function OpenTraefikDashboard() {
     WriteToConsole "dns entries for c:\windows\system32\drivers\etc\hosts (if needed)"
     WriteToConsole "${myip} ${dnshostname}"
     WriteToConsole "-"
-    WriteToConsole "You can access the traefik dashboard at: https://${dnshostname}/dashboard/ or https://${myip}/dashboard/"
+    WriteToConsole "You can access the traefik dashboard at: https://${dnshostname}/external/ or https://${myip}/external/"
+    WriteToConsole "You can access the traefik dashboard at: https://${dnshostname}/internal/ or https://${myip}/internal/"
 }
 
 function ShowKubernetesServiceStatus() {
