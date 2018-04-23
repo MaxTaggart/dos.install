@@ -794,7 +794,8 @@ function OptimizeCentosForHyperv() {
     WriteToConsole "installing hyperv-daemons package"
     sudo yum install -y hyperv-daemons bind-utils
     WriteToConsole "turning off disk optimization in centos since Hyper-V already does disk optimization"
-    WriteToConsole "noop" | sudo tee /sys/block/sda/queue/scheduler
+    # don't use WriteToConsole here
+    echo "noop" | sudo tee /sys/block/sda/queue/scheduler
     $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
     WriteToConsole "You can connect to this machine via SSH: ssh $(whoami)@${myip}"
     # grep -v "$(hostname)" /etc/hosts | sudo tee /etc/hosts > /dev/null

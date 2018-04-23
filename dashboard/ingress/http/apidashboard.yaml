@@ -5,14 +5,15 @@ metadata:
   namespace: kube-system
   labels:
     k8s-traefik: traefik    
-    expose: internal
+    expose: external
   annotations:
     kubernetes.io/ingress.class: traefik
+    traefik.frontend.rule.type: PathPrefixStrip    
 spec:
   rules:
   - http:
       paths:
-      - path: /api/
+      - path: /dashboard
         backend:
           serviceName: kubernetes-dashboard
-          servicePort: 443
+          servicePort: 80

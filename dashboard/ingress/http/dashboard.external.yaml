@@ -6,7 +6,7 @@ metadata:
   namespace: kube-system
   labels:
     k8s-traefik: traefik
-    expose: internal
+    expose: external
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.frontend.rule.type: PathPrefixStrip    
@@ -17,4 +17,4 @@ spec:
         - path: /external
           backend:
             serviceName: traefik-dashboard-external
-            servicePort: 443  
+            servicePort: 80  

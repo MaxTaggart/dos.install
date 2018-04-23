@@ -21,6 +21,8 @@ function Write-Status(){
 }
 
 function InstallPrerequisites(){
+    # increase sudo timeout: https://apple.stackexchange.com/questions/10139/how-do-i-increase-sudo-password-remember-timeout?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+    # sudo sh -c 'echo "\nDefaults timestamp_timeout=-1">>/etc/sudoers'
     Write-Status "--- updating yum packages ---"
     #sudo yum update -y -q -e 0
     sudo yum update -y
