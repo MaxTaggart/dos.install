@@ -131,7 +131,7 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # from https://docs.projectcalico.org/v3.0/getting-started/kubernetes/installation/hosted/kubeadm/
     # WriteToLog "enabling calico network plugin"
     # http://leebriggs.co.uk/blog/2017/02/18/kubernetes-networking-calico.html
-    # kubectl apply -f ${GITHUB_URL}/kubernetes/cni/calico.yaml
+    # kubectl apply -f ${baseUrl}/kubernetes/cni/calico.yaml
 
     # flannel
     # kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Documentation/kube-flannel.yml
@@ -152,7 +152,7 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # enable master to run containers
     # kubectl taint nodes --all node-role.kubernetes.io/master-
 
-    # kubectl create -f "$GITHUB_URL/azure/cafe-kube-dns.yml"
+    # kubectl create -f "${baseUrl}/azure/cafe-kube-dns.yml"
     WriteToLog "nodes"
     kubectl get nodes
 
@@ -423,7 +423,7 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
     $ingressExternal = "onprem"
     $publicIp = ""
 
-    LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl 1 -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -isOnPrem $true -publicIp $publicIp    
+    LoadLoadBalancerStack -baseUrl $baseUrl -ssl 1 -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -isOnPrem $true -publicIp $publicIp    
 
     return $Return
 }

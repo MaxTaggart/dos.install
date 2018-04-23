@@ -569,7 +569,7 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
 
     kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
 
-    Write-Information -MessageData "GITHUB_URL: $baseUrl"
+    Write-Information -MessageData "baseUrl: $baseUrl"
 
     # setting up traefik
     # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md

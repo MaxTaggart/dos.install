@@ -1,12 +1,12 @@
+param([ValidateNotNullOrEmpty()][string]$baseUrl)    
 $version = "2018.04.18.01"
+Write-Host "baseUrl = $baseUrl"
 
 # This script is meant for quick & easy install via:
 #   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
 #   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | pwsh -Interactive -NoExit -c -;
 
 Write-Host "--- master.ps1 version $version ---"
-
-$GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -16,7 +16,7 @@ Write-Host "Powershell version: $($PSVersionTable.PSVersion.Major).$($PSVersionT
 mkdir -p ${HOME}
 
 function ImportModuleFromUrl($module){
-    Invoke-WebRequest -useb -Uri "${GITHUB_URL}/common/${module}.ps1?f=$randomstring" -OutFile "${HOME}/${module}.psm1"
+    Invoke-WebRequest -useb -Uri "${baseUrl}/common/${module}.ps1?f=$randomstring" -OutFile "${HOME}/${module}.psm1"
     Import-Module -Name "${HOME}/${module}.psm1" -Force
 }
 
@@ -54,13 +54,13 @@ while ($userinput -ne "q") {
     $userinput = Read-Host "Please make a selection"
     switch ($userinput) {
         '1' {
-            SetupMaster -baseUrl $GITHUB_URL -singlenode $false 
+            SetupMaster -baseUrl $baseUrl -singlenode $false 
         } 
         '2' {
-            SetupNewNode -baseUrl $GITHUB_URL
+            SetupNewNode -baseUrl $baseUrl
         } 
         '3' {
-            SetupMaster -baseUrl $GITHUB_URL -singlenode $true 
+            SetupMaster -baseUrl $baseUrl -singlenode $true 
         } 
         '4' {
             UninstallDockerAndKubernetes
@@ -72,7 +72,7 @@ while ($userinput -ne "q") {
             ShowStatusOfCluster
         } 
         '8' {
-            ShowCommandToJoinCluster -baseUrl $GITHUB_URL
+            ShowCommandToJoinCluster -baseUrl $baseUrl
         } 
         '9' {
             mountSharedFolder -saveIntoSecret $true
@@ -81,10 +81,10 @@ while ($userinput -ne "q") {
             GenerateKubeConfigFile
         } 
         '20' {
-            showTroubleshootingMenu -baseUrl $GITHUB_URL
+            showTroubleshootingMenu -baseUrl $baseUrl
         } 
         '40' {
-            showRealtimeMenu -baseUrl $GITHUB_URL
+            showRealtimeMenu -baseUrl $baseUrl
         } 
         'q' {
             return

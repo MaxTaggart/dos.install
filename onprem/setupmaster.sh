@@ -11,7 +11,7 @@ set -o pipefail
 #
 version="2018.04.09.01"
 
-GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 
 if [ ! -x "$(command -v yum)" ]; then
     echo "yum command is not available"
@@ -32,4 +32,4 @@ stty sane < /dev/tty
 
 SetupMaster $GITHUB_URL false
 
-curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
+curl -sSL ${GITHUB_URL}/master/onprem/main.sh | bash

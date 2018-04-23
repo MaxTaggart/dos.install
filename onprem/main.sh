@@ -5,14 +5,25 @@ set -u
 set -o pipefail
 #
 # This script is meant for quick & easy install via:
+#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/release/onprem/main.sh -o main.sh; bash main.sh
+#   To test with the latest code on the master
+#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/release/onprem/main.sh -o main.sh; bash main.sh -prerelease
+#   obsolete:
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh | bash
 #   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh -o "${HOME}/main.sh"; bash "${HOME}/main.sh"
-#   curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/main.sh -o main.sh; bash main.sh
 #   curl https://bit.ly/2GOPcyX | bash
 #
 version="2018.04.17.02"
 
-GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+if [[ "$1" = "-prerelease" ]]; then
+    prerelease=true
+fi
+
+GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/release"
+if [[ "$prerelease" = true ]]; then
+    GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+    echo "-prerelease flag passed so switched GITHUB_URL to $GITHUB_URL"
+fi
 
 if [ ! -x "$(command -v yum)" ]; then
     echo "ERROR: yum command is not available"

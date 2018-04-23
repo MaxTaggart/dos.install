@@ -80,13 +80,13 @@ function createShortcutFordos(){
     installscript="$HOME/bin/dos"
     if [[ ! -f "$installscript" ]]; then
         echo "#!/bin/bash" > $installscript
-        echo curl -o "${HOME}/master.ps1" -sSL "${GITHUB_URL}/menus/master.ps1?p="'$RANDOM' >> $installscript
-        echo pwsh -f "${HOME}/master.ps1" >> $installscript
+        echo curl -o "${HOME}/master.ps1" -sSL "${baseUrl}/menus/master.ps1?p="'$RANDOM' >> $installscript
+        echo pwsh -f "${HOME}/master.ps1 ${baseUrl}" >> $installscript
         chmod +x $installscript
         echo "NOTE: Next time just type 'dos' to bring up this menu"
 
         # from http://web.archive.org/web/20120621035133/http://www.ibb.net/~anne/keyboard/keyboard.html
-        # curl -o ~/.inputrc "$GITHUB_URL/kubernetes/inputrc"
+        # curl -o ~/.inputrc "${baseUrl}/kubernetes/inputrc"
     fi    
 }
 

@@ -23,6 +23,7 @@ data:
       [entryPoints.https]
       address = ":443"
         [entryPoints.https.tls]
+        # https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet
         minVersion = "VersionTLS12"
           [[entryPoints.https.tls.certificates]]
           # TLS certs for Allina (AHMN): *.ahmn.healthcatalyst.net
