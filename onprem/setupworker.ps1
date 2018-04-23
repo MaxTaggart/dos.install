@@ -10,9 +10,7 @@ Write-Output "----"
 #   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
 #   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | pwsh -Interactive -NoExit -c -;
 
-Write-Host "--- master.ps1 version $version ---"
-
-$GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+Write-Host "--- setupworker.ps1 version $version ---"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -22,7 +20,7 @@ Write-Host "Powershell version: $($PSVersionTable.PSVersion.Major).$($PSVersionT
 mkdir -p ${HOME}
 
 function ImportModuleFromUrl($module){
-    Invoke-WebRequest -useb -Uri "${GITHUB_URL}/common/${module}.ps1?f=$randomstring" -OutFile "${HOME}/${module}.psm1"
+    Invoke-WebRequest -useb -Uri "${baseUrl}/common/${module}.ps1?f=$randomstring" -OutFile "${HOME}/${module}.psm1"
     Import-Module -Name "${HOME}/${module}.psm1" -Force
 }
 
@@ -35,5 +33,5 @@ ImportModuleFromUrl -module "common-onprem"
 # show Information messages
 $InformationPreference = "Continue"
 
-SetupWorker -baseUrl $GITHUB_URL -joincommand "$joincommand"
+SetupWorker -baseUrl $baseUrl -joincommand "$joincommand"
 

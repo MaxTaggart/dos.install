@@ -10,6 +10,9 @@
         "dns": [],
         "configmaps": [],
         "roles": [
+            "dashboard-minimalrole.yaml",
+            "dashboard-minimalrolebinding.yaml",
+            "dashboard-serviceaccount.yaml",
             "heapster-rbac.yaml",
             "dashboard-user.yaml"
         ],
@@ -25,12 +28,21 @@
             "kubernetes-dashboard.yaml"
         ],
         "services": {
-            "cluster": [],
+            "cluster": [
+                "influxdb.yaml",
+                "heapster.yaml",
+                "grafana.yaml",
+                "apidashboard.yaml",
+                "dashboard.internal.yaml",
+                "dashboard.external.yaml"
+            ],
             "external": []
         },
         "ingress": {
             "http": [
-                "dashboard.yaml"
+                "dashboard.internal.yaml",
+                "dashboard.external.yaml",
+                "apidashboard.yaml"           
             ],
             "tcp": []
         }

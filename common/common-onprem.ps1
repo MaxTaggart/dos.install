@@ -5,13 +5,20 @@ function global:GetCommonOnPremVersion() {
     return $versiononpremcommon
 }
 
+$dockerversion = "17.03.2.ce-1"
+$kubernetesversion = "1.10.0-0"
+$kubernetescniversion = "0.6.0-0"
+$kubernetesserverversion = "1.10.0"
+
 function WriteToLog($txt) {
     Write-Information -MessageData "$txt"
 }
 
 function WriteToConsole($txt) {
     # Write-Information -MessageData "$txt"
-    Write-Host "$txt"
+    Write-Host "===============================================" -ForegroundColor "Magenta"
+    Write-Host "$txt" -ForegroundColor "Magenta"
+    Write-Host "===============================================" -ForegroundColor "Magenta"
 }
 
 function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $joincommand) {
@@ -22,19 +29,19 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
     WriteToConsole "Logging to $logfile"
     Start-Transcript -Path "$logfile"
 
-    WriteToConsole "--- cleaning up old stuff ---"
+    WriteToConsole "cleaning up old stuff"
     UninstallDockerAndKubernetes
 
-    WriteToConsole "--- setting up new node ---"
+    WriteToConsole "setting up new node"
     SetupNewNode -baseUrl $baseUrl
 
-    WriteToConsole "--- joining cluster ---"
+    WriteToConsole "joining cluster"
     WriteToLog "sudo $joincommand"
     Invoke-Expression "sudo $joincommand"
 
     # sudo kubeadm join --token $token $masterurl --discovery-token-ca-cert-hash $discoverytoken
 
-    WriteToConsole "--- mounting network folder ---"
+    WriteToConsole "mounting network folder"
     MountFolderFromSecrets -baseUrl $baseUrl
 
     WriteToConsole "This node has successfully joined the cluster"
@@ -51,13 +58,13 @@ function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlen
     WriteToConsole "Logging to $logfile"
     Start-Transcript -Path "$logfile"
     
-    WriteToConsole "--- cleaning up old stuff ---"
+    WriteToConsole "cleaning up old stuff"
     UninstallDockerAndKubernetes
     
-    WriteToConsole "--- setting up new node ---"
+    WriteToConsole "setting up new node"
     SetupNewNode -baseUrl $baseUrl
 
-    WriteToConsole "--- setting up new master node ---"
+    WriteToConsole "setting up new master node"
     SetupNewMasterNode -baseUrl $baseUrl
 
     if ($singlenode -eq $True) {
@@ -70,13 +77,13 @@ function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlen
         mountSharedFolder -saveIntoSecret $True
     }
     
-    WriteToConsole "--- setting up load balancer ---"   
+    WriteToConsole "setting up load balancer"   
     SetupNewLoadBalancer -baseUrl $baseUrl
 
-    WriteToConsole "--- setting up kubernetes dashboard ---"   
+    WriteToConsole "setting up kubernetes dashboard"   
     InstallStack -baseUrl $baseUrl -namespace "kube-system" -appfolder "dashboard"
     # clear
-    WriteToLog "--- waiting for pods to run in kube-system ---"
+    WriteToLog "waiting for pods to run in kube-system"
     WaitForPodsInNamespace -namespace "kube-system" -interval 5    
 
     if ($singlenode -eq $True) {
@@ -94,21 +101,19 @@ function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlen
 function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
-    $kubernetesversion = "1.10.0"
-
     $u = "$(whoami)"
     WriteToLog "User name: $u"
 
     # for calico network plugin
-    # WriteToLog "--- running kubeadm init for calico ---"
+    # WriteToLog "running kubeadm init for calico"
     # sudo kubeadm init --kubernetes-version=v1.9.6 --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
 
     # CLUSTER_DNS_CORE_DNS="true"
 
-    # WriteToLog "--- running kubeadm init for flannel ---"
+    # WriteToLog "running kubeadm init for flannel"
     # for flannel network plugin
     # sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
-    sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16
+    sudo kubeadm init --kubernetes-version=v${kubernetesserverversion} --pod-network-cidr=10.244.0.0/16 --skip-token-print --apiserver-cert-extra-sans $(hostname --fqdn)
 
     WriteToLog "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
 
@@ -116,7 +121,7 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
     # for logs, sudo journalctl -xeu kubelet
 
-    WriteToLog "--- copying kube config to $HOME/.kube/config ---"
+    WriteToLog "copying kube config to $HOME/.kube/config"
     mkdir -p $HOME/.kube
     sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
     WriteToLog "sudo chown $(id -u):$(id -g) $HOME/.kube/config"
@@ -124,16 +129,16 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
     # calico
     # from https://docs.projectcalico.org/v3.0/getting-started/kubernetes/installation/hosted/kubeadm/
-    # WriteToLog "--- enabling calico network plugin ---"
+    # WriteToLog "enabling calico network plugin"
     # http://leebriggs.co.uk/blog/2017/02/18/kubernetes-networking-calico.html
-    # kubectl apply -f ${GITHUB_URL}/kubernetes/cni/calico.yaml
+    # kubectl apply -f ${baseUrl}/kubernetes/cni/calico.yaml
 
     # flannel
     # kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Documentation/kube-flannel.yml
-    WriteToLog "--- enabling flannel network plugin ---"
+    WriteToLog "enabling flannel network plugin"
     kubectl apply -f ${baseUrl}/kubernetes/cni/flannel.yaml
 
-    WriteToLog "--- sleeping 10 secs to wait for pods ---"
+    WriteToLog "sleeping 10 secs to wait for pods"
     Start-Sleep 10
 
     WriteToLog "adding cni0 network interface to trusted zone"
@@ -141,60 +146,131 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # sudo firewall-cmd --zone=trusted --add-interface docker0 --permanent
     sudo firewall-cmd --reload
 
-    WriteToLog "--- kubelet status ---"
+    WriteToLog "kubelet status"
     sudo systemctl status kubelet -l
 
     # enable master to run containers
     # kubectl taint nodes --all node-role.kubernetes.io/master-
 
-    # kubectl create -f "$GITHUB_URL/azure/cafe-kube-dns.yml"
-    WriteToLog "--- nodes ---"
+    # kubectl create -f "${baseUrl}/azure/cafe-kube-dns.yml"
+    WriteToLog "nodes"
     kubectl get nodes
 
-    WriteToLog "--- sleep for 10 secs ---"
+    WriteToLog "sleep for 10 secs"
     Start-Sleep 10
 
-    WriteToLog "--- current pods ---"
+    WriteToLog "current pods"
     kubectl get pods -n kube-system -o wide
 
-    WriteToLog "--- waiting for pods to run ---"
+    WriteToLog "waiting for pods to run"
     WaitForPodsInNamespace kube-system 5
 
-    WriteToLog "--- current pods ---"
+    WriteToLog "current pods"
     kubectl get pods -n kube-system -o wide
 
     if (!(Test-Path C:\Windows -PathType Leaf)) {
-        WriteToLog "--- creating /mnt/data ---"
+        WriteToLog "creating /mnt/data"
         sudo mkdir -p "/mnt/data"
         WriteToLog "sudo chown $(id -u):$(id -g) /mnt/data"
         sudo chown "$(id -u):$(id -g)" "/mnt/data"
         sudo chmod -R 777 "/mnt/data"
     }
 
-    WriteToLog "opening port 6661 for mirth"
-    sudo firewall-cmd --add-port=6661/tcp --permanent
-    WriteToLog "opening port 5671 for rabbitmq"
-    sudo firewall-cmd --add-port=5671/tcp --permanent  # flannel networking
-    WriteToLog "opening port 3307 for mysql"
-    sudo firewall-cmd --add-port 3307/tcp --permanent
+    AddFirewallPort -port "6661/tcp" -name "Mirth"
+    AddFirewallPort -port "5671/tcp" -name "RabbitMq"
+    AddFirewallPort -port "3307/tcp" -name "MySql"
+
     WriteToLog "reloading firewall"
     sudo firewall-cmd --reload
     
     return $Return    
 }
 
+function ConfigureIpTables() {
+    WriteToConsole "switching from firewalld to iptables"
+    # iptables-services: for iptables firewall  
+    sudo yum -y install iptables-services
+    # https://www.digitalocean.com/community/tutorials/how-to-migrate-from-firewalld-to-iptables-on-centos-7
+    sudo systemctl stop firewalld
+    sudo systemctl start iptables; 
+    # sudo systemctl start ip6tables
+    # sudo firewall-cmd --state
+    sudo systemctl disable firewalld
+    sudo systemctl enable iptables
+    # sudo systemctl enable ip6tables
+  
+    WriteToConsole "removing firewalld"
+    sudo yum -y remove firewalld
+    
+    WriteToConsole "setting up iptables rules"
+    # https://www.digitalocean.com/community/tutorials/iptables-essentials-common-firewall-rules-and-commands
+    WriteToConsole "fixing kubedns"
+    sudo iptables -P FORWARD ACCEPT
+    sudo iptables -I INPUT -p tcp -m tcp --dport 8472 -j ACCEPT
+    sudo iptables -I INPUT -p tcp -m tcp --dport 6443 -j ACCEPT
+    sudo iptables -I INPUT -p tcp -m tcp --dport 9898 -j ACCEPT
+    sudo iptables -I INPUT -p tcp -m tcp --dport 10250 -j ACCEPT  
+    sudo iptables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT  
+    sudo iptables -I INPUT -p tcp -m tcp --dport 8081 -j ACCEPT  
+    # WriteToConsole "allow all outgoing connections"
+    # sudo iptables -I OUTPUT -o eth0 -d 0.0.0.0/0 -j ACCEPT
+    WriteToConsole "allowing loopback connections"
+    sudo iptables -A INPUT -i lo -j ACCEPT
+    sudo iptables -A OUTPUT -o lo -j ACCEPT
+    WriteToConsole "allowing established and related incoming connections"
+    sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED, RELATED -j ACCEPT
+    WriteToConsole "allowing established outgoing connections"
+    sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
+    WriteToConsole "allowing docker containers to access the external network"
+    sudo iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+    sudo iptables -A FORWARD -i docker0 -o eth0 -j ACCEPT
+    WriteToConsole "allow all incoming ssh"
+    sudo iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW, ESTABLISHED -j ACCEPT
+    sudo iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+    # reject an IP address
+    # sudo iptables -A INPUT -s 15.15.15.51 -j REJECT
+    WriteToConsole "allow incoming HTTP"
+    sudo iptables -A INPUT -p tcp --dport 80 -m conntrack --ctstate NEW, ESTABLISHED -j ACCEPT
+    sudo iptables -A OUTPUT -p tcp --sport 80 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+    WriteToConsole "allow incoming HTTPS"
+    sudo iptables -A INPUT -p tcp --dport 443 -m conntrack --ctstate NEW, ESTABLISHED -j ACCEPT
+    sudo iptables -A OUTPUT -p tcp --sport 443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+    #WriteToConsole "block outgoing SMTP Mail"
+    #sudo iptables -A OUTPUT -p tcp --dport 25 -j REJECT
+    
+    WriteToConsole "reloading iptables"
+    sudo systemctl reload iptables
+    # WriteToConsole "saving iptables"
+    # sudo iptables-save
+    # WriteToConsole "restarting iptables"
+    # sudo systemctl restart iptables
+    WriteToConsole "status of iptables "
+    sudo systemctl status iptables
+    WriteToConsole "current iptables rules"
+    sudo iptables -t nat -L
+}
+  
+function AddFirewallPort($port, $name) {
+    if ("$(sudo firewall-cmd --query-port=${port})" -ne "yes") {
+        WriteToLog "opening port $port for $name"
+        sudo firewall-cmd --add-port=${port} --permanent
+    }
+    else {
+        WriteToLog "Port $port for $name is already open"
+    }
+}
 function ConfigureFirewall() {
     [hashtable]$Return = @{} 
 
-    WriteToLog " --- installing firewalld ---"
+    WriteToLog " installing firewalld"
     # https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7
-    installYumPackages "firewalld"
-    WriteToLog "--- starting firewalld ---"
+    sudo yum -y install firewalld
+    WriteToLog "starting firewalld"
     sudo systemctl start firewalld
     sudo systemctl enable firewalld
     sudo systemctl status firewalld -l
-    WriteToLog "--- removing iptables ---"
-    removeYumPackages iptables-services
+    WriteToLog "removing iptables"
+    sudo yum -y remove iptables-services
 
     WriteToLog "Making sure the main network interface is in public zone"
     $primarynic = $(route | grep default | awk '{print $NF; ext }')
@@ -217,32 +293,27 @@ function ConfigureFirewall() {
     # kubernetes ports: https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
     # https://github.com/coreos/coreos-kubernetes/blob/master/Documentation/kubernetes-networking.md
     # https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/rhel/installing-workers.md
-    WriteToLog "opening port 22 for SSH"
-    sudo firewall-cmd --add-port=22/tcp --permanent # SSH
-    WriteToLog "opening port 6443 for Kubernetes API server"
-    sudo firewall-cmd --add-port=6443/tcp --permanent # kubernetes API server
-    WriteToLog "opening ports 2379-2380 for Kubernetes API server"
-    sudo firewall-cmd --add-port=2379-2380/tcp --permanent 
-    WriteToLog "opening port 8472,8285 and 4789 for Flannel networking"
-    sudo firewall-cmd --add-port=8472/udp --permanent  # flannel networking
-    sudo firewall-cmd --add-port=8285/udp --permanent  # flannel networking
-    sudo firewall-cmd --add-port 4789/udp --permanent
-    WriteToLog "opening ports 10250,10251,10252 and 10255 for Kubelet API"
-    sudo firewall-cmd --add-port=10250/tcp --permanent  # Kubelet API
-    sudo firewall-cmd --add-port=10251/tcp --permanent 
-    sudo firewall-cmd --add-port=10252/tcp --permanent 
-    sudo firewall-cmd --add-port=10255/tcp --permanent # Read-only Kubelet API
-    WriteToLog "opening ports 80 and 443 for HTTP and HTTPS"
-    sudo firewall-cmd --add-port=80/tcp --permanent # HTTP
-    sudo firewall-cmd --add-port=443/tcp --permanent # HTTPS
-    WriteToLog "Opening port 53 for internal DNS"
-    sudo firewall-cmd --add-port=53/udp --permanent # DNS
-    sudo firewall-cmd --add-port=53/tcp --permanent # DNS
-    sudo firewall-cmd --add-port=67/udp --permanent # DNS
-    sudo firewall-cmd --add-port=68/udp --permanent # DNS
-    # sudo firewall-cmd --add-port=30000-60000/udp --permanent # NodePort services
-    sudo firewall-cmd --add-service=dns --permanent # DNS
-    WriteToLog "Adding NTP service to firewall"
+    AddFirewallPort -port "22/tcp" -name "SSH"
+    AddFirewallPort -port "6443/tcp" -name "Kubernetes API server"
+    AddFirewallPort -port "80/tcp" -name "HTTP"
+    AddFirewallPort -port "443/tcp" -name "HTTPS"
+    AddFirewallPort -port "2379-2380/tcp" -name "Flannel networking"
+    AddFirewallPort -port "8472/udp" -name "Flannel networking"
+    AddFirewallPort -port "8285/udp" -name "Flannel networking"
+    AddFirewallPort -port "4789/udp" -name "Flannel networking"
+    AddFirewallPort -port "10250-10255/tcp" -name "Kubelet API"
+    # WriteToLog "Opening port 53 for internal DNS"
+    # AddFirewallPort -port "443/tcp" -name "DNS"
+    # sudo firewall-cmd --add-port=53/udp --permanent # DNS
+    # AddFirewallPort -port "443/tcp" -name "HTTPS"
+    # sudo firewall-cmd --add-port=53/tcp --permanent # DNS
+    # AddFirewallPort -port "443/tcp" -name "HTTPS"
+    # sudo firewall-cmd --add-port=67/udp --permanent # DNS
+    # AddFirewallPort -port "443/tcp" -name "HTTPS"
+    # sudo firewall-cmd --add-port=68/udp --permanent # DNS
+    # # sudo firewall-cmd --add-port=30000-60000/udp --permanent # NodePort services
+    # sudo firewall-cmd --add-service=dns --permanent # DNS
+    # WriteToLog "Adding NTP service to firewall"
     sudo firewall-cmd --add-service=ntp --permanent # NTP server
     WriteToLog "enable all communication between pods"
     # sudo firewall-cmd --zone=trusted --add-interface eth0
@@ -271,7 +342,7 @@ function ConfigureFirewall() {
     # WriteToLog "Save flanneld to DNAT'ed traffic"
     # sudo firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 1 -o flannel.1 -j ACCEPT -m comment --comment "flannel subnet"
   
-    WriteToLog "--- enable logging of rejected packets ---"
+    WriteToLog "enable logging of rejected packets"
     sudo firewall-cmd --set-log-denied=all
   
     # http://wrightrocket.blogspot.com/2017/11/installing-kubernetes-on-centos-7-with.html
@@ -280,9 +351,9 @@ function ConfigureFirewall() {
   
     sudo systemctl status firewalld -l
   
-    WriteToLog "--- services enabled in firewall ---"
+    WriteToLog "services enabled in firewall"
     sudo firewall-cmd --list-services
-    WriteToLog "--- ports enabled in firewall ---"
+    WriteToLog "ports enabled in firewall"
     sudo firewall-cmd --list-ports
   
     sudo firewall-cmd --list-all
@@ -292,12 +363,13 @@ function ConfigureFirewall() {
 function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
+    WriteToConsole "deleting any old resources"
     # enable running pods on master
     # kubectl taint node mymasternode node-role.kubernetes.io/master:NoSchedule
-    WriteToLog "--- deleting existing resources with label traefik ---"
+    WriteToLog "deleting existing resources with label traefik"
     kubectl delete 'pods,services,configMaps,deployments,ingress' -l k8s-traefik=traefik -n kube-system --ignore-not-found=true
 
-    WriteToLog "--- deleting existing service account for traefik ---"
+    WriteToLog "deleting existing service account for traefik"
     kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
 
     $publicip = ""
@@ -318,7 +390,7 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
         if (!$certfolder) {
             WriteToLog "Creating self-signed SSL certificate"
-            installYumPackages "openssl"
+            sudo yum -y install openssl
             $u = "$(whoami)"
             $certfolder = "/opt/healthcatalyst/certs"
             WriteToLog "Creating folder: $certfolder and giving access to $u"
@@ -351,7 +423,7 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
     $ingressExternal = "onprem"
     $publicIp = ""
 
-    LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl 0 -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -publicIp $publicIp    
+    LoadLoadBalancerStack -baseUrl $baseUrl -ssl 1 -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -isOnPrem $true -publicIp $publicIp    
 
     return $Return
 }
@@ -360,9 +432,9 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
     WriteToLog "checking if this machine can access a DNS server via host $(hostname)"
-    WriteToLog "--- /etc/resolv.conf ---"
+    WriteToLog "/etc/resolv.conf"
     sudo cat /etc/resolv.conf
-    WriteToLog "-----------------------"
+    WriteToLog "----------------------------"
 
     $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
 
@@ -378,10 +450,6 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     else {
         WriteToLog "My external IP is $myip"
     }
-
-    $dockerversion = "17.03.2.ce-1"
-    $kubernetesversion = "1.10.0-0"
-    $kubernetescniversion = "0.6.0-0"
 
     # $(export dockerversion="17.03.2.ce-1")
     # $(export kubernetesversion="1.9.6-0")
@@ -399,13 +467,13 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     ConfigureFirewall
     # ConfigureIpTables
 
-    WriteToConsole "-- starting NTP deamon ---"
+    WriteToConsole "starting NTP deamon"
     # https://www.tecmint.com/install-ntp-server-in-centos/
     sudo systemctl start ntpd
     sudo systemctl enable ntpd
     sudo systemctl status ntpd -l
 
-    # WriteToConsole "--- stopping docker and kubectl ---"
+    # WriteToConsole "stopping docker and kubectl"
     # $servicestatus = $(systemctl show -p SubState kubelet)
     # if [[ $servicestatus = *"running"* ]]; then
     # WriteToLog "stopping kubelet"
@@ -415,14 +483,15 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # remove older versions
     UninstallDockerAndKubernetes
                     
-    WriteToConsole "--- Adding docker repo --"
+    WriteToConsole "Adding docker repo "
     sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
-    WriteToConsole " --- current repo list ---"
+    WriteToConsole " current repo list"
     sudo yum -y repolist
 
-    WriteToConsole "-- docker versions available in repo --"
+    WriteToConsole "docker versions available in repo "
     sudo yum -y --showduplicates list docker-ce
+    sudo yum -y --showduplicates list docker-ce-selinux
 
     # https://saurabh-deochake.github.io/posts/2017/07/post-1/
     WriteToConsole "setting selinux to disabled so kubernetes can work"
@@ -430,68 +499,68 @@ function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
     # sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux   
 
-    WriteToConsole "--- Installing docker via yum --"
+    WriteToConsole "Installing docker via yum "
     WriteToLog "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
     # need to pass --setpot=obsoletes=0 due to this bug: https://github.com/docker/for-linux/issues/20#issuecomment-312122325
-    # sudo yum install -y --setopt=obsoletes=0 docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos
-    installYumPackages "docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos"
+    sudo yum install -y --setopt=obsoletes=0 docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos
+    # installYumPackages "docker-ce-${dockerversion}.el7.centos docker-ce-selinux-${dockerversion}.el7.centos"
     lockPackageVersion "docker-ce docker-ce-selinux"
 
     # https://kubernetes.io/docs/setup/independent/install-kubeadm/
     # log rotation for docker: https://docs.docker.com/config/daemon/
     # https://docs.docker.com/config/containers/logging/json-file/
-    WriteToConsole "--- Configuring docker to use systemd and set logs to max size of 10MB and 5 days --"
+    WriteToConsole "Configuring docker to use systemd and set logs to max size of 10MB and 5 days "
     sudo mkdir -p /etc/docker
     sudo curl -sSL -o /etc/docker/daemon.json ${baseUrl}/onprem/daemon.json?p=$RANDOM
     
-    WriteToConsole "--- Starting docker service --"
+    WriteToConsole "Starting docker service "
     sudo systemctl enable docker
     sudo systemctl start docker
 
     if ($u -ne "root") {
-        WriteToConsole "--- Giving permission to $u to interact with docker ---"
+        WriteToConsole "Giving permission to $u to interact with docker"
         sudo usermod -aG docker $u
         # reload permissions without requiring a logout
         # from https://superuser.com/questions/272061/reload-a-linux-users-group-assignments-without-logging-out
         # https://man.cx/newgrp(1)
-        WriteToConsole "--- Reloading permissions via newgrp ---"
+        WriteToConsole "Reloading permissions via newgrp"
         # newgrp docker
     }
 
     WriteToLog "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
 
-    WriteToLog "--- docker status ---"
+    WriteToLog "docker status"
     sudo systemctl status docker -l
 
-    WriteToConsole "--- Adding kubernetes repo ---"
+    WriteToConsole "Adding kubernetes repo"
     sudo yum-config-manager --add-repo ${baseUrl}/onprem/kubernetes.repo
 
-    WriteToConsole "--- checking to see if port 10250 is still busy ---"
+    WriteToConsole "checking to see if port 10250 is still busy"
     sudo lsof -i -P -n | grep LISTEN
 
-    WriteToConsole "--- kubernetes versions available in repo ---"
+    WriteToConsole "kubernetes versions available in repo"
     sudo yum -y --showduplicates list kubelet kubeadm kubectl kubernetes-cni
 
-    WriteToConsole "--- installing kubernetes ---"
+    WriteToConsole "installing kubernetes"
     WriteToLog "using docker version ${dockerversion}, kubernetes version ${kubernetesversion}, cni version ${kubernetescniversion}"
-    installYumPackages "kubelet-${kubernetesversion} kubeadm-${kubernetesversion} kubectl-${kubernetesversion} kubernetes-cni-${kubernetescniversion}"
+    sudo yum -y install kubelet-${kubernetesversion} kubeadm-${kubernetesversion} kubectl-${kubernetesversion} kubernetes-cni-${kubernetescniversion}
     lockPackageVersion "kubelet kubeadm kubectl kubernetes-cni"
-    WriteToConsole "--- locking versions of kubernetes so they don't get updated by yum update ---"
+    WriteToConsole "locking versions of kubernetes so they don't get updated by yum update"
     # sudo yum versionlock add kubelet
     # sudo yum versionlock add kubeadm
     # sudo yum versionlock add kubectl
     # sudo yum versionlock add kubernetes-cni
 
-    WriteToConsole "--- starting kubernetes service ---"
+    WriteToConsole "starting kubernetes service"
     sudo systemctl enable kubelet
     sudo systemctl start kubelet
 
-    WriteToLog "--- setting up iptables for kubernetes in k8s.conf ---"
+    WriteToLog "setting up iptables for kubernetes in k8s.conf"
     # # Some users on RHEL/CentOS 7 have reported issues with traffic being routed incorrectly due to iptables being bypassed
     sudo curl -o "/etc/sysctl.d/k8s.conf" -sSL "$baseUrl/onprem/k8s.conf"
     sudo sysctl --system
 
-    WriteToConsole "--- finished setting up node ---"
+    WriteToConsole "finished setting up node"
 
     return $Return
 }
@@ -509,16 +578,18 @@ function UninstallDockerAndKubernetes() {
         WriteToLog "resetting kubeadm"
         sudo kubeadm reset
     }    
-    removeYumPackages "kubelet kubeadm kubectl kubernetes-cni"
+    sudo yum -y remove kubelet kubeadm kubectl kubernetes-cni
+    unlockPackageVersion "kubelet kubeadm kubectl kubernetes-cni"
 
     if ("$(command -v docker)") {
         sudo docker system prune -f
         # sudo docker volume rm etcd
     }
     sudo rm -rf /var/etcd/backups/*
-    removeYumPackages "docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine"
-    removeYumPackages "docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux"
-    removeYumPackages "docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine"
+    sudo yum -y remove docker-engine.x86_64 docker-ce docker-engine-selinux.noarch docker-cimprov.x86_64 docker-engine
+    sudo yum -y remove docker docker-common docker-selinux docker-engine docker-ce docker-ce-selinux container-selinux
+    sudo yum -y remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine
+    unlockPackageVersion "docker-ce docker-ce-selinux"
 
     WriteToConsole "Successfully uninstalled docker and kubernetes"
 
@@ -527,37 +598,19 @@ function UninstallDockerAndKubernetes() {
     return $Return
 }
 
-
-function removeYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
-    $packages = $packagelist.Split(" ");
-    foreach ($name in $packages) {
-        sudo yum list installed $name 2>&1 >> yum.log
-        if ($?) {
-            WriteToLog "Removing package $name"
-            sudo yum versionlock delete $name 2>&1 >> yum.log
-            sudo yum -y remove $name 2>&1 >> yum.log
-        }
-    }
-}
-
-function installYumPackages([ValidateNotNullOrEmpty()][string]$packagelist) {
-    $packages = $packagelist.Split(" ");
-    foreach ($name in $packages) {
-        sudo yum list installed $name 2>&1 >> yum.log
-        if (!($?)) {
-            WriteToLog "Installing package $name"
-            sudo yum -y install $name 2>&1 >> yum.log
-        }
-    }
-}
-
 function lockPackageVersion([ValidateNotNullOrEmpty()][string]$packagelist) {
     $packages = $packagelist.Split(" ");
     foreach ($name in $packages) {
-        sudo yum list installed $name 2>&1 >> yum.log
+        sudo yum list installed $name 
         if (!($?)) {
-            sudo yum versionlock delete $name 2>&1 >> yum.log
+            sudo yum versionlock add $name 2>&1 >> yum.log
         }
+    }
+}
+function unlockPackageVersion([ValidateNotNullOrEmpty()][string]$packagelist) {
+    $packages = $packagelist.Split(" ");
+    foreach ($name in $packages) {
+        sudo yum versionlock delete $name 2>&1 >> yum.log
     }
 }
 
@@ -623,7 +676,7 @@ function mountAzureFile([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
 
 function MountFolderFromSecrets([ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
-    WriteToConsole "--- waiting to let kubernetes come up ---"
+    WriteToConsole "waiting to let kubernetes come up"
     Do {
         Write-Host '.' -NoNewline;
         Start-Sleep -Seconds 5;
@@ -631,16 +684,16 @@ function MountFolderFromSecrets([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
     Start-Sleep -Seconds 10
 
-    WriteToConsole "--- copying kube config to ${HOME}/.kube/config ---"
+    WriteToConsole "copying kube config to ${HOME}/.kube/config"
     mkdir -p "${HOME}/.kube"
     sudo cp -f "/etc/kubernetes/kubelet.conf" "${HOME}/.kube/config"
     sudo chown "$(id -u):$(id -g)" "${HOME}/.kube/config"
 
-    WriteToConsole "--- giving read access to current user to /var/lib/kubelet/pki/kubelet-client.key ---"
+    WriteToConsole "giving read access to current user to /var/lib/kubelet/pki/kubelet-client.key"
     $u = "$(whoami)"
     sudo setfacl -m u:${u}:r "/var/lib/kubelet/pki/kubelet-client.key"
 
-    WriteToConsole "--- reading secret for folder to mount ----"
+    WriteToConsole "reading secret for folder to mount "
 
     $secretname = "mountsharedfolder"
     $namespace = "default"    
@@ -673,7 +726,7 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
     # kubectl create secret generic $secretname --namespace=$namespace --from-literal=path=$pathToShare --from-literal=username=$username --from-literal=password=$password
 
     # from: https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux
-    installYumPackages "samba-client samba-common cifs-utils"
+    sudo yum -y install samba-client samba-common cifs-utils
 
     sudo mkdir -p /mnt/data
 
@@ -694,7 +747,7 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
         WriteToLog "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null       
     }
 
-    WriteToLog "--- Mounting all shares ---"
+    WriteToLog "Mounting all shares"
     sudo mount -a --verbose
 
     if ( $saveIntoSecret -eq $True) {
@@ -724,17 +777,130 @@ function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
         # $discoverytoken = $parts[6];
     
         WriteToLog "Run this command on any new node to join this cluster (this command expires in 24 hours):"
-        WriteToLog "---- COPY BELOW THIS LINE ----"
-        WriteToLog "curl -sSL $baseUrl/onprem/setupnode.sh?p=`$RANDOM -o setupnode.sh; bash setupnode.sh `"$joinCommand`""
+        WriteToLog " COPY BELOW THIS LINE "
+        WriteToLog "curl -sSL $baseUrl/onprem/setupworker.sh?p=`$RANDOM -o setupworker.sh; bash setupworker.sh `"$joinCommand`""
     
         # if [[ ! -z "$pathToShare" ]]; then
         #     WriteToLog "curl -sSL $baseUrl/onprem/mountfolder.sh?p=$RANDOM | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
         # fi
         # WriteToLog "sudo $(sudo kubeadm token create --print-join-command)"
         WriteToLog ""
-        WriteToLog "---- COPY ABOVE THIS LINE ----"
+        WriteToLog " COPY ABOVE THIS LINE "
     }
 }
 
-# --------------------
+function OptimizeCentosForHyperv() {
+    # from https://www.altaro.com/hyper-v/centos-linux-hyper-v/
+    WriteToConsole "installing hyperv-daemons package"
+    sudo yum install -y hyperv-daemons bind-utils
+    WriteToConsole "turning off disk optimization in centos since Hyper-V already does disk optimization"
+    # don't use WriteToConsole here
+    echo "noop" | sudo tee /sys/block/sda/queue/scheduler
+    $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
+    WriteToConsole "You can connect to this machine via SSH: ssh $(whoami)@${myip}"
+    # grep -v "$(hostname)" /etc/hosts | sudo tee /etc/hosts > /dev/null
+    # WriteToConsole "127.0.0.1 $(hostname)" | sudo tee -a /etc/hosts > /dev/null    
+}
+
+function TroubleshootNetworking() {
+    # https://www.tecmint.com/things-to-do-after-minimal-rhel-centos-7-installation/3/
+    WriteToConsole " open ports " 
+    sudo nmap 127.0.0.1
+    WriteToConsole "network interfaces "
+    sudo ip link show
+    WriteToConsole "services enabled in firewall"
+    sudo firewall-cmd --list-services
+    WriteToConsole "ports enabled in firewall"
+    sudo firewall-cmd --list-ports
+    WriteToConsole "active zones"
+    sudo firewall-cmd --get-active-zones
+    WriteToConsole "available services to enable"
+    sudo firewall-cmd --get-services
+    WriteToConsole "all rules in firewall"
+    sudo firewall-cmd --list-all
+    sudo firewall-cmd --zone trusted --list-all
+    WriteToConsole "iptables --list"
+    sudo iptables --list
+    WriteToConsole "checking DNS server "
+    $ipfordnsservice = $(kubectl get svc kube-dns -n kube-system -o jsonpath="{.spec.clusterIP}")
+    sudo dig "@${ipfordnsservice}" kubernetes.default.svc.cluster.local +noall +answer
+    sudo dig "@${ipfordnsservice}" ptr 1.0.96.10.in-addr.arpa. +noall +answer
+    WriteToConsole "recent rejected packets "
+    sudo tail --lines 1000 /var/log/messages | grep REJECT
+}
+
+function TestDNS([ValidateNotNullOrEmpty()][string] $baseUrl) {
+    WriteToConsole "To resolve DNS issues: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#debugging-dns-resolution"
+    WriteToConsole "Checking if DNS pods are running"
+    kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o wide
+    WriteToConsole "Details about DNS pods"
+    kubectl describe pods --namespace=kube-system -l k8s-app=kube-dns    
+    WriteToConsole "Details about flannel pods"
+    kubectl logs --namespace kube-system -l app=flannel
+    WriteToConsole "Checking if DNS service is running"
+    kubectl get svc --namespace=kube-system
+    WriteToConsole "Checking if DNS endpoints are exposed "
+    kubectl get ep kube-dns --namespace=kube-system
+    WriteToConsole "Checking logs for DNS service"
+    # kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name)
+    kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c kubedns
+    kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c dnsmasq
+    kubectl logs --namespace=kube-system $(kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o name) -c sidecar        
+    WriteToConsole "Creating a busybox pod to test DNS"
+    Do {
+        WriteToConsole "Waiting for busybox to terminate"
+        WriteToConsole "."
+        Start-Sleep 5
+    } while ($(kubectl get pods busybox -n default -o jsonpath='{.status.phase}' --ignore-not-found=true))
+
+    kubectl create -f $baseUrl/kubernetes/test/busybox.yaml
+    Do {    
+        WriteToConsole "."
+        Start-Sleep 5
+    } while ("$(kubectl get pods busybox -n default -o jsonpath='{.status.phase}')" -ne "Running")
+    WriteToConsole " resolve.conf "
+    kubectl exec busybox cat /etc/resolv.conf
+    WriteToConsole "testing if we can access internal (pod) network"
+    kubectl exec busybox nslookup kubernetes.default
+    WriteToConsole "testing if we can access external network"
+    kubectl exec busybox wget www.google.com
+    kubectl delete -f $baseUrl/kubernetes/test/busybox.yaml    
+    WriteToConsole "firewall logs"
+    sudo systemctl status firewalld -l
+}
+
+function ShowContentsOfSharedFolder() {
+    ls -al /mnt/data
+}
+
+function OpenKubernetesDashboard() {
+    $dnshostname = $(ReadSecret "dnshostname")
+    $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
+    WriteToConsole "dns entries for c:\windows\system32\drivers\etc\hosts (if needed)"
+    WriteToConsole "${myip} ${dnshostname}"
+    WriteToConsole "-"
+    WriteToConsole "You can access the kubernetes dashboard at: https://${dnshostname}/api/ or https://${myip}/api/"
+    $secretname = $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+    $token = $(ReadSecretValue "$secretname" "token" "kube-system")
+    WriteToConsole "Bearer Token"
+    WriteToConsole $token
+    WriteToConsole " End of Bearer Token -"
+}
+function OpenTraefikDashboard() {
+    $dnshostname = $(ReadSecret "dnshostname")
+    $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
+    WriteToConsole "dns entries for c:\windows\system32\drivers\etc\hosts (if needed)"
+    WriteToConsole "${myip} ${dnshostname}"
+    WriteToConsole "-"
+    WriteToConsole "You can access the traefik dashboard at: https://${dnshostname}/external/ or https://${myip}/external/"
+    WriteToConsole "You can access the traefik dashboard at: https://${dnshostname}/internal/ or https://${myip}/internal/"
+}
+
+function ShowKubernetesServiceStatus() {
+    sudo systemctl status kubelet -l
+    sudo journalctl -xe --priority 0..3
+    sudo journalctl -u kube-apiserve
+}
+
+# 
 Write-Information -MessageData "end common-onprem.ps1 version $versiononpremcommon"

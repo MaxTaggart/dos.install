@@ -2,11 +2,11 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: traefik-dashboard-route
+  name: traefik-dashboard-route-external
   namespace: kube-system
   labels:
     k8s-traefik: traefik
-    expose: internal
+    expose: external
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.frontend.rule.type: PathPrefixStrip    
@@ -14,7 +14,7 @@ spec:
   rules:
     - http:
         paths:
-        - path: /dashboard
+        - path: /external
           backend:
-            serviceName: traefik-dashboard
+            serviceName: traefik-dashboard-external
             servicePort: 80  

@@ -1,0 +1,17 @@
+# ------------------- Dashboard Service ------------------- #
+
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    k8s-app: kubernetes-dashboard
+    k8s-traefik: traefik 
+  name: traefik-dashboard-external
+  namespace: kube-system
+spec:
+  selector:
+    k8s-app-external: traefik-ingress-lb
+    k8s-traefik: traefik
+  ports:
+    - port: 80
+      targetPort: 8080

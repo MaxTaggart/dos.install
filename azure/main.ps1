@@ -68,7 +68,7 @@ while ($userinput -ne "q") {
     Write-Host "44: Show NLP logs"
     Write-Host "45: Restart NLP"
     Write-Host "46: Show commands to SSH to NLP containers"
-    Write-Host "47: Delete everything in fabricnlp"
+    Write-Host "47: Delete all data in fabricnlp"
     Write-Host "------ Realtime -----"
     Write-Host "51: Show status of realtime"
     Write-Host "-----------"

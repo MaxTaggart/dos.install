@@ -147,8 +147,8 @@ function global:AskForSecretValue ([ValidateNotNullOrEmpty()] $secretname, [Vali
         $certhostname = ""
         Do {
             $certhostname = Read-host "$prompt"
-            if(!$certhostname){
-                if($defaultvalue){
+            if (!$certhostname) {
+                if ($defaultvalue) {
                     $certhostname = $defaultvalue
                 }
             }
@@ -163,40 +163,22 @@ function global:AskForSecretValue ([ValidateNotNullOrEmpty()] $secretname, [Vali
     return $Return
 }
 
-function global:ReadYamlAndReplaceCustomer([ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $templateFile, $customerid ) {
+function global:ReadYamlAndReplaceTokens([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $templateFile, [ValidateNotNullOrEmpty()][hashtable] $tokens  ) {
     [hashtable]$Return = @{} 
     
     Write-Information -MessageData "Reading from url: ${baseUrl}/${templateFile}"
 
     if ($baseUrl.StartsWith("http")) { 
         $response = $(Invoke-WebRequest -Uri "${baseUrl}/${templateFile}?f=${randomstring}" -UseBasicParsing -ErrorAction:Stop -ContentType "text/plain; charset=utf-8")
-        $content = $response | Select-Object -Expand Content | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"}
+        $content = $response | Select-Object -Expand Content
     }
     else {
-        $content=$(Get-Content -Path "$baseUrl/$templateFile" `
-            | Foreach-Object {$_ -replace 'CUSTOMERID', "$customerid"})
+        $content = $(Get-Content -Path "$baseUrl/$templateFile")
     }
 
+    $content = $(Merge-Tokens $content $tokens)
+    
     $Return.Content = $content
-    return $Return
-}
-
-# $files is a list of files separated by spaces
-function global:DownloadAndDeployYamlFiles([ValidateNotNullOrEmpty()] $folder, [ValidateNotNullOrEmpty()] $files, [ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $customerid, $public_ip ) {
-    [hashtable]$Return = @{} 
-
-    foreach ($file in $files.Split(" ")) { 
-        if ([string]::IsNullOrEmpty($public_ip)) {
-            $(ReadYamlAndReplaceCustomer -baseUrl $baseUrl -templateFile "${folder}/${file}" -customerid $customerid).Content `
-                | kubectl apply -f -
-        }
-        else {
-            $(ReadYamlAndReplaceCustomer -baseUrl $baseUrl -templateFile "${folder}/${file}" -customerid $customerid).Content `
-                | Foreach-Object {$_ -replace 'PUBLICIP', "$publicip"} `
-                | kubectl apply -f -
-        }
-    }
-
     return $Return
 }
 
@@ -329,25 +311,17 @@ function global:CleanKubConfig() {
     return $Return
 }
 
-function global:CleanSecrets([ValidateNotNullOrEmpty()] $namespace) {
-    [hashtable]$Return = @{} 
 
-    kubectl delete secret mysqlrootpassword -n $namespace --ignore-not-found=true
-    kubectl delete secret mysqlpassword -n $namespace --ignore-not-found=true
-    kubectl delete secret certhostname -n $namespace --ignore-not-found=true
-    kubectl delete secret certpassword -n $namespace --ignore-not-found=true
-    kubectl delete secret rabbitmqmgmtuipassword -n $namespace --ignore-not-found=true    
-
-    return $Return
-}
-
-function global:DeployYamlFiles([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $appfolder, [ValidateNotNullOrEmpty()] $folder, [ValidateNotNullOrEmpty()] $customerid, $resources) {
+function global:DeployYamlFiles([ValidateNotNullOrEmpty()][string] $namespace, [ValidateNotNullOrEmpty()][string] $baseUrl, `
+                                [ValidateNotNullOrEmpty()][string] $appfolder, [ValidateNotNullOrEmpty()][string] $folder, `
+                                [ValidateNotNullOrEmpty()][hashtable] $tokens, $resources) {
+    # $resources can be null
     [hashtable]$Return = @{} 
 
     if ($resources) {
         Write-Information -MessageData "-- Deploying $folder --"
         foreach ($file in $resources) {
-            $(ReadYamlAndReplaceCustomer -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -customerid $customerid).Content | kubectl apply -f -
+            $(ReadYamlAndReplaceTokens -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -tokens $tokens).Content | kubectl apply -f -
         }
     }
     return $Return
@@ -393,79 +367,83 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
     $customerid = $customerid.ToLower().Trim()
     Write-Information -MessageData "Customer ID: $customerid"
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "dns" -customerid $customerid -resources $($config.resources.dns)
+    [hashtable] $tokens = @{
+        "CUSTOMERID" = $customerid
+    }
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "configmaps" -customerid $customerid -resources $($config.resources.configmaps)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "dns" -tokens $tokens -resources $($config.resources.dns)
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "roles" -customerid $customerid -resources $($config.resources.roles)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "configmaps" -tokens $tokens -resources $($config.resources.configmaps)
+
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "roles" -tokens $tokens -resources $($config.resources.roles)
     
     if ($isAzure) {
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumes/azure" -customerid $customerid -resources $($config.resources.volumes.azure)
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumes/azure" -tokens $tokens -resources $($config.resources.volumes.azure)
     }
     else {
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumes/onprem" -customerid $customerid -resources $($config.resources.volumes.onprem)
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumes/onprem" -tokens $tokens -resources $($config.resources.volumes.onprem)
     }
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumeclaims" -customerid $customerid -resources $($config.resources.volumeclaims)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumeclaims" -tokens $tokens -resources $($config.resources.volumeclaims)
     
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "pods" -customerid $customerid -resources $($config.resources.pods)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "pods" -tokens $tokens -resources $($config.resources.pods)
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "services/cluster" -customerid $customerid -resources $($config.resources.services.cluster)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "services/cluster" -tokens $tokens -resources $($config.resources.services.cluster)
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "services/external" -customerid $customerid -resources $($config.resources.services.external)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "services/external" -tokens $tokens -resources $($config.resources.services.external)
     
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/http" -customerid $customerid -resources $($config.resources.ingress.http)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/http" -tokens $tokens -resources $($config.resources.ingress.http)
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp" -customerid $customerid -resources $($config.resources.ingress.tcp)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp" -tokens $tokens -resources $($config.resources.ingress.tcp)
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -customerid $customerid -resources $($config.resources.ingress.jobs)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -tokens $tokens -resources $($config.resources.ingress.jobs)
     
-    # DeploySimpleServices -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -customerid $customerid -resources $($config.resources.ingress.simpleservices)
+    # DeploySimpleServices -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -tokens $tokens -resources $($config.resources.ingress.simpleservices)
 
     WaitForPodsInNamespace -namespace $namespace -interval 5
     return $Return
 }
 
-function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $interval){
+function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $interval) {
     [hashtable]$Return = @{} 
 
-    $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
-    $waitingonPod="n"
+    $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+    $waitingonPod = "n"
 
     $counter = 0
     Do {
-        $waitingonPod=""
+        $waitingonPod = ""
         Write-Information -MessageData "---- waiting until all pods are running in namespace $namespace ---"
 
         Start-Sleep -Seconds $interval
         $counter++
-        $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+        $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
 
-        if(!$pods){
+        if (!$pods) {
             throw "No pods were found in namespace $namespace"
         }
 
         foreach ($pod in $pods.Split(" ")) {
-            $podstatus=$(kubectl get pods $pod -n $namespace -o jsonpath='{.status.phase}')
-            if($podstatus -eq "Running"){
+            $podstatus = $(kubectl get pods $pod -n $namespace -o jsonpath='{.status.phase}')
+            if ($podstatus -eq "Running") {
                 # nothing to do
             }
-            elseif($podstatus -eq "Pending"){
+            elseif ($podstatus -eq "Pending") {
                 # Write-Information -MessageData "${pod}: $podstatus"
-                $containerReady=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].ready}")
-                if($containerReady -ne "true" ){
-                    $containerStatus=$(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].state.waiting.reason}")
-                    if(![string]::IsNullOrEmpty(($containerStatus))){
-                        $waitingonPod="${waitingonPod}${pod}($containerStatus);"    
+                $containerReady = $(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].ready}")
+                if ($containerReady -ne "true" ) {
+                    $containerStatus = $(kubectl get pods $pod -n $namespace -o jsonpath="{.status.containerStatuses[0].state.waiting.reason}")
+                    if (![string]::IsNullOrEmpty(($containerStatus))) {
+                        $waitingonPod = "${waitingonPod}${pod}($containerStatus);"    
                     }
                     else {
-                        $waitingonPod="${waitingonPod}${pod}(container);"                        
+                        $waitingonPod = "${waitingonPod}${pod}(container);"                        
                     }
                     # Write-Information -MessageData "container in $pod is not ready yet: $containerReady"
                 }
             }
             else {
-                $waitingonPod="${waitingonPod}${pod}($podstatus);" 
+                $waitingonPod = "${waitingonPod}${pod}($podstatus);" 
             }
         }
             
@@ -475,7 +453,10 @@ function global:WaitForPodsInNamespace([ValidateNotNullOrEmpty()] $namespace, $i
 
     kubectl get pods -n $namespace -o wide
 
-    kubectl get events -n $namespace | grep "Warning" | tail     
+    if ($counter -gt 29) {
+        Write-Information -MessageData "--- warnings in kubenetes event log ---"
+        kubectl get events -n $namespace | grep "Warning" | tail    
+    } 
     return $Return    
 }
 
@@ -571,7 +552,9 @@ function global:DeploySimpleServices([ValidateNotNullOrEmpty()] $namespace, [Val
     return $Return
 }
 
-function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, [ValidateNotNullOrEmpty()] [string]$ingressInternal, [ValidateNotNullOrEmpty()] [string]$ingressExternal, [ValidateNotNullOrEmpty()] [string]$customerid, [string]$publicIp) {
+function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, [ValidateNotNullOrEmpty()] [string]$ingressInternal, `
+                                        [ValidateNotNullOrEmpty()] [string]$ingressExternal, [ValidateNotNullOrEmpty()] [string]$customerid, `
+                                        [ValidateNotNullOrEmpty()][bool] $isOnPrem, [string]$publicIp) {
     [hashtable]$Return = @{} 
 
     # delete existing containers
@@ -586,20 +569,32 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
 
     kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
 
-    Write-Information -MessageData "GITHUB_URL: $baseUrl"
+    Write-Information -MessageData "baseUrl: $baseUrl"
 
     # setting up traefik
     # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
 
+    $runOnMaster = ""
+
+    # $traefiklabels = "external,internal"
+
+    [hashtable]$tokens = @{ 
+        "CUSTOMERID" = $customerid;
+        "PUBLICIP" = "$publicip";
+        "#REPLACE-RUNMASTER" = "$runOnMaster";
+    }    
+
+    $namespace="kube-system"
+    $appfolder="loadbalancer"
     Write-Information -MessageData "Deploying configmaps"
-    $folder = "loadbalancer/configmaps"
+    $folder = "configmaps"
     if ($ssl) {
         $files = "config.ssl.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
     else {
         $files = "config.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
 
     $kubectlversion = $(kubectl version --short=true)[1]
@@ -608,56 +603,46 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     }
     else {
         Write-Information -MessageData "Deploying roles"
-        $folder = "loadbalancer/roles"
+        $folder = "roles"
         $files = "ingress-roles.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
 
     Write-Information -MessageData "Deploying pods"
-    $folder = "loadbalancer/pods"
+    $folder = "pods"
 
     if ($ingressExternal -eq "onprem" ) {
-        $files = "ingress-onprem.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+        $files = "traefik-onprem.yaml"
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
     elseif ($ingressInternal -eq "public" ) {
-        $files = "ingress-azure.both.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+        $files = "traefik-azure.both.yaml"
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
     else {
         if ($ssl) {
-            $files = "ingress-azure.ssl.yaml ingress-azure.internal.ssl.yaml"
-            DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+            $files = "traefik-azure.external.ssl.yaml traefik-azure.internal.ssl.yaml"
+            DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
         }
         else {
-            $files = "ingress-azure.yaml ingress-azure.internal.yaml"
-            DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
+            $files = "traefik-azure.external.yaml traefik-azure.internal.yaml"
+            DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
         }    
     }
 
     Write-Information -MessageData "Deploying services"
-    $folder = "loadbalancer/services/cluster"
-    $files = "dashboard.yaml dashboard-internal.yaml"
-    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
 
-    Write-Information -MessageData "Deploying ingress"
-    $folder = "loadbalancer/ingress"
+    # Write-Information -MessageData "Deploying http ingress"
+    # $folder = "ingress/http"
+    # $files = "apidashboard.yaml"
+    # DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
 
-    if ($ssl ) {
-        $files = "dashboard.ssl.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
-    }
-    else {
-        $files = "dashboard.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid
-    }
-
-    $folder = "loadbalancer/services/external"
+    $folder = "services/external"
 
     if ($ingressExternal -eq "onprem" ) {
         Write-Information -MessageData "Setting up external load balancer"
         $files = "loadbalancer.onprem.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }    
     elseif ("$ingressExternal" -ne "vnetonly") {
         Write-Information -MessageData "Setting up a public load balancer"
@@ -665,13 +650,13 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
         Write-Information -MessageData "Using Public IP: [$publicip]"
 
         Write-Information -MessageData "Setting up external load balancer"
-        $files = "loadbalancer.external.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
+        $files = "loadbalancer.external.public.yaml"
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
     else {
         Write-Information -MessageData "Setting up an external load balancer"
-        $files = "loadbalancer.external.restricted.yaml"
-        DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
+        $files = "loadbalancer.external.vnetonly.yaml"
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
 
 
@@ -679,13 +664,13 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     }
     elseif ("$ingressInternal" -eq "public") {
         Write-Information -MessageData "Setting up an internal load balancer"
-        $files = "loadbalancer.internal.open.yaml"
+        $files = "loadbalancer.internal.public.yaml"
     }
     else {
         Write-Information -MessageData "Setting up an internal load balancer"
-        $files = "loadbalancer.internal.yaml"
+        $files = "loadbalancer.internal.vnetonly.yaml"
     }
-    DownloadAndDeployYamlFiles -folder $folder -files $files -baseUrl $baseUrl -customerid $customerid -public_ip $publicip
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
 
     WaitForPodsInNamespace -namespace kube-system -interval 5
 
@@ -709,11 +694,11 @@ function Merge-Tokens($template, $tokens) {
         })
 }
 
-function global:FixLabelOnMaster(){
+function global:FixLabelOnMaster() {
     # for some reaosn ACS doesn't set this label on the master correctly and we need it to target pods to the master
     Write-Information -MessageData "Looking for node with label [kubernetes.io/role=master]"
-    $masternodename=$(kubectl get nodes -l kubernetes.io/role=master -o jsonpath="{.items[0].metadata.name}")
-    if(![string]::IsNullOrEmpty($masternodename)){
+    $masternodename = $(kubectl get nodes -l kubernetes.io/role=master -o jsonpath="{.items[0].metadata.name}")
+    if (![string]::IsNullOrEmpty($masternodename)) {
         Write-Information -MessageData "Setting label [node-role.kubernetes.io/master] on node [$masternodename]"
         kubectl label nodes $masternodename node-role.kubernetes.io/master=""
     }
@@ -722,7 +707,7 @@ function global:FixLabelOnMaster(){
     }
 }
 
-function global:TestFunction(){
+function global:TestFunction() {
     param( [string]$namespace, [string]$size)     
 
     [hashtable]$Return = @{} 
@@ -734,22 +719,116 @@ function global:TestFunction(){
     return $Return    
 }
 
-function ShowStatusOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namespace){
+function ShowStatusOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namespace) {
     Write-Information -MessageData "showing status of pods in $namespace"
-    $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
-    foreach($pod in $pods.Split(" ")){
+    $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+    foreach ($pod in $pods.Split(" ")) {
         Write-Information -MessageData "=============== Describe Pod: $pod ================="
         kubectl describe pods $pod -n $namespace
     }
 }
-function ShowLogsOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namespace){
+function ShowLogsOfAllPodsInNameSpace([ValidateNotNullOrEmpty()][string] $namespace) {
     Write-Information -MessageData "showing logs (last 30 lines) in $namespace"
-    $pods=$(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
-    foreach($pod in $pods.Split(" ")){
+    $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+    foreach ($pod in $pods.Split(" ")) {
         Write-Information -MessageData "=============== Describe Pod: $pod ================="
         kubectl logs --tail=30 $pod -n $namespace
     }   
 }
 
+function ShowStatusOfCluster() {
+    WriteToConsole "Current cluster: $(kubectl config current-context)"
+    kubectl version --short
+    kubectl get "deployments,pods,services,nodes,ingress" --namespace=kube-system -o wide    
+}
+
+function ShowNodes() {
+    Write-Host "Current cluster: $(kubectl config current-context)"
+    kubectl version --short
+    kubectl get "nodes" -o wide
+}
+
+function ShowLoadBalancerLogs() {
+    kubectl logs --namespace=kube-system -l k8s-app=traefik-ingress-lb-onprem --tail=100
+}
+
+function GenerateKubeConfigFile() {
+    $user = "admin-user"
+    # https://stackoverflow.com/questions/47770676/how-to-create-a-kubectl-config-file-for-serviceaccount
+    $secretname = $(kubectl -n kube-system get secret | grep $user | awk '{print $1}')
+    $ca = $(kubectl get secret $name -n kube-system -o jsonpath='{.data.ca\.crt}') # ca doesn't use base64 encoding
+    $token = $(ReadSecretValue "$secretname" "token" "kube-system")
+    $namespace = $(ReadSecretValue "$secretname" "namespace" "kube-system")
+    $server = $(ReadSecret -secretname "dnshostname" -namespace "default")
+    $serverurl = "https://${server}:6443"
+
+    # the multiline string below HAS to start at the beginning of the line per powershell
+    # https://www.kongsli.net/2012/05/03/powershell-gotchas-getting-multiline-string-literals-correct/
+    $kubeconfig =
+    @"
+apiVersion: v1
+kind: Config
+clusters:
+- name: ${server}
+  cluster:
+    certificate-authority-data: ${ca}
+    server: ${serverurl}
+contexts:
+- name: default-context
+  context:
+    cluster: ${server}
+    namespace: ${namespace}
+    user: ${user}
+current-context: default-context
+users:
+- name: ${user}
+  user:
+    token: ${token}
+"@
+
+    WriteToConsole "------ CUT HERE -----"
+    WriteToConsole $kubeconfig
+    WriteToConsole "------ END CUT HERE ---"
+
+}
+
+function troubleshootIngress([ValidateNotNullOrEmpty()][string] $namespace) {
+    $ingresses = $(kubectl get ingress -n $namespace -o jsonpath='{.items[*].metadata.name}')
+    foreach ($ingress in $ingresses.Split(" ")) {
+        $ingressPath = $(kubectl get ing $ingress -n $namespace -o jsonpath="{.spec.rules[].http.paths[].path}")
+        $ingressHost = $(kubectl get ing $ingress -n $namespace -o jsonpath="{.spec.rules[].host}")
+        $ingressRuleType = $(kubectl get ing $ingress -n $namespace -o jsonpath="{.metadata.annotations.traefik\.frontend\.rule\.type}")
+        $ingressType = $(kubectl get ing $ingress -n $namespace -o jsonpath="{.metadata.labels.expose}")
+        Write-Host "=============== Ingress: $ingress ================="
+        Write-Host "Ingress Path: $ingressPath"
+        Write-Host "Ingress Host: $ingressHost"
+        Write-Host "Ingress Type: $ingressType"
+        Write-Host "Ingress Rule Type: $ingressRuleType"
+        $ingressServiceName = $(kubectl get ing $ingress -n $namespace -o jsonpath="{.spec.rules[].http.paths[].backend.serviceName}")
+        $ingressServicePort = $(kubectl get ing $ingress -n $namespace -o jsonpath="{.spec.rules[].http.paths[].backend.servicePort}")
+        Write-Host "Service: $ingressServiceName port: $ingressServicePort"
+        $servicePort = $(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.ports[].port}")
+        $targetPort = $(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.ports[].targetPort}")
+        Write-Host "Service Port: $servicePort target Port: $targetPort"
+        $servicePodSelectorMap = $(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.selector}")
+        $servicePodSelectors = $servicePodSelectorMap.Replace("map[", "").Replace("]", "").Split(" ")
+        $servicePodSelectorsList = ""
+        foreach($servicePodSelector in $servicePodSelectors){
+            $servicePodSelectorItems = $servicePodSelector.Split(":")
+            $servicePodSelectorKey = $($servicePodSelectorItems[0])
+            $servicePodSelectorValue = $($servicePodSelectorItems[1])
+            $servicePodSelectorsList += " -l ${servicePodSelectorKey}=${servicePodSelectorValue}"
+        }
+        Write-Host "Pod Selector: $servicePodSelectorsList"
+        $pod = $(Invoke-Expression("kubectl get pod $servicePodSelectorsList -n $namespace -o jsonpath='{.items[*].metadata.name}'"))
+        Write-Host "Pod name: $pod"
+        $podstatus = $(kubectl get pod $pod -n $namespace -n kube-system -o jsonpath="{.status.phase}")
+        Write-Host "Pod status: $podstatus"
+        $containerImage = $(kubectl get pod $pod -n $namespace -o jsonpath="{.spec.containers[0].image}")
+        Write-Host "Container image: $containerImage"
+        $containerPort = $(kubectl get pod $pod -n $namespace -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+        Write-Host "Container Port: $containerPort"
+    }   
+}
 # --------------------
 Write-Information -MessageData "end common-kube.ps1 version $versionkubecommon"

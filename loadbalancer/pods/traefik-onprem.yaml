@@ -16,7 +16,9 @@ spec:
       labels:
         k8s-app: traefik-ingress-lb-onprem
         name: traefik-ingress-lb-onprem
-        k8s-traefik: traefik          
+        k8s-traefik: traefik
+        k8s-app-internal: traefik-ingress-lb
+        k8s-app-external: traefik-ingress-lb
     spec:
       # hostPort is broken on CNI (https://github.com/kubernetes/kubernetes/issues/31307) we have to use hostNetwork where CNI is used
       hostNetwork: true    
@@ -57,7 +59,7 @@ spec:
         - --kubernetes
         - --configfile=/config/traefik.toml
         - --logLevel=INFO
-        - --kubernetes.labelselector=expose=external
+        - --kubernetes.labelselector=expose in (external,internal)
         - --kubernetes.debugloggeneratedtemplate
         - --accesslog
         - --insecureskipverify

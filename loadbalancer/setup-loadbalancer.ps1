@@ -175,7 +175,7 @@ if ("$($config.ingress.external)" -ne "vnetonly") {
     Write-Host "Using Public IP: [$publicip]"
 }
 
-LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl $($config.ssl) -ingressInternal "$ingressInternal" -ingressExternal "$ingressExternal" -customerid $customerid -publicIp $publicIp
+LoadLoadBalancerStack -baseUrl $GITHUB_URL -ssl $($config.ssl) -ingressInternal "$ingressInternal" -ingressExternal "$ingressExternal" -customerid $customerid -isOnPrem $false -publicIp $publicIp
 
 # setting up traefik
 # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md

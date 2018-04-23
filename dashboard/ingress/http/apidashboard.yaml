@@ -1,14 +1,14 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: kubernetes-dashboard-ingress
+  name: kubernetes-api-ingress
   namespace: kube-system
   labels:
     k8s-traefik: traefik    
     expose: external
   annotations:
     kubernetes.io/ingress.class: traefik
-    traefik.frontend.rule.type: PathPrefixStrip
+    traefik.frontend.rule.type: PathPrefixStrip    
 spec:
   rules:
   - http:

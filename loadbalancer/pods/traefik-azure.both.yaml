@@ -17,6 +17,8 @@ spec:
         k8s-app: traefik-ingress-lb
         name: traefik-ingress-lb
         k8s-traefik: traefik          
+        expose-external: "true"
+        expose-internal: "true"        
     spec:
       serviceAccountName: traefik-ingress-serviceaccount
       terminationGracePeriodSeconds: 60
@@ -25,7 +27,7 @@ spec:
           configMap:
             name: traefik-conf
       containers:
-      - image: traefik:1.5
+      - image: traefik:1.5.3
         name: traefik-ingress-lb
         imagePullPolicy: Always        
         volumeMounts:
@@ -40,7 +42,7 @@ spec:
         - --kubernetes
         - --configfile=/config/traefik.toml
         - --logLevel=INFO
-        - --kubernetes.labelselector=expose=external
+        - --kubernetes.labelselector=expose in (external,internal)
         - --kubernetes.debugloggeneratedtemplate
         - --accesslog
         - --insecureskipverify
