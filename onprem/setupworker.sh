@@ -14,10 +14,19 @@ version="2018.04.18.02"
 echo "---- setupnode version $version ----"
 
 joincommand=$1
+prerelease=false
+if [[ "${2:-}" = "-prerelease" ]]; then
+    prerelease=true
+fi
 
 echo "joincommand: $joincommand"
+echo "prerelease: $prerelease"
 
-GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/release"
+if [[ "${prerelease:-false}" = true ]]; then
+    GITHUB_URL="https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+    echo "-prerelease flag passed so switched GITHUB_URL to $GITHUB_URL"
+fi
 
 if [[ "$TERM" = "cygwin" ]]; then
     echo "Your TERM is set to cygwin.  We do not support this because it has errors in displaying text.  Please use a different SSH terminal e.g., MobaXterm"
