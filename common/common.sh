@@ -75,13 +75,19 @@ function InstallPrerequisites(){
 }
 function createShortcutFordos(){
     local baseUrl=$1
+    local prerelease=${2:-false}
 
     mkdir -p $HOME/bin
     installscript="$HOME/bin/dos"
     if [[ ! -f "$installscript" ]]; then
         echo "#!/bin/bash" > $installscript
         echo curl -o "${HOME}/master.ps1" -sSL "${baseUrl}/menus/master.ps1?p="'$RANDOM' >> $installscript
-        echo pwsh -f "${HOME}/master.ps1 ${baseUrl}" >> $installscript
+        if [[ "$prerelease" = true ]]; then
+            echo pwsh -f "${HOME}/master.ps1 ${baseUrl}" >> $installscript
+        else
+            echo pwsh -f "${HOME}/master.ps1 ${baseUrl} -prerelease" >> $installscript
+        fi
+
         chmod +x $installscript
         echo "NOTE: Next time just type 'dos' to bring up this menu"
 

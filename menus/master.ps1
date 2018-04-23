@@ -1,12 +1,16 @@
-param([ValidateNotNullOrEmpty()][string]$baseUrl)    
+param([ValidateNotNullOrEmpty()][string]$baseUrl, [string]$prereleaseflag)    
+Write-Host "--- master.ps1 version $version ---"
 $version = "2018.04.18.01"
 Write-Host "baseUrl = $baseUrl"
+Write-Host "prerelease flag: $prereleaseflag"
 
-# This script is meant for quick & easy install via:
-#   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
-#   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | pwsh -Interactive -NoExit -c -;
-
-Write-Host "--- master.ps1 version $version ---"
+if("$prereleaseflag" -eq "-prerelease"){
+    $prerelease = $true
+    Write-Host "prerelease: true"
+}
+else{
+    $prerelease = $false
+}
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -72,7 +76,7 @@ while ($userinput -ne "q") {
             ShowStatusOfCluster
         } 
         '8' {
-            ShowCommandToJoinCluster -baseUrl $baseUrl
+            ShowCommandToJoinCluster -baseUrl $baseUrl -prerelease $prerelease
         } 
         '9' {
             mountSharedFolder -saveIntoSecret $true

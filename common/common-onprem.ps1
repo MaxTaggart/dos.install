@@ -386,10 +386,10 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
     $sslsecret = $(kubectl get secret traefik-cert-ahmn -n kube-system --ignore-not-found=true)
 
     if (!$sslsecret) {
-        $certfolder = Read-Host -Prompt "Location of SSL cert files (tls.crt and tls.key): (leave empty to use self-signed certificates) "
+        $certfolder = Read-Host -Prompt "Location of SSL cert files (tls.crt and tls.key): (leave empty to generate self-signed certificates)"
 
         if (!$certfolder) {
-            WriteToLog "Creating self-signed SSL certificate"
+            WriteToLog "Generating self-signed SSL certificate"
             sudo yum -y install openssl
             $u = "$(whoami)"
             $certfolder = "/opt/healthcatalyst/certs"
@@ -767,7 +767,7 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
     return $Return    
 }
 
-function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
+function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$prerelease) {
     
     $joinCommand = $(sudo kubeadm token create --print-join-command)
     if ($joinCommand) {
@@ -776,16 +776,20 @@ function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl) {
         # $token = $parts[4];
         # $discoverytoken = $parts[6];
     
-        WriteToLog "Run this command on any new node to join this cluster (this command expires in 24 hours):"
-        WriteToLog " COPY BELOW THIS LINE "
-        WriteToLog "curl -sSL $baseUrl/onprem/setupworker.sh?p=`$RANDOM -o setupworker.sh; bash setupworker.sh `"$joinCommand`""
+        WriteToConsole "Run this command on any new node to join this cluster (this command expires in 24 hours):"
+        WriteToConsole "---------------- COPY BELOW THIS LINE ----------------"
+        $fullCommand= "curl -sSL $baseUrl/onprem/setupworker.sh?p=`$RANDOM -o setupworker.sh; bash setupworker.sh `"$joinCommand`""
+        if($prerelease){
+            $fullCommand = "${fullCommand} -prerelease"
+        }
+        WriteToConsole $fullCommand
     
         # if [[ ! -z "$pathToShare" ]]; then
         #     WriteToLog "curl -sSL $baseUrl/onprem/mountfolder.sh?p=$RANDOM | bash -s $pathToShare $username $domain $password 2>&1 | tee mountfolder.log"
         # fi
         # WriteToLog "sudo $(sudo kubeadm token create --print-join-command)"
         WriteToLog ""
-        WriteToLog " COPY ABOVE THIS LINE "
+        WriteToLog "-------------------- COPY ABOVE THIS LINE ------------------------------"
     }
 }
 

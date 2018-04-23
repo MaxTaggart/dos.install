@@ -54,7 +54,7 @@ stty sane < /dev/tty
 # export TERM=xterm
 
 echo "--- creating shortcut for dos ---"
-createShortcutFordos $GITHUB_URL
+createShortcutFordos $GITHUB_URL $prerelease
 
 echo "--- installing prerequisites ---"
 InstallPrerequisites
