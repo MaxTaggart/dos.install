@@ -83,9 +83,9 @@ function createShortcutFordos(){
         echo "#!/bin/bash" > $installscript
         echo curl -o "${HOME}/master.ps1" -sSL "${baseUrl}/menus/master.ps1?p="'$RANDOM' >> $installscript
         if [[ "$prerelease" = true ]]; then
-            echo pwsh -f "${HOME}/master.ps1 ${baseUrl}" >> $installscript
+            echo pwsh -f "${HOME}/master.ps1 -baseUrl ${baseUrl} -prerelease no" >> $installscript
         else
-            echo pwsh -f "${HOME}/master.ps1 ${baseUrl} -prerelease" >> $installscript
+            echo pwsh -f "${HOME}/master.ps1 -baseUrl ${baseUrl} -prerelease yes" >> $installscript
         fi
 
         chmod +x $installscript
