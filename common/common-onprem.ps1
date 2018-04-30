@@ -184,6 +184,9 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
     WriteToLog "reloading firewall"
     sudo firewall-cmd --reload
+
+    WriteToLog "enabling autocomplete for kubectl"
+    echo "source <(kubectl completion bash)" >> ~/.bashrc
     
     return $Return    
 }

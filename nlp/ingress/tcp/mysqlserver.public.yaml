@@ -3,6 +3,8 @@ apiVersion: v1
 metadata:
   name: mysql-direct-port
   namespace: fabricnlp
+  labels:
+    dns: mysql    
 spec:
   selector:
     app: mysqlserver

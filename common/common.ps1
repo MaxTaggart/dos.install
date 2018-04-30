@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.16.03"
+$versioncommon = "2018.04.30.01"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -1189,6 +1189,7 @@ function global:GetDNSCommands() {
 
     $myCommands = @()
 
+    # first get DNS entries for internal facing services
     $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
     
     $internalDNSEntries = $(kubectl get ing --all-namespaces -l expose=internal -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true).Split(" ")
@@ -1207,6 +1208,21 @@ function global:GetDNSCommands() {
 
     $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $customerid A /f"
     $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $customerid A $loadBalancerInternalIP"
+
+    # now get DNS entries for any TCP load balancer
+    $namespaces=$(kubectl get namespaces -o jsonpath="{.items[*].metadata.name}").Split(" ")
+    foreach ($namespace in $namespaces) {
+        $tcpLoadBalancers = $(kubectl get svc -n $namespace -o jsonpath="{.items[?(@.spec.type=='LoadBalancer')].metadata.name}" --ignore-not-found=true).Split(" ")
+        foreach ($tcpLoadBalancer in $tcpLoadBalancers) {
+            $dns=$(kubectl get svc $tcpLoadBalancer -n $namespace -o jsonpath="{.metadata.labels.dns}" --ignore-not-found=true)
+            if(![string]::IsNullOrEmpty($dns)){
+                $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns.$customerid A /f"
+                $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dns.$customerid A $loadBalancerInternalIP"    
+            }
+        }
+    }
+
+    # now get DNS entries for external facing services
 
     $loadBalancerIP = kubectl get svc traefik-ingress-service-public -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
     
