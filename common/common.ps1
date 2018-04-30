@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.16.03"
+$versioncommon = "2018.04.30.02"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -606,7 +606,7 @@ function global:AddFolderToPathEnvironmentVariable([ValidateNotNullOrEmpty()] $f
 
     # add the c:\kubernetes folder to system PATH
     Write-Information -MessageData "Checking if $folder is in PATH"
-    $current_path=[Environment]::GetEnvironmentVariable("PATH",[System.EnvironmentVariableTarget]::User)
+    $current_path = [Environment]::GetEnvironmentVariable("PATH", [System.EnvironmentVariableTarget]::User)
     $pathItems = ($current_path).split(";")
     if ( $pathItems -notcontains "$folder") {
         Write-Information -MessageData "Adding $folder to system path"
@@ -938,7 +938,7 @@ function global:DownloadFileOld([ValidateNotNullOrEmpty()] $url, [ValidateNotNul
     return $Return
 }
 
-function global:FixLoadBalancerBackendPools([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $loadbalancer){
+function global:FixLoadBalancerBackendPools([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $loadbalancer) {
     [hashtable]$Return = @{} 
 
     $loadbalancerBackendPoolName = $resourceGroup # the name may change in the future so we should look it up
@@ -959,28 +959,28 @@ function global:FixLoadBalancerBackendPools([ValidateNotNullOrEmpty()] $resource
 
             $loadbalancerForNic = $(az network nic ip-config show --resource-group $resourceGroup --nic-name $nic --name $ipconfig --query "loadBalancerBackendAddressPools[].id" -o tsv)
 
-            $foundNicInLoadbalancer=$false
+            $foundNicInLoadbalancer = $false
             # if loadBalancerBackendAddressPools is missing then
             if ([string]::IsNullOrEmpty($loadbalancerForNic)) {
                 Write-Warning "Fixing load balancer for vm: $vm by adding nic $nic with ip-config $ipconfig to backend pool $loadbalancerBackendPoolName in load balancer $loadbalancer "
                 # --lb-address-pools: Space-separated list of names or IDs of load balancer address pools to associate with the NIC. If names are used, --lb-name must be specified.
                 az network nic ip-config update --resource-group $resourceGroup --nic-name $nic --name $ipconfig --lb-name $loadbalancer --lb-address-pools $loadbalancerBackendPoolName
-                $foundNicInLoadbalancer=$true
+                $foundNicInLoadbalancer = $true
             }
-            elseif ($($loadbalancerForNic -is [array])){
-                foreach($lb in $loadbalancerForNic){
+            elseif ($($loadbalancerForNic -is [array])) {
+                foreach ($lb in $loadbalancerForNic) {
                     Write-Information -MessageData "Checking loadbalancerforNic: $lb to see if it matches $loadbalancer"
-                    if($($lb -match $loadbalancer)){
+                    if ($($lb -match $loadbalancer)) {
                         Write-Information -MessageData "Found loadbalancerforNic: $lb to match $loadbalancer"
-                        $foundNicInLoadbalancer=$true
+                        $foundNicInLoadbalancer = $true
                     }
                 }
             }
             elseif (($($loadbalancerForNic -contains $loadbalancer))) {
-                $foundNicInLoadbalancer=$true
+                $foundNicInLoadbalancer = $true
             }
 
-            if(!$foundNicInLoadbalancer){
+            if (!$foundNicInLoadbalancer) {
                 Write-Information -MessageData "nic is already bound to load balancer $loadbalancerForNic with ip-config $ipconfig"
                 Write-Information -MessageData "adding internal load balancer to secondary ip-config"
                 # get the first secondary ipconfig
@@ -1003,7 +1003,7 @@ function global:FixLoadBalancerBackendPools([ValidateNotNullOrEmpty()] $resource
     return $Return
 }
 
-function global:FixLoadBalancerBackendPorts([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $loadbalancer){
+function global:FixLoadBalancerBackendPorts([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $loadbalancer) {
     [hashtable]$Return = @{} 
 
     # 2. fix the ports in load balancing rules
@@ -1189,16 +1189,18 @@ function global:GetDNSCommands() {
 
     $myCommands = @()
 
+    # first get DNS entries for internal facing services
     $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
     
     $internalDNSEntries = $(kubectl get ing --all-namespaces -l expose=internal -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true).Split(" ")
     ForEach ($dns in $internalDNSEntries) { 
-        if([string]::IsNullOrEmpty($loadBalancerInternalIP)){
+        if ([string]::IsNullOrEmpty($loadBalancerInternalIP)) {
             throw "loadBalancerInternalIP cannot be found"
         }
         $dnsWithoutDomain = $dns -replace ".healthcatalyst.net", ""
         $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dnsWithoutDomain A /f"
         $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dnsWithoutDomain A $loadBalancerInternalIP"
+        # these are reverse DNS entries that don't seem to be needed
         # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns PTR /f"
         # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd 10.in-addr-arpa $loadBalancerInternalIP PTR $dns"
     }
@@ -1208,9 +1210,25 @@ function global:GetDNSCommands() {
     $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $customerid A /f"
     $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $customerid A $loadBalancerInternalIP"
 
-    $loadBalancerIP = kubectl get svc traefik-ingress-service-public -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
-    
+    # now get DNS entries for any TCP load balancers
+    $namespaces = $(kubectl get namespaces -o jsonpath="{.items[*].metadata.name}").Split(" ")
+    foreach ($namespace in $namespaces) {
+        # find services of type LoadBalancer
+        $tcpLoadBalancers = $(kubectl get svc -n $namespace -o jsonpath="{.items[?(@.spec.type=='LoadBalancer')].metadata.name}" --ignore-not-found=true)
+        if ($tcpLoadBalancers) {
+            $tcpLoadBalancers = $tcpLoadBalancers.Split(" ")
+            foreach ($tcpLoadBalancer in $tcpLoadBalancers) {
+                $dns = $(kubectl get svc $tcpLoadBalancer -n $namespace -o jsonpath="{.metadata.labels.dns}" --ignore-not-found=true)
+                if (![string]::IsNullOrEmpty($dns)) {
+                    $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns.$customerid A /f"
+                    $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dns.$customerid A $loadBalancerInternalIP"    
+                }
+            }        
+        }
+    }
 
+    # now get DNS entries for external facing services
+    $loadBalancerIP = kubectl get svc traefik-ingress-service-public -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
     $externalDNSEntries = $(kubectl get ing --all-namespaces -l expose=external -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true).Split(" ")
 
     ForEach ($dns in $externalDNSEntries) { 
@@ -1218,7 +1236,7 @@ function global:GetDNSCommands() {
             # already included in internal load balancer
         }
         else {
-            if([string]::IsNullOrEmpty($loadBalancerIP)){
+            if ([string]::IsNullOrEmpty($loadBalancerIP)) {
                 throw "loadBalancerIP cannot be found"
             }
             $dnsWithoutDomain = $dns -replace ".healthcatalyst.net", ""

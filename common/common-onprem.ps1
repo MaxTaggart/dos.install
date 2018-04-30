@@ -45,6 +45,8 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
     MountFolderFromSecrets -baseUrl $baseUrl
 
     WriteToConsole "This node has successfully joined the cluster"
+
+    kubectl get nodes
     
     Stop-Transcript
 
@@ -182,6 +184,9 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
     WriteToLog "reloading firewall"
     sudo firewall-cmd --reload
+
+    WriteToLog "enabling autocomplete for kubectl"
+    echo "source <(kubectl completion bash)" >> ~/.bashrc
     
     return $Return    
 }

@@ -1,6 +1,8 @@
 # stop on error
 $ErrorActionPreference = "Stop"
 
+# curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/developer/createhyperv.ps1 | iex;
+
 function New-LinuxVM {
 	#requires -Modules Hyper-V
 	[CmdletBinding(SupportsShouldProcess=$true)]

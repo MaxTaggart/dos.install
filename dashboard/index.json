@@ -42,7 +42,8 @@
             "http": [
                 "dashboard.internal.yaml",
                 "dashboard.external.yaml",
-                "apidashboard.yaml"           
+                "apidashboard.yaml",
+                "grafana.yaml"        
             ],
             "tcp": []
         }

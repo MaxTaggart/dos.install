@@ -6,6 +6,8 @@ metadata:
   annotations:
     # from https://radu-matei.com/blog/k8s-appsvc/
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"  
+  labels:
+    dns: mysql    
 spec:
   selector:
     app: mysqlserver

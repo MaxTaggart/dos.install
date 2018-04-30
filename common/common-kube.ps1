@@ -822,7 +822,7 @@ function troubleshootIngress([ValidateNotNullOrEmpty()][string] $namespace) {
         Write-Host "Pod Selector: $servicePodSelectorsList"
         $pod = $(Invoke-Expression("kubectl get pod $servicePodSelectorsList -n $namespace -o jsonpath='{.items[*].metadata.name}'"))
         Write-Host "Pod name: $pod"
-        $podstatus = $(kubectl get pod $pod -n $namespace -n kube-system -o jsonpath="{.status.phase}")
+        $podstatus = $(kubectl get pod $pod -n $namespace -o jsonpath="{.status.phase}")
         Write-Host "Pod status: $podstatus"
         $containerImage = $(kubectl get pod $pod -n $namespace -o jsonpath="{.spec.containers[0].image}")
         Write-Host "Container image: $containerImage"
