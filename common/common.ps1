@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.04.30.02"
+$versioncommon = "2018.05.01.01"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -1191,40 +1191,26 @@ function global:GetDNSCommands() {
 
     # first get DNS entries for internal facing services
     $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
-    
-    $internalDNSEntries = $(kubectl get ing --all-namespaces -l expose=internal -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true).Split(" ")
-    ForEach ($dns in $internalDNSEntries) { 
-        if ([string]::IsNullOrEmpty($loadBalancerInternalIP)) {
-            throw "loadBalancerInternalIP cannot be found"
-        }
-        $dnsWithoutDomain = $dns -replace ".healthcatalyst.net", ""
-        $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dnsWithoutDomain A /f"
-        $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dnsWithoutDomain A $loadBalancerInternalIP"
-        # these are reverse DNS entries that don't seem to be needed
-        # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns PTR /f"
-        # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd 10.in-addr-arpa $loadBalancerInternalIP PTR $dns"
-    }
-    $customerid = ReadSecret -secretname customerid
-    $customerid = $customerid.ToLower().Trim()
 
-    $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $customerid A /f"
-    $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $customerid A $loadBalancerInternalIP"
+    if ([string]::IsNullOrEmpty($loadBalancerInternalIP)) {
 
-    # now get DNS entries for any TCP load balancers
-    $namespaces = $(kubectl get namespaces -o jsonpath="{.items[*].metadata.name}").Split(" ")
-    foreach ($namespace in $namespaces) {
-        # find services of type LoadBalancer
-        $tcpLoadBalancers = $(kubectl get svc -n $namespace -o jsonpath="{.items[?(@.spec.type=='LoadBalancer')].metadata.name}" --ignore-not-found=true)
-        if ($tcpLoadBalancers) {
-            $tcpLoadBalancers = $tcpLoadBalancers.Split(" ")
-            foreach ($tcpLoadBalancer in $tcpLoadBalancers) {
-                $dns = $(kubectl get svc $tcpLoadBalancer -n $namespace -o jsonpath="{.metadata.labels.dns}" --ignore-not-found=true)
-                if (![string]::IsNullOrEmpty($dns)) {
-                    $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns.$customerid A /f"
-                    $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dns.$customerid A $loadBalancerInternalIP"    
-                }
-            }        
+        $internalDNSEntries = $(kubectl get ing --all-namespaces -l expose=internal -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true).Split(" ")
+        ForEach ($dns in $internalDNSEntries) { 
+            if ([string]::IsNullOrEmpty($loadBalancerInternalIP)) {
+                throw "loadBalancerInternalIP cannot be found"
+            }
+            $dnsWithoutDomain = $dns -replace ".healthcatalyst.net", ""
+            $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dnsWithoutDomain A /f"
+            $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dnsWithoutDomain A $loadBalancerInternalIP"
+            # these are reverse DNS entries that don't seem to be needed
+            # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns PTR /f"
+            # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd 10.in-addr-arpa $loadBalancerInternalIP PTR $dns"
         }
+        $customerid = ReadSecret -secretname customerid
+        $customerid = $customerid.ToLower().Trim()
+
+        $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $customerid A /f"
+        $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $customerid A $loadBalancerInternalIP"
     }
 
     # now get DNS entries for external facing services
@@ -1246,6 +1232,25 @@ function global:GetDNSCommands() {
             # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd 10.in-addr-arpa $loadBalancerIP PTR $dns"        
         }
     }
+
+    # now get DNS entries for any TCP load balancers
+    $namespaces = $(kubectl get namespaces -o jsonpath="{.items[*].metadata.name}").Split(" ")
+    foreach ($namespace in $namespaces) {
+        # find services of type LoadBalancer
+        $tcpLoadBalancers = $(kubectl get svc -n $namespace -o jsonpath="{.items[?(@.spec.type=='LoadBalancer')].metadata.name}" --ignore-not-found=true)
+        if ($tcpLoadBalancers) {
+            $tcpLoadBalancers = $tcpLoadBalancers.Split(" ")
+            $loadBalancerTcpIP = $loadBalancerInternalIP
+            if ([string]::IsNullOrEmpty($loadBalancerInternalIP)) {$loadBalancerTcpIP = $loadBalancerIP}
+            foreach ($tcpLoadBalancer in $tcpLoadBalancers) {
+                $dns = $(kubectl get svc $tcpLoadBalancer -n $namespace -o jsonpath="{.metadata.labels.dns}" --ignore-not-found=true)
+                if (![string]::IsNullOrEmpty($dns)) {
+                    $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns.$customerid A /f"
+                    $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dns.$customerid A $loadBalancerTcpIP"    
+                }
+            }        
+        }
+    }    
     $Return.Commands = $myCommands
     return $Return
 }
