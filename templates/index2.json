@@ -42,7 +42,7 @@
                     "containerPort": 8083,
                     "name": "nlpwebserver",
                     "http": {
-                        "host": "nlp.CUSTOMERID.healthcatalyst.net",
+                        "host": "nlp.$CUSTOMERID$.healthcatalyst.net",
                         "path": "/solr",
                         "public": true
                     }

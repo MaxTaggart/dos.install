@@ -9,7 +9,7 @@ metadata:
         kubernetes.io/ingress.class: traefik
 spec:
     rules:
-    - host: solr.CUSTOMERID.healthcatalyst.net
+    - host: solr.$CUSTOMERID$.healthcatalyst.net
       http:
         paths:
         - backend:

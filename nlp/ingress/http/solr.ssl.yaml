@@ -11,9 +11,9 @@ spec:
     tls:
     - secretName: ssl-ahmn
       hosts:
-        - solr.CUSTOMERID.healthcatalyst.net
+        - solr.$CUSTOMERID$.healthcatalyst.net
     rules:
-    - host: solr.CUSTOMERID.healthcatalyst.net
+    - host: solr.$CUSTOMERID$.healthcatalyst.net
       http:
         paths:
         - backend:

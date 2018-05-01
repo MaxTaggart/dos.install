@@ -9,13 +9,13 @@ metadata:
         kubernetes.io/ingress.class: traefik
 spec:
     rules:
-    - host: nlp.CUSTOMERID.healthcatalyst.net
+    - host: nlp.$CUSTOMERID$.healthcatalyst.net
       http:
         paths:
         - backend:
             serviceName: nlpserverpublic
             servicePort: 80
-    - host: nlpjobs.CUSTOMERID.healthcatalyst.net
+    - host: nlpjobs.$CUSTOMERID$.healthcatalyst.net
       http:
         paths:
         - backend:

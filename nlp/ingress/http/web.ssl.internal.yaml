@@ -12,16 +12,16 @@ spec:
     tls:
     - secretName: ssl-ahmn
       hosts:
-        - nlp.CUSTOMERID.healthcatalyst.net
-        - nlpjobs.CUSTOMERID.healthcatalyst.net
+        - nlp.$CUSTOMERID$.healthcatalyst.net
+        - nlpjobs.$CUSTOMERID$.healthcatalyst.net
     rules:
-    - host: nlp.CUSTOMERID.healthcatalyst.net
+    - host: nlp.$CUSTOMERID$.healthcatalyst.net
       http:
         paths:
         - backend:
             serviceName: nlpserverpublic
             servicePort: 80
-    - host: nlpjobs.CUSTOMERID.healthcatalyst.net
+    - host: nlpjobs.$CUSTOMERID$.healthcatalyst.net
       http:
         paths:
         - backend:
