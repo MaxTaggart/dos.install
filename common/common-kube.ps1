@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.01.01"
+$versionkubecommon = "2018.05.01.02"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -754,9 +754,10 @@ function ShowLoadBalancerLogs() {
 
 function GenerateKubeConfigFile() {
     $user = "admin-user"
+    # https://kubernetes.io/docs/getting-started-guides/scratch/#preparing-credentials
     # https://stackoverflow.com/questions/47770676/how-to-create-a-kubectl-config-file-for-serviceaccount
     $secretname = $(kubectl -n kube-system get secret | grep $user | awk '{print $1}')
-    $ca = $(kubectl get secret $name -n kube-system -o jsonpath='{.data.ca\.crt}') # ca doesn't use base64 encoding
+    $ca = $(kubectl get secret $secretname -n kube-system -o jsonpath='{.data.ca\.crt}') # ca doesn't use base64 encoding
     $token = $(ReadSecretValue "$secretname" "token" "kube-system")
     $namespace = $(ReadSecretValue "$secretname" "namespace" "kube-system")
     $server = $(ReadSecret -secretname "dnshostname" -namespace "default")
