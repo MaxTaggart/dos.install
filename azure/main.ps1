@@ -338,11 +338,11 @@ while ($userinput -ne "q") {
             Start-Process -FilePath "http://$customerid.healthcatalyst.net/dashboard";
         }         
         '51' {
-            showMenu -baseUrl $baseUrl -namespace "fabricnlp" -isAzure $true
+            showMenu -baseUrl $GITHUB_URL -namespace "fabricnlp" -isAzure $true
             $skip=$true
         } 
         '52' {
-            showMenu -baseUrl $baseUrl -namespace "fabricrealtime" -isAzure $true
+            showMenu -baseUrl $GITHUB_URL -namespace "fabricrealtime" -isAzure $true
             $skip=$true
         } 
         'q' {
