@@ -1192,8 +1192,7 @@ function global:GetDNSCommands() {
     # first get DNS entries for internal facing services
     $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
 
-    if ([string]::IsNullOrEmpty($loadBalancerInternalIP)) {
-
+    if (![string]::IsNullOrEmpty($loadBalancerInternalIP)) {
         $internalDNSEntries = $(kubectl get ing --all-namespaces -l expose=internal -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true).Split(" ")
         ForEach ($dns in $internalDNSEntries) { 
             if ([string]::IsNullOrEmpty($loadBalancerInternalIP)) {
