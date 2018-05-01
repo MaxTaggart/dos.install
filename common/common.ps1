@@ -60,7 +60,7 @@ function global:CreateShareInStorageAccount([ValidateNotNullOrEmpty()] $storageA
 function global:CreateShare([ValidateNotNullOrEmpty()] $resourceGroup, [ValidateNotNullOrEmpty()] $sharename, $deleteExisting) {
     [hashtable]$Return = @{} 
 
-    $storageAccountName = ReadSecretValue -secretname azure-secret -valueName azurestorageaccountname 
+    $storageAccountName = ReadSecretData -secretname azure-secret -valueName azurestorageaccountname 
     
     CreateShareInStorageAccount -storageAccountName $storageAccountName -resourceGroup $resourceGroup -sharename $sharename -deleteExisting $deleteExisting
     return $Return
@@ -439,9 +439,9 @@ function global:GetVnet([ValidateNotNullOrEmpty()] $subscriptionId) {
     if ($confirmation -eq 'y') {
 
         # see if we had previously connected to a vnet
-        $vnetName = ReadSecretValue -secretname azure-vnet -valueName vnet
-        $subnetName = ReadSecretValue -secretname azure-vnet -valueName subnet
-        $subnetResourceGroup = ReadSecretValue -secretname azure-vnet -valueName subnetResourceGroup
+        $vnetName = ReadSecretData -secretname azure-vnet -valueName vnet
+        $subnetName = ReadSecretData -secretname azure-vnet -valueName subnet
+        $subnetResourceGroup = ReadSecretData -secretname azure-vnet -valueName subnetResourceGroup
 
         
         if ([string]::IsNullOrEmpty($vnetName)) {
@@ -1205,7 +1205,7 @@ function global:GetDNSCommands() {
             # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns PTR /f"
             # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd 10.in-addr-arpa $loadBalancerInternalIP PTR $dns"
         }
-        $customerid = ReadSecret -secretname customerid
+        $customerid = ReadSecretValue -secretname customerid
         $customerid = $customerid.ToLower().Trim()
 
         $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $customerid A /f"
@@ -1379,7 +1379,7 @@ function global:GetUrlAndIPForLoadBalancer([ValidateNotNullOrEmpty()]  $resource
     }
     
     if ($IS_CAFE_ENVIRONMENT) {
-        $customerid = ReadSecret -secretname customerid
+        $customerid = ReadSecretValue -secretname customerid
         $customerid = $customerid.ToLower().Trim()
         $url = "dashboard.$customerid.healthcatalyst.net"
         $loadBalancerIP = $loadBalancerInternalIP
@@ -1661,7 +1661,7 @@ function global:SaveConfigFile() {
 
 function global:GetResourceGroup() {
     [hashtable]$Return = @{} 
-    $Return.ResourceGroup = ReadSecretValue -secretname azure-secret -valueName "resourcegroup"    
+    $Return.ResourceGroup = ReadSecretData -secretname azure-secret -valueName "resourcegroup"    
 
     return $Return
 }
@@ -1701,7 +1701,7 @@ function global:DeleteAzureStorage([ValidateNotNullOrEmpty()] $namespace) {
     Write-Information -MessageData "Using resource group: $resourceGroup"        
     
     $shareName = "$namespace"
-    $storageAccountName = ReadSecretValue -secretname azure-secret -valueName "azurestorageaccountname" 
+    $storageAccountName = ReadSecretData -secretname azure-secret -valueName "azurestorageaccountname" 
     
     $storageAccountConnectionString = az storage account show-connection-string -n $storageAccountName -g $resourceGroup -o tsv
     

@@ -121,7 +121,7 @@ while ($userinput -ne "q") {
                 $DNS_RESOURCE_GROUP = "dns"
             }
 
-            $customerid = ReadSecret -secretname customerid
+            $customerid = ReadSecretValue -secretname customerid
             $customerid = $customerid.ToLower().Trim()
 
             $dnsrecordname = "$customerid.healthcatalyst.net"
@@ -134,7 +134,7 @@ while ($userinput -ne "q") {
                 $DNS_RESOURCE_GROUP = "dns"
             }
 
-            $customerid = ReadSecret -secretname customerid
+            $customerid = ReadSecretValue -secretname customerid
             $customerid = $customerid.ToLower().Trim()
 
             $dnsrecordname = "$customerid.healthcatalyst.net"
@@ -156,7 +156,7 @@ while ($userinput -ne "q") {
             $namespace="fabricnlp"
             CreateNamespaceIfNotExists $namespace
             AskForPasswordAnyCharacters -secretname "smtprelaypassword" -prompt "Please enter SMTP relay password" -namespace $namespace
-            $dnshostname=$(ReadSecret -secretname "dnshostname" -namespace "default")
+            $dnshostname=$(ReadSecretValue -secretname "dnshostname" -namespace "default")
             SaveSecretValue -secretname "nlpweb-external-url" -valueName "url" -value "nlp.$dnshostname" -namespace $namespace
             SaveSecretValue -secretname "jobserver-external-url" -valueName "url" -value "nlpjobs.$dnshostname" -namespace $namespace
             InstallStack -namespace $namespace -baseUrl $GITHUB_URL -appfolder "nlp" -isAzure 1
@@ -216,7 +216,7 @@ while ($userinput -ne "q") {
             }            
         } 
         '22' {        
-            $DEFAULT_RESOURCE_GROUP = ReadSecretValue -secretname azure-secret -valueName resourcegroup
+            $DEFAULT_RESOURCE_GROUP = ReadSecretData -secretname azure-secret -valueName resourcegroup
             
             if ([string]::IsNullOrWhiteSpace($AKS_PERS_RESOURCE_GROUP)) {
                 Do { 
@@ -281,7 +281,7 @@ while ($userinput -ne "q") {
         } 
         '24' {
             # restart VMs
-            $AKS_PERS_RESOURCE_GROUP = ReadSecretValue -secretname azure-secret -valueName resourcegroup
+            $AKS_PERS_RESOURCE_GROUP = ReadSecretData -secretname azure-secret -valueName resourcegroup
 
             if ([string]::IsNullOrWhiteSpace($AKS_PERS_RESOURCE_GROUP)) {
                 Do { 
@@ -299,7 +299,7 @@ while ($userinput -ne "q") {
             Start-Process powershell -verb RunAs -ArgumentList "ipconfig /flushdns"
         } 
         '30' {
-            $AKS_PERS_RESOURCE_GROUP = ReadSecretValue -secretname azure-secret -valueName resourcegroup
+            $AKS_PERS_RESOURCE_GROUP = ReadSecretData -secretname azure-secret -valueName resourcegroup
 
             $urlAndIPForLoadBalancer=$(GetUrlAndIPForLoadBalancer "$AKS_PERS_RESOURCE_GROUP")
             $url=$($urlAndIPForLoadBalancer.Url)
@@ -311,7 +311,7 @@ while ($userinput -ne "q") {
             Write-Host "curl --header 'Host: $url' 'http://$ip/dashboard' -k" 
             } 
         '31' {
-            $DEFAULT_RESOURCE_GROUP = ReadSecretValue -secretname azure-secret -valueName resourcegroup
+            $DEFAULT_RESOURCE_GROUP = ReadSecretData -secretname azure-secret -valueName resourcegroup
             
             if ([string]::IsNullOrWhiteSpace($AKS_PERS_RESOURCE_GROUP)) {
                 Do { 
@@ -332,7 +332,7 @@ while ($userinput -ne "q") {
             }
         }         
         '33' {
-            $customerid = ReadSecret -secretname customerid
+            $customerid = ReadSecretValue -secretname customerid
             $customerid = $customerid.ToLower().Trim()
             Write-Host "Launching http://$customerid.healthcatalyst.net/dashboard in the web browser"
             Start-Process -FilePath "http://$customerid.healthcatalyst.net/dashboard";
