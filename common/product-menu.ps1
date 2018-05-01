@@ -1,23 +1,23 @@
-$versionmenucommon = "2018.04.18.01"
+$versionmenucommon = "2018.05.01.01"
 
-Write-Information -MessageData "Including realtime-menu.ps1 version $versionmenucommon"
+Write-Information -MessageData "Including product-menu.ps1 version $versionmenucommon"
 function global:GetCommonMenuVersion() {
     return $versionmenucommon
 }
 
-function showRealtimeMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
-    $namespace="fabricrealtime"
+function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $namespace, [bool] $isAzure){
+    $folder = $namespace.Replace("fabric","")
     $userinput = ""
     while ($userinput -ne "q") {
         Write-Host "================ Health Catalyst version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
         Write-Host "------ Install -------"
-        Write-Host "1: Install Realtime"
+        Write-Host "1: Install $namespace"
         Write-Host "------ Status --------"
-        Write-Host "2: Show status of realtime"
+        Write-Host "2: Show status of $namespace"
         Write-Host "3: Show web site urls"
-        Write-Host "4: Show realtime passwords"
-        Write-Host "5: Show Realtime detailed status"
-        Write-Host "6: Show Realtime logs"
+        Write-Host "4: Show $namespace passwords"
+        Write-Host "5: Show $namespace detailed status"
+        Write-Host "6: Show $namespace logs"
         Write-Host "7: Show urls to download client certificates"
         Write-Host "8: Show DNS entries for /etc/hosts"
         Write-Host "9: Troubleshoot Ingresses"        
@@ -26,7 +26,7 @@ function showRealtimeMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
         $userinput = Read-Host "Please make a selection"
         switch ($userinput) {
             '1' {
-                InstallStack $baseUrl "$namespace" "realtime"
+                InstallStack $baseUrl "$namespace" $folder
             } 
             '2' {
                 kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=$namespace -o wide
@@ -87,4 +87,4 @@ function showRealtimeMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
     }        
 }
 
-Write-Information -MessageData "end realtime-menu.ps1 version $versionmenucommon"
+Write-Information -MessageData "end product-menu.ps1 version $versionmenucommon"
