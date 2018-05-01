@@ -9,7 +9,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
     $folder = $namespace.Replace("fabric", "")
     $userinput = ""
     while ($userinput -ne "q") {
-        Write-Host "================ Health Catalyst version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
+        Write-Host "================ $namespace menu version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
         Write-Host "------ Install -------"
         Write-Host "1: Install $namespace"
         Write-Host "------ Status --------"
@@ -25,7 +25,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
         Write-Host "11: Show commands to SSH to $namespace containers"
         Write-Host "12: Delete all data in $namespace"        
         Write-Host "-----------"
-        Write-Host "q: Quit"
+        Write-Host "q: Go back to main menu"
         $userinput = Read-Host "Please make a selection"
         switch ($userinput) {
             '1' {

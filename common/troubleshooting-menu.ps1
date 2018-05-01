@@ -1,4 +1,4 @@
-$versionmenutroubleshooting = "2018.05.01.01"
+$versionmenutroubleshooting = "2018.05.01.02"
 
 Write-Information -MessageData "Including troubleshooting-menu.ps1 version $versionmenucommon"
 function global:GetTroubleshootingMenuVersion() {
@@ -8,7 +8,7 @@ function global:GetTroubleshootingMenuVersion() {
 function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
     $userinput = ""
     while ($userinput -ne "q") {
-        Write-Host "================ Health Catalyst version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
+        Write-Host "================ Troubleshooting menu version $versionmenutroubleshooting, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
         Write-Host "0: Show status of cluster"        
         Write-Host "-----  Kubernetes ------"
         Write-Host "1: Open Kubernetes dashboard"
@@ -30,7 +30,7 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
         Write-Host "33: Create kubeconfig"
         Write-Host "--- helpers ---"
         Write-Host "41: Optimize Centos under Hyper-V"
-        Write-Host "q: Quit"
+        Write-Host "q: Go back to main menu"
         $userinput = Read-Host "Please make a selection"
         switch ($userinput) {
             '0' {

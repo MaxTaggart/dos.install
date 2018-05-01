@@ -39,6 +39,7 @@ $InformationPreference = "Continue"
 
 $userinput = ""
 while ($userinput -ne "q") {
+    $skip=$false
     Write-Host "================ Health Catalyst version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
     Write-Host "------ On-Premise -------"
     Write-Host "1: Setup Master VM"
@@ -72,20 +73,25 @@ while ($userinput -ne "q") {
         } 
         '20' {
             showTroubleshootingMenu -baseUrl $baseUrl
+            $skip=$true
         } 
         '51' {
             showMenu -baseUrl $baseUrl -namespace "fabricnlp" -isAzure $false
+            $skip=$true
         } 
         '52' {
             showMenu -baseUrl $baseUrl -namespace "fabricrealtime" -isAzure $false
+            $skip=$true
         } 
         'q' {
             return
         }
     }
-    $userinput = Read-Host -Prompt "Press Enter to continue or q to exit"
-    if($userinput -eq "q"){
-        return
+    if(!($skip)){
+        $userinput = Read-Host -Prompt "Press Enter to continue or q to exit"
+        if($userinput -eq "q"){
+            return
+        }    
     }
     [Console]::ResetColor()
     Clear-Host

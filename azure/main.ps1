@@ -1,4 +1,4 @@
-$version = "2018.05.01.01"
+$version = "2018.05.01.02"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -31,6 +31,7 @@ $InformationPreference = "Continue"
 
 $userinput = ""
 while ($userinput -ne "q") {
+    $skip=$false
     $currentcluster=""
     if (Test-CommandExists kubectl) {
         $currentcluster=$(kubectl config current-context 2> $null)
@@ -338,17 +339,21 @@ while ($userinput -ne "q") {
         }         
         '51' {
             showMenu -baseUrl $baseUrl -namespace "fabricnlp" -isAzure $true
+            $skip=$true
         } 
         '52' {
             showMenu -baseUrl $baseUrl -namespace "fabricrealtime" -isAzure $true
+            $skip=$true
         } 
         'q' {
             return
         }
     }
-    $userinput = Read-Host -Prompt "Press Enter to continue or q to exit"
-    if($userinput -eq "q"){
-        return
+    if(!($skip)){
+        $userinput = Read-Host -Prompt "Press Enter to continue or q to exit"
+        if($userinput -eq "q"){
+            return
+        }    
     }
     [Console]::ResetColor()
     Clear-Host
