@@ -37,9 +37,9 @@
         "external_ip_whitelist": ""
     },
     "networking": {
-        "vnet": "devkubernetes-vnet",
+        "vnet": "DevKubernetes",
         "subnet": "default",
-        "subnet_resource_group": "Imran"
+        "subnet_resource_group": "DevKubernetes"
     },
     "network_security_group": {
         "name": "",

@@ -79,6 +79,7 @@ function createShortcutFordos(){
 
     mkdir -p $HOME/bin
     installscript="$HOME/bin/dos"
+    rm -f $installscript
     if [[ ! -f "$installscript" ]]; then
         echo "#!/bin/bash" > $installscript
         echo curl -o "${HOME}/onprem-menu.ps1" -sSL "${baseUrl}/menus/onprem-menu.ps1?p="'$RANDOM' >> $installscript
