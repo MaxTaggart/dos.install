@@ -1,4 +1,4 @@
-$version = "2018.04.18.01"
+$version = "2018.05.01.01"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -60,17 +60,10 @@ while ($userinput -ne "q") {
     Write-Host "31: Fix load balancers"
     Write-Host "32: Show load balancer logs"
     Write-Host "33: Launch Load Balancer Dashboard"
-    Write-Host "------ NLP -----"
-    Write-Host "40: Show status of NLP"
-    Write-Host "41: Show detailed status of NLP"
-    Write-Host "42: Test web sites"
-    Write-Host "43: Show passwords"
-    Write-Host "44: Show NLP logs"
-    Write-Host "45: Restart NLP"
-    Write-Host "46: Show commands to SSH to NLP containers"
-    Write-Host "47: Delete all data in fabricnlp"
-    Write-Host "------ Realtime -----"
-    Write-Host "51: Show status of realtime"
+    Write-Host "-----------"
+    Write-Host "51: Fabric NLP Menu"
+    Write-Host "-----------"
+    Write-Host "52: Fabric Realtime Menu"
     Write-Host "-----------"
     Write-Host "q: Quit"
     $userinput = Read-Host "Please make a selection"
@@ -339,92 +332,11 @@ while ($userinput -ne "q") {
             Write-Host "Launching http://$customerid.healthcatalyst.net/dashboard in the web browser"
             Start-Process -FilePath "http://$customerid.healthcatalyst.net/dashboard";
         }         
-        '40' {
-            kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=fabricnlp -o wide
-        } 
-        '41' {
-            $pods = $(kubectl get pods -n fabricnlp -o jsonpath='{.items[*].metadata.name}')
-            foreach ($pod in $pods.Split(" ")) {
-                Write-Host "=============== Describe Pod: $pod ================="
-                kubectl describe pods $pod -n fabricnlp 
-            }            
-        } 
-        '42' {
-            $loadBalancerIP = kubectl get svc traefik-ingress-service-public -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
-            $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
-            if ([string]::IsNullOrWhiteSpace($loadBalancerIP)) {
-                $loadBalancerIP = $loadBalancerInternalIP
-            }
-            $customerid = ReadSecret -secretname customerid
-            $customerid = $customerid.ToLower().Trim()
-                                    
-            # Invoke-WebRequest -useb -Headers @{"Host" = "nlp.$customerid.healthcatalyst.net"} -Uri http://$loadBalancerIP/nlpweb | Select-Object -Expand Content
-
-            Write-Host "To test out the NLP services, open Git Bash and run:"
-            Write-Host "curl -L --verbose --header 'Host: solr.$customerid.healthcatalyst.net' 'http://$loadBalancerInternalIP/solr' -k" 
-            Write-Host "curl -L --verbose --header 'Host: $customerid.healthcatalyst.net' 'http://$loadBalancerInternalIP/dashboard' -k" 
-            Write-Host "curl -L --verbose --header 'Host: nlp.$customerid.healthcatalyst.net' 'http://$loadBalancerIP/nlpweb' -k" 
-            Write-Host "curl -L --verbose --header 'Host: nlpjobs.$customerid.healthcatalyst.net' 'http://$loadBalancerIP/nlp' -k"
-
-            Write-Host "If you didn't setup DNS, add the following entries in your c:\windows\system32\drivers\etc\hosts file to access the urls from your browser"
-            Write-Host "$loadBalancerInternalIP solr.$customerid.healthcatalyst.net"            
-            Write-Host "$loadBalancerIP nlp.$customerid.healthcatalyst.net"            
-            Write-Host "$loadBalancerIP nlpjobs.$customerid.healthcatalyst.net"
-            Write-Host "$loadBalancerInternalIP $customerid.healthcatalyst.net"            
-            
-            # clear Google DNS cache: http://www.redsome.com/flush-clear-dns-cache-google-chrome-browser/
-            Write-Host "Launching http://$loadBalancerInternalIP/dashboard in the web browser"
-            Start-Process -FilePath "http://$loadBalancerInternalIP/dashboard";
-            Write-Host "Launching http://$loadBalancerInternalIP/solr in the web browser"
-            Start-Process -FilePath "http://$loadBalancerInternalIP/solr";
-            Write-Host "Launching http://$loadBalancerIP/nlpweb in the web browser"
-            Start-Process -FilePath "http://$loadBalancerIP/nlpweb";
-        } 
-        '43' {
-            $namespace="fabricnlp"
-            $secretname="mysqlrootpassword"
-            $secretvalue=$(ReadSecretPassword -secretname $secretname -namespace $namespace)
-            Write-Host "MySql root password: $secretvalue"
-            Write-Host "To recreate the secret:"
-            Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
-            $secretname="mysqlpassword"
-            $secretvalue=$(ReadSecretPassword -secretname $secretname -namespace $namespace)            
-            Write-Host "MySql NLP_APP_USER password: $secretvalue"
-            Write-Host "To recreate the secret:"
-            Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
-            $secretname="smtprelaypassword"
-            $secretvalue=$(ReadSecretPassword -secretname $secretname -namespace $namespace)             
-            Write-Host "SendGrid SMTP Relay key: $secretvalue"
-            Write-Host "To recreate the secret:"
-            Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
-        } 
-        '44' {
-            $pods = $(kubectl get pods -n fabricnlp -o jsonpath='{.items[*].metadata.name}')
-            foreach ($pod in $pods.Split(" ")) {
-                Write-Host "=============== Pod: $pod ================="
-                kubectl logs --tail=20 $pod -n fabricnlp
-            }
-        } 
-        '45' {
-            kubectl delete --all 'pods' --namespace=fabricnlp --ignore-not-found=true                        
-        } 
-        '46' {
-            $pods = $(kubectl get pods -n fabricnlp -o jsonpath='{.items[*].metadata.name}')
-            foreach ($pod in $pods.Split(" ")) {
-                Write-Host "kubectl exec -it $pod -n fabricnlp -- sh"
-            }
-        } 
-        '47' {
-            Write-Warning "This will delete all data in this namespace and clear out any secrets"
-            Do { $confirmation = Read-Host "Do you want to continue? (y/n)"}
-            while ([string]::IsNullOrWhiteSpace($confirmation))
-        
-            if ($confirmation -eq "y") {
-                DeleteNamespaceAndData -namespace "fabricnlp" -isAzure 1
-            }
-        } 
         '51' {
-            kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=fabricrealtime -o wide
+            showMenu -baseUrl $baseUrl -namespace "fabricnlp" -isAzure $true
+        } 
+        '52' {
+            showMenu -baseUrl $baseUrl -namespace "fabricrealtime" -isAzure $true
         } 
         'q' {
             return

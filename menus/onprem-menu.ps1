@@ -1,5 +1,5 @@
 param([ValidateNotNullOrEmpty()][string]$baseUrl, [string]$prerelease)    
-$version = "2018.05.01.01"
+$version = "2018.05.01.02"
 Write-Host "--- master.ps1 version $version ---"
 Write-Host "baseUrl = $baseUrl"
 Write-Host "prerelease flag: $prerelease"
@@ -49,9 +49,9 @@ while ($userinput -ne "q") {
     Write-Host "-----------"
     Write-Host "20: Troubleshooting Menu"
     Write-Host "-----------"
-    Write-Host "30: Fabric NLP Menu"
+    Write-Host "51: Fabric NLP Menu"
     Write-Host "-----------"
-    Write-Host "40: Fabric Realtime Menu"
+    Write-Host "52: Fabric Realtime Menu"
     Write-Host "q: Quit"
     $userinput = Read-Host "Please make a selection"
     switch ($userinput) {
@@ -73,10 +73,10 @@ while ($userinput -ne "q") {
         '20' {
             showTroubleshootingMenu -baseUrl $baseUrl
         } 
-        '30' {
+        '51' {
             showMenu -baseUrl $baseUrl -namespace "fabricnlp" -isAzure $false
         } 
-        '40' {
+        '52' {
             showMenu -baseUrl $baseUrl -namespace "fabricrealtime" -isAzure $false
         } 
         'q' {

@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.04.18.02"
+$versionkubecommon = "2018.05.01.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -829,6 +829,18 @@ function troubleshootIngress([ValidateNotNullOrEmpty()][string] $namespace) {
         $containerPort = $(kubectl get pod $pod -n $namespace -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
         Write-Host "Container Port: $containerPort"
     }   
+}
+
+function DeleteAllPodsInNamespace([ValidateNotNullOrEmpty()][string] $namespace){
+    kubectl delete --all 'pods' --namespace=$namespace --ignore-not-found=true
+}
+
+function ShowSSHCommandsToContainers([ValidateNotNullOrEmpty()][string] $namespace){
+    $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
+    foreach ($pod in $pods.Split(" ")) {
+        Write-Host "kubectl exec -it $pod -n fabricnlp -- sh"
+    }
+
 }
 # --------------------
 Write-Information -MessageData "end common-kube.ps1 version $versionkubecommon"

@@ -81,11 +81,11 @@ function createShortcutFordos(){
     installscript="$HOME/bin/dos"
     if [[ ! -f "$installscript" ]]; then
         echo "#!/bin/bash" > $installscript
-        echo curl -o "${HOME}/master.ps1" -sSL "${baseUrl}/menus/master.ps1?p="'$RANDOM' >> $installscript
+        echo curl -o "${HOME}/onprem-menu.ps1" -sSL "${baseUrl}/menus/onprem-menu.ps1?p="'$RANDOM' >> $installscript
         if [[ "$prerelease" = true ]]; then
-            echo pwsh -f "${HOME}/master.ps1 -baseUrl ${baseUrl} -prerelease yes" >> $installscript
+            echo pwsh -f "${HOME}/onprem-menu.ps1 -baseUrl ${baseUrl} -prerelease yes" >> $installscript
         else
-            echo pwsh -f "${HOME}/master.ps1 -baseUrl ${baseUrl} -prerelease no" >> $installscript
+            echo pwsh -f "${HOME}/onprem-menu.ps1 -baseUrl ${baseUrl} -prerelease no" >> $installscript
         fi
 
         chmod +x $installscript
