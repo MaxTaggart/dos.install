@@ -25,6 +25,12 @@ function InstallPrerequisites(){
     # sudo sh -c 'echo "\nDefaults timestamp_timeout=-1">>/etc/sudoers'
     Write-Status "--- updating yum packages ---"
     #sudo yum update -y -q -e 0
+    # http://man7.org/linux/man-pages/man8/yum.8.html
+    # foo=$(sudo yum -y check-update)
+    # if [ $? = 100 ];then 
+    #     sudo yum update -y
+    # fi
+
     sudo yum update -y
 
     echo "---- RAM ----"

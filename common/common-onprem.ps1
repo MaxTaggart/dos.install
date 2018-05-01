@@ -890,7 +890,7 @@ function OpenKubernetesDashboard() {
     WriteToConsole "${myip} ${dnshostname}"
     WriteToConsole "-"
     WriteToConsole "You can access the kubernetes dashboard at: https://${dnshostname}/api/ or https://${myip}/api/"
-    $secretname = $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+    $secretname = $(kubectl -n kube-system get secret | grep api-dashboard-user | awk '{print $1}')
     $token = $(ReadSecretData "$secretname" "token" "kube-system")
     WriteToConsole "Bearer Token"
     WriteToConsole $token

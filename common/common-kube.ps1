@@ -769,7 +769,7 @@ function ShowLoadBalancerLogs() {
 }
 
 function GenerateKubeConfigFile() {
-    $user = "admin-user"
+    $user = "api-dashboard-user"
     # https://kubernetes.io/docs/getting-started-guides/scratch/#preparing-credentials
     # https://stackoverflow.com/questions/47770676/how-to-create-a-kubectl-config-file-for-serviceaccount
     $secretname = $(kubectl -n kube-system get secret | grep $user | awk '{print $1}')

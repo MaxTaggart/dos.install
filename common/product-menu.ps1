@@ -9,7 +9,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
     $folder = $namespace.Replace("fabric", "")
     $userinput = ""
     while ($userinput -ne "q") {
-        Write-Host "================ $namespace menu version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
+        Write-Host "================ $namespace menu version $version, common functions kube:$(GetCommonKubeVersion) ================"
         Write-Host "------ Install -------"
         Write-Host "1: Install $namespace"
         Write-Host "------ Status --------"
@@ -90,6 +90,8 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
                     WriteSecretPasswordToOutput -namespace $namespace -secretname "mysqlrootpassword"
                     WriteSecretPasswordToOutput -namespace $namespace -secretname "mysqlpassword"
                     WriteSecretPasswordToOutput -namespace $namespace -secretname "smtprelaypassword"
+                    WriteSecretValueToOutput  -namespace $namespace -secretname "jobserver-external-url"
+                    WriteSecretValueToOutput  -namespace $namespace -secretname "nlpweb-external-url"
                 }
             } 
             '5' {
