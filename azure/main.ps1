@@ -212,9 +212,9 @@ while ($userinput -ne "q") {
                 Start-Process -FilePath "http://localhost:$port/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy";
             }
             else {
-                Write-Host "Launching http://localhost:$port/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/ in the web browser"
+                Write-Host "Launching http://localhost:$port/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/ in the web browser"
                 Write-Host "Click Skip on login screen";
-                Start-Process -FilePath "http://localhost:$port/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/";
+                Start-Process -FilePath "http://localhost:$port/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/";
             }            
         } 
         '22' {        
