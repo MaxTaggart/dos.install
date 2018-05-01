@@ -1,4 +1,4 @@
-$versionmenutroubleshooting = "2018.04.18.01"
+$versionmenutroubleshooting = "2018.05.01.01"
 
 Write-Information -MessageData "Including troubleshooting-menu.ps1 version $versionmenucommon"
 function global:GetTroubleshootingMenuVersion() {
@@ -95,4 +95,4 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
     }        
 }
 
-Write-Information -MessageData "end realtime-menu.ps1 version $versionmenutroubleshooting"
+Write-Information -MessageData "end troubleshooting-menu.ps1 version $versionmenutroubleshooting"

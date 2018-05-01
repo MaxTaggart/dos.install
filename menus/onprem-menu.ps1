@@ -1,6 +1,6 @@
 param([ValidateNotNullOrEmpty()][string]$baseUrl, [string]$prerelease)    
+$version = "2018.05.01.02"
 Write-Host "--- master.ps1 version $version ---"
-$version = "2018.04.18.01"
 Write-Host "baseUrl = $baseUrl"
 Write-Host "prerelease flag: $prerelease"
 
@@ -30,7 +30,7 @@ ImportModuleFromUrl -module "common-kube"
 
 ImportModuleFromUrl -module "common-onprem"
 
-ImportModuleFromUrl -module "realtime-menu"
+ImportModuleFromUrl -module "product-menu"
 
 ImportModuleFromUrl -module "troubleshooting-menu"
 
@@ -49,7 +49,9 @@ while ($userinput -ne "q") {
     Write-Host "-----------"
     Write-Host "20: Troubleshooting Menu"
     Write-Host "-----------"
-    Write-Host "40: Fabric Realtime Menu"
+    Write-Host "51: Fabric NLP Menu"
+    Write-Host "-----------"
+    Write-Host "52: Fabric Realtime Menu"
     Write-Host "q: Quit"
     $userinput = Read-Host "Please make a selection"
     switch ($userinput) {
@@ -71,8 +73,11 @@ while ($userinput -ne "q") {
         '20' {
             showTroubleshootingMenu -baseUrl $baseUrl
         } 
-        '40' {
-            showRealtimeMenu -baseUrl $baseUrl
+        '51' {
+            showMenu -baseUrl $baseUrl -namespace "fabricnlp" -isAzure $false
+        } 
+        '52' {
+            showMenu -baseUrl $baseUrl -namespace "fabricrealtime" -isAzure $false
         } 
         'q' {
             return

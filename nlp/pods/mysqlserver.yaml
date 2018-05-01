@@ -52,6 +52,14 @@ spec:
             - containerPort: 3306
               # name of the port
               name: mysql
+          readinessProbe:
+            exec:
+              command:
+              - cat
+              - /opt/healthcatalyst/done.txt
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
           volumeMounts:
             - name: mysql-persistent-storage
               # point the /var/lib/mysql folder inside the container to the volume called mysql-persistent-storage

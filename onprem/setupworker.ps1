@@ -7,8 +7,8 @@ Write-Output "joincommand:$joincommand"
 Write-Output "----"
 
 # This script is meant for quick & easy install via:
-#   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | iex;
-#   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/master.ps1 | pwsh -Interactive -NoExit -c -;
+#   Invoke-WebRequest -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/onprem-menu.ps1 | iex;
+#   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/menus/onprem-menu.ps1 | pwsh -Interactive -NoExit -c -;
 
 Write-Host "--- setupworker.ps1 version $version ---"
 
