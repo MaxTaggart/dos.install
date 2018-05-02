@@ -837,7 +837,7 @@ function global:CreateBareMetalCluster([Parameter(Mandatory=$true)][ValidateNotN
         -image $urn
     
     Write-Host "ssh -i ${SSH_PRIVATE_KEY_FILE_UNIX_PATH} azureuser@$($VMInfo.IP)"
-    Write-Host "Run: curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/setupmaster.sh | bash"
+    Write-Host "Run: curl -sSL ${$baseUrl}/onprem/main.sh | bash"
     
     Write-Host "Creating linux vm 1"
     $VMInfo = CreateVM -vm "k8s-linux-agent-1" -resourceGroup $AKS_PERS_RESOURCE_GROUP `

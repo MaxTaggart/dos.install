@@ -1,8 +1,9 @@
 #!/bin/bash
 # from http://redsymbol.net/articles/unofficial-bash-strict-mode/
-set -e
-set -u
-set -o pipefail
+# set -e option instructs bash to immediately exit if any command [1] has a non-zero exit status
+# when set -u is set, a reference to any variable you haven't previously defined - with the exceptions of $* and $@ - is an error, and causes the program to immediately exit
+# set -o pipefail: If any command in a pipeline fails, that return code will be used as the return code of the whole pipeline
+set -euo pipefail
 
 #
 # This script is meant for quick & easy install via:
