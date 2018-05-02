@@ -240,7 +240,7 @@ while ($userinput -ne "q") {
             LaunchAzureLoadBalancerDashboard
         } 
         '50' {
-            showTroubleshootingMenu -baseUrl $baseUrl -isAzure $true
+            showTroubleshootingMenu -baseUrl $GITHUB_URL -isAzure $true
             $skip = $true
         }                 
         '51' {
