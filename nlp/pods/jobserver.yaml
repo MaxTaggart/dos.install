@@ -29,12 +29,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: nlpweb-external-url
-                  key: url
+                  key: value
             - name: JOBSERVER_EXTERNAL_URL
               valueFrom:
                 secretKeyRef:
                   name: jobserver-external-url
-                  key: url
+                  key: value
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
