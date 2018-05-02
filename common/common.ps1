@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.01.01"
+$versioncommon = "2018.05.01.02"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -176,12 +176,12 @@ function global:RestartVMsInResourceGroup([ValidateNotNullOrEmpty()] $resourceGr
     }
 
     # sudo systemctl restart etcd 
-    ForEach ($vm in $virtualmachines) {
-        if ($vm -match "master" ) {
-            Write-Information -MessageData "Sending command to master($vm) to restart etcd due to bug: https://github.com/Azure/acs-engine/issues/2282"
-            az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "systemctl restart etcd"
-        }
-    }
+    # ForEach ($vm in $virtualmachines) {
+    #     if ($vm -match "master" ) {
+    #         Write-Information -MessageData "Sending command to master($vm) to restart etcd due to bug: https://github.com/Azure/acs-engine/issues/2282"
+    #         az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "systemctl restart etcd"
+    #     }
+    # }
 
     # systemctl enable etcd.service
     

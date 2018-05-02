@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.01.01"
+$versionazurecommon = "2018.05.01.02"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -1017,7 +1017,7 @@ function global:RestartDNSPodsIfNeeded() {
         } 
     }             
 }
-function global:RestartVMsInResourceGroup() {
+function global:RestartAzureVMsInResourceGroup() {
     # restart VMs
     $AKS_PERS_RESOURCE_GROUP = ReadSecretData -secretname azure-secret -valueName resourcegroup
 
