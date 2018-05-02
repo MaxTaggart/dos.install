@@ -29,7 +29,18 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
         $userinput = Read-Host "Please make a selection"
         switch ($userinput) {
             '1' {
-                InstallStack $baseUrl "$namespace" $folder
+                if ($namespace -eq "fabricrealtime") {
+                    InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "realtime" -isAzure 1
+                }
+                elseif ($namespace -eq "fabricnlp") {
+                    $namespace="fabricnlp"
+                    CreateNamespaceIfNotExists $namespace
+                    AskForPasswordAnyCharacters -secretname "smtprelaypassword" -prompt "Please enter SMTP relay password" -namespace $namespace
+                    $dnshostname=$(ReadSecretValue -secretname "dnshostname" -namespace "default")
+                    SaveSecretValue -secretname "nlpweb-external-url" -valueName "value" -value "nlp.$dnshostname" -namespace $namespace
+                    SaveSecretValue -secretname "jobserver-external-url" -valueName "value" -value "nlpjobs.$dnshostname" -namespace $namespace
+                    InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "nlp" -isAzure 1                            
+                }
             } 
             '2' {
                 kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=$namespace -o wide
