@@ -637,7 +637,7 @@ function global:AddFolderToPathEnvironmentVariable([ValidateNotNullOrEmpty()][st
     }
     return $Return
 }
-function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()][string] $version) {
+function global:DownloadAzCliIfNeeded([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $version) {
     [hashtable]$Return = @{} 
 
     # install az cli from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
@@ -647,7 +647,8 @@ function global:DownloadAzCliIfNeeded([ValidateNotNullOrEmpty()][string] $versio
         $downloadazcli = $True
     }
     else {
-        $azcurrentversion = az -v | Select-String "azure-cli" | Select-Object -exp line
+        $azcurrentversion = $(az -v | Select-String "azure-cli" | Select-Object -exp line)
+        Write-Information -MessageData "Desired az cli: [$desiredAzClVersion], Found az cli: [$azcurrentversion]"
         $justVersion = [System.Version] $azcurrentversion.Substring($azcurrentversion.IndexOf('(') + 1, $azcurrentversion.IndexOf(')') - $azcurrentversion.IndexOf('(') - 1)
         # we should get: azure-cli (2.0.22)
         if ($justVersion -lt $desiredAzClVersion) {
@@ -1785,7 +1786,6 @@ function global:InstallStack([ValidateNotNullOrEmpty()][string] $baseUrl, [Valid
     [hashtable]$Return = @{} 
 
     if ($isAzure) {
-        DownloadAzCliIfNeeded
         $userInfo = $(GetLoggedInUserInfo)
     }
     

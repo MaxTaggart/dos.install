@@ -1,8 +1,11 @@
-param([bool]$prerelease)    
-$version = "2018.05.01.05"
+param([bool]$prerelease, [bool]$local)    
+$version = "2018.05.02.01"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
+if ($local) {
+    Write-Host "use local files: $local"    
+}
 # stop whenever there is an error
 $ErrorActionPreference = "Stop"
 # show Information messages
@@ -25,24 +28,45 @@ $randomstring += $set | Get-Random
 
 Write-Host "Powershell version: $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor).$($PSVersionTable.PSVersion.Build)"
 
-Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring | Invoke-Expression;
-# Get-Content ./common/common-kube.ps1 -Raw | Invoke-Expression;
+if ($local) {
+    Get-Content ./common/common-kube.ps1 -Raw | Invoke-Expression;
+}
+else {
+    Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring | Invoke-Expression;    
+}
 
-Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring | Invoke-Expression;
-# Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
+if ($local) {
+    Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
+}
+else {
+    Invoke-WebRequest -useb ${GITHUB_URL}/common/common.ps1?f=$randomstring | Invoke-Expression;    
+}
 
-Invoke-WebRequest -useb $GITHUB_URL/common/common-azure.ps1 | Invoke-Expression;
-# Get-Content ./common/common-azure.ps1 -Raw | Invoke-Expression;
+if ($local) {
+    Get-Content ./common/common-azure.ps1 -Raw | Invoke-Expression;
+}
+else {
+    Invoke-WebRequest -useb ${GITHUB_URL}/common/common-azure.ps1?f=$randomstring | Invoke-Expression;    
+}
 
-Invoke-WebRequest -useb $GITHUB_URL/common/product-menu.ps1?f=$randomstring | Invoke-Expression;
+if ($local) {
+    Get-Content ./common/product-menu.ps1 -Raw | Invoke-Expression;
+}
+else {
+    Invoke-WebRequest -useb ${GITHUB_URL}/common/product-menu.ps1?f=$randomstring | Invoke-Expression;    
+}
 
-Invoke-WebRequest -useb $GITHUB_URL/common/troubleshooting-menu.ps1?f=$randomstring | Invoke-Expression;
+if ($local) {
+    Get-Content ./common/troubleshooting-menu.ps1 -Raw | Invoke-Expression;
+}
+else {
+    Invoke-WebRequest -useb ${GITHUB_URL}/common/troubleshooting-menu.ps1?f=$randomstring | Invoke-Expression;    
+}
 
 # if(!(Test-Path .\Fabric-Install-Utilities.psm1)){
 #     Invoke-WebRequest -Uri https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/common/Fabric-Install-Utilities.psm1 -Headers @{"Cache-Control"="no-cache"} -OutFile Fabric-Install-Utilities.psm1
 # }
 # Import-Module -Name .\Fabric-Install-Utilities.psm1 -Force
-
 
 $userinput = ""
 while ($userinput -ne "q") {
