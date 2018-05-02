@@ -1,5 +1,5 @@
 param([bool]$prerelease)    
-$version = "2018.05.01.03"
+$version = "2018.05.01.04"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
@@ -31,8 +31,8 @@ Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring | I
 Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring | Invoke-Expression;
 # Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
 
-# Invoke-WebRequest -useb $GITHUB_URL/common/common-azure.ps1 | Invoke-Expression;
-Get-Content ./common/common-azure.ps1 -Raw | Invoke-Expression;
+Invoke-WebRequest -useb $GITHUB_URL/common/common-azure.ps1 | Invoke-Expression;
+# Get-Content ./common/common-azure.ps1 -Raw | Invoke-Expression;
 
 Invoke-WebRequest -useb $GITHUB_URL/common/product-menu.ps1?f=$randomstring | Invoke-Expression;
 
