@@ -1,9 +1,7 @@
 param([bool]$prerelease)    
-$version = "2018.05.01.02"
+$version = "2018.05.01.03"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
-
-$version = "2018.05.01.03"
 
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
@@ -16,7 +14,6 @@ else
 {
     $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/release"
 }
-
 Write-Host "GITHUB_URL: $GITHUB_URL"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
