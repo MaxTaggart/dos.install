@@ -3,12 +3,12 @@
     "kubectl": {
         "version": "1.10.0"
     },
-    "azcli": {
-        "version": "2.0.27"
-    },
     "kubernetes": {
         "version": "1.10.0"
     },    
+    "azcli": {
+        "version": "2.0.30"
+    },
     "azure": {
         "resourceGroup": "Prod-Kub-HCUT-RG",
         "location": "westus",
