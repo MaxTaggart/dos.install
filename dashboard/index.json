@@ -32,16 +32,12 @@
                 "influxdb.yaml",
                 "heapster.yaml",
                 "grafana.yaml",
-                "apidashboard.yaml",
-                "dashboard.internal.yaml",
-                "dashboard.external.yaml"
+                "apidashboard.yaml"
             ],
             "external": []
         },
         "ingress": {
             "http": [
-                "dashboard.internal.yaml",
-                "dashboard.external.yaml",
                 "apidashboard.yaml",
                 "grafana.yaml"        
             ],

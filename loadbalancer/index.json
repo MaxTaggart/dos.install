@@ -9,7 +9,8 @@
         "dns": [
             "upstream.yaml"
         ],
-        "configmaps": [{
+        "configmaps": [
+            {
                 "name": "config.ssl.yaml",
                 "ssl": true
             },
@@ -26,16 +27,19 @@
             "azure": []
         },
         "volumeclaims": [],
-        "pods": [
-        ],
+        "pods": [],
         "services": {
             "cluster": [
+                "dashboard.external.yaml",
+                "dashboard.internal.yaml"
             ],
-            "external": [
-            ]
+            "external": []
         },
         "ingress": {
-            "http": [],
+            "http": [
+                "dashboard.internal.yaml",
+                "dashboard.external.yaml"
+            ],
             "tcp": []
         }
     }

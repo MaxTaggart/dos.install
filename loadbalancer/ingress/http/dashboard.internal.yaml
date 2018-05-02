@@ -16,5 +16,5 @@ spec:
         paths:
         - path: /internal
           backend:
-            serviceName: traefik-dashboard-external
+            serviceName: traefik-dashboard-internal
             servicePort: 80  
