@@ -275,7 +275,7 @@ function global:CleanResourceGroup([ValidateNotNullOrEmpty()] $resourceGroup, [V
         #az group delete --name $resourceGroup --verbose
 
         if ($(az vm list -g $resourceGroup --query "[].id" -o tsv).length -ne 0) {
-            Write-Information -MessageData "delete the VMs first"
+            Write-Information -MessageData "delete the VMs first (this can take 5-10 minutes)"
             az vm delete --ids $(az vm list -g $resourceGroup --query "[].id" -o tsv) --verbose --yes
         }
 

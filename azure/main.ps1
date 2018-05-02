@@ -179,12 +179,12 @@ while ($userinput -ne "q") {
             kubectl get "nodes"
         } 
         '11' {
-            # $namespace="fabricnlp"
-            # CreateNamespaceIfNotExists $namespace
-            # AskForPasswordAnyCharacters -secretname "smtprelaypassword" -prompt "Please enter SMTP relay password" -namespace $namespace
-            # $dnshostname=$(ReadSecretValue -secretname "dnshostname" -namespace "default")
-            # SaveSecretValue -secretname "nlpweb-external-url" -valueName "url" -value "nlp.$dnshostname" -namespace $namespace
-            # SaveSecretValue -secretname "jobserver-external-url" -valueName "url" -value "nlpjobs.$dnshostname" -namespace $namespace
+            $namespace="fabricnlp"
+            CreateNamespaceIfNotExists $namespace
+            AskForPasswordAnyCharacters -secretname "smtprelaypassword" -prompt "Please enter SMTP relay password" -namespace $namespace
+            $dnshostname=$(ReadSecretValue -secretname "dnshostname" -namespace "default")
+            SaveSecretValue -secretname "nlpweb-external-url" -valueName "url" -value "nlp.$dnshostname" -namespace $namespace
+            SaveSecretValue -secretname "jobserver-external-url" -valueName "url" -value "nlpjobs.$dnshostname" -namespace $namespace
             InstallStack -namespace $namespace -baseUrl $GITHUB_URL -appfolder "nlp" -isAzure 1
         } 
         '12' {
