@@ -45,5 +45,6 @@ spec:
         - --kubernetes.debugloggeneratedtemplate
         - --accesslog
         - --insecureskipverify
+        - --kubernetes.enablepasstlscert        
         # - --debug
 ---
