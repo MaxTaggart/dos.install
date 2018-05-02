@@ -501,7 +501,7 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
 }
 
 
-function global:SetupAzureLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config) {
+function global:SetupAzureLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNull()] $config) {
    
     $AKS_IP_WHITELIST = ""
     
@@ -683,7 +683,7 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory=$true)][ValidateNotN
     }        
 }
 
-function global:CreateBareMetalCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config) {   
+function global:CreateBareMetalCluster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNull()] $config) {   
     DownloadAzCliIfNeeded -version $($config.azcli.version)
     
     $AKS_SUBSCRIPTION_ID = $(GetLoggedInUserInfo).AKS_SUBSCRIPTION_ID
@@ -896,10 +896,10 @@ function global:CreateBareMetalCluster([ValidateNotNullOrEmpty()][string] $baseU
     Write-Host "Storage key: $STORAGE_KEY"        
 }
 
-function global:StartVMsInResourceGroup([ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:StartVMsInResourceGroup([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     az vm start --ids $(az vm list -g $resourceGroup --query "[].id" -o tsv) 
 }
-function global:StopVMsInResourceGroup([ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:StopVMsInResourceGroup([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     az vm stop --ids $(az vm list -g $resourceGroup --query "[].id" -o tsv) 
 }
 function global:RenewAzureToken() {
