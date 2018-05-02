@@ -1,5 +1,5 @@
 param([bool]$prerelease)    
-$version = "2018.05.01.04"
+$version = "2018.05.01.05"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
@@ -206,7 +206,7 @@ while ($userinput -ne "q") {
             RestartDNSPodsIfNeeded
         } 
         '24' {
-            RestartVMsInResourceGroup
+            RestartAzureVMsInResourceGroup
         } 
         '25' {
             Read-Host "Script needs elevated privileges to flushdns.  Hit ENTER to launch script to set PATH"
