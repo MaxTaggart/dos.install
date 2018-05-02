@@ -351,6 +351,8 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
     }
     
     $configpath = "$baseUrl/${appfolder}/index.json"
+    Write-Information -MessageData "Loading stack manifest from $configpath"
+    
     $config = $(Invoke-WebRequest -useb $configpath | ConvertFrom-Json)
 
     # $configpath="./$appfolder/index.json"
@@ -688,7 +690,7 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     }
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
 
-    InstallStack -baseUrl $baseUrl -namespace $namespace -appfolder $folder
+    InstallStack -baseUrl $baseUrl -namespace $namespace -appfolder $appfolder
 
     WaitForPodsInNamespace -namespace kube-system -interval 5
 

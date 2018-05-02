@@ -1768,7 +1768,7 @@ function global:WaitForLoadBalancers([ValidateNotNullOrEmpty()] $resourceGroup) 
     return $Return
 }
 
-function global:InstallStack([ValidateNotNullOrEmpty()] $baseUrl, [ValidateNotNullOrEmpty()] $namespace, [ValidateNotNullOrEmpty()] $appfolder, $isAzure ) {
+function global:InstallStack([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $namespace, [ValidateNotNullOrEmpty()][string] $appfolder, $isAzure ) {
     [hashtable]$Return = @{} 
 
     if ($isAzure) {
