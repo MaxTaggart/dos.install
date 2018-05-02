@@ -615,17 +615,6 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
 
-    $kubectlversion = $(kubectl version --short=true)[1]
-    if ($kubectlversion -match "v1.8") {
-        Write-Information -MessageData "Since kubectlversion ($kubectlversion) is less than 1.9 no roles are needed"
-    }
-    else {
-        Write-Information -MessageData "Deploying roles"
-        $folder = "roles"
-        $files = "ingress-roles.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
-    }
-
     Write-Information -MessageData "Deploying pods"
     $folder = "pods"
 
