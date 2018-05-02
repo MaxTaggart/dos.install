@@ -7,11 +7,10 @@ Write-Host "prerelease flag: $prerelease"
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
 #   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | pwsh -Interactive -NoExit -c -;
 
-if($prerelease){
+if ($prerelease) {
     $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
 }
-else
-{
+else {
     $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/release"
 }
 Write-Host "GITHUB_URL: $GITHUB_URL"
@@ -43,14 +42,16 @@ $InformationPreference = "Continue"
 
 $userinput = ""
 while ($userinput -ne "q") {
-    $skip=$false
-    $currentcluster=""
+    $skip = $false
+    $currentcluster = ""
     if (Test-CommandExists kubectl) {
-        $currentcluster=$(kubectl config current-context 2> $null)
+        $currentcluster = $(kubectl config current-context 2> $null)
     }
     
     Write-Host "================ Health Catalyst version $version, common functions $(GetCommonVersion) $(GetCommonKubeVersion) ================"
-    Write-Warning "CURRENT CLUSTER: $currentcluster"
+    if ($prerelease) {
+        Write-Host "prerelease flag: $prerelease"
+    }
     Write-Host "0: Change kube to point to another cluster"
     Write-Host "------ Infrastructure -------"
     Write-Host "1: Create a new Azure Container Service"
@@ -208,7 +209,7 @@ while ($userinput -ne "q") {
         } 
         '30' {
             TestAzureLoadBalancer
-            } 
+        } 
         '31' {
             $DEFAULT_RESOURCE_GROUP = ReadSecretData -secretname azure-secret -valueName resourcegroup
             
@@ -235,23 +236,23 @@ while ($userinput -ne "q") {
         } 
         '50' {
             showTroubleshootingMenu -baseUrl $baseUrl -isAzure $true
-            $skip=$true
+            $skip = $true
         }                 
         '51' {
             showMenu -baseUrl $GITHUB_URL -namespace "fabricnlp" -isAzure $true
-            $skip=$true
+            $skip = $true
         } 
         '52' {
             showMenu -baseUrl $GITHUB_URL -namespace "fabricrealtime" -isAzure $true
-            $skip=$true
+            $skip = $true
         } 
         'q' {
             return
         }
     }
-    if(!($skip)){
+    if (!($skip)) {
         $userinput = Read-Host -Prompt "Press Enter to continue or q to exit"
-        if($userinput -eq "q"){
+        if ($userinput -eq "q") {
             return
         }    
     }
