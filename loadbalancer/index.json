@@ -10,14 +10,6 @@
             "upstream.yaml"
         ],
         "configmaps": [
-            {
-                "name": "config.ssl.yaml",
-                "ssl": true
-            },
-            {
-                "name": "config.yml",
-                "ssl": false
-            }
         ],
         "roles": [
             "ingress-roles.yaml"
