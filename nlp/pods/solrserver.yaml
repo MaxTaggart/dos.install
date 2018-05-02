@@ -40,14 +40,14 @@ spec:
           #     port: 8085
           #   initialDelaySeconds: 60
           #   periodSeconds: 60 
-          readinessProbe:
-            exec:
-              command:
-              - cat
-              - /opt/healthcatalyst/done.txt
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            failureThreshold: 30          
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #     - cat
+          #     - /opt/healthcatalyst/done.txt
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 5
+          #   failureThreshold: 30          
       # give pod more time to finish solr indexing
       terminationGracePeriodSeconds: 10      
       volumes:
