@@ -9,7 +9,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
     $folder = $namespace.Replace("fabric", "")
     $userinput = ""
     while ($userinput -ne "q") {
-        Write-Host "================ Health Catalyst version $version, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
+        Write-Host "================ $namespace menu version $version, common functions kube:$(GetCommonKubeVersion) ================"
         Write-Host "------ Install -------"
         Write-Host "1: Install $namespace"
         Write-Host "------ Status --------"
@@ -25,7 +25,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
         Write-Host "11: Show commands to SSH to $namespace containers"
         Write-Host "12: Delete all data in $namespace"        
         Write-Host "-----------"
-        Write-Host "q: Quit"
+        Write-Host "q: Go back to main menu"
         $userinput = Read-Host "Please make a selection"
         switch ($userinput) {
             '1' {
@@ -36,7 +36,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
             } 
             '3' {
                 if ($namespace -eq "fabricrealtime") {
-                    $certhostname = $(ReadSecret certhostname $namespace)
+                    $certhostname = $(ReadSecretValue certhostname $namespace)
                     Write-Host "Send HL7 to Mirth: server=${certhostname} port=6661"
                     Write-Host "Rabbitmq Queue: server=${certhostname} port=5671"
                     Write-Host "RabbitMq Mgmt UI is at: http://${certhostname}/rabbitmq/ user: admin password: $(ReadSecretPassword rabbitmqmgmtuipassword $namespace)"
@@ -48,7 +48,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
                     if ([string]::IsNullOrWhiteSpace($loadBalancerIP)) {
                         $loadBalancerIP = $loadBalancerInternalIP
                     }
-                    $customerid = ReadSecret -secretname customerid
+                    $customerid = ReadSecretValue -secretname customerid
                     $customerid = $customerid.ToLower().Trim()
                                             
                     # Invoke-WebRequest -useb -Headers @{"Host" = "nlp.$customerid.healthcatalyst.net"} -Uri http://$loadBalancerIP/nlpweb | Select-Object -Expand Content
@@ -76,28 +76,22 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
             } 
             '4' {
                 if ($namespace -eq "fabricrealtime") {
-                    Write-Host "MySql root password: $(ReadSecretPassword mysqlrootpassword $namespace)"
-                    Write-Host "MySql NLP_APP_USER password: $(ReadSecretPassword mysqlpassword $namespace)"
-                    Write-Host "certhostname: $(ReadSecret certhostname $namespace)"
-                    Write-Host "certpassword: $(ReadSecretPassword certpassword $namespace)"
-                    Write-Host "rabbitmq mgmtui user: admin password: $(ReadSecretPassword rabbitmqmgmtuipassword $namespace)"            
+                    $secrets = $(kubectl get secrets -n $namespace -o jsonpath="{.items[?(@.type=='Opaque')].metadata.name}")
+                    Write-Host "All secrets in $namespace : $secrets"
+                    WriteSecretPasswordToOutput -namespace $namespace -secretname "mysqlrootpassword"
+                    WriteSecretPasswordToOutput -namespace $namespace -secretname "mysqlpassword"
+                    WriteSecretValueToOutput  -namespace $namespace -secretname "certhostname"
+                    WriteSecretPasswordToOutput -namespace $namespace -secretname "certpassword"
+                    WriteSecretPasswordToOutput -namespace $namespace -secretname "rabbitmqmgmtuipassword"
                 }
                 elseif ($namespace -eq "fabricnlp") {
-                    $secretname="mysqlrootpassword"
-                    $secretvalue=$(ReadSecretPassword -secretname $secretname -namespace $namespace)
-                    Write-Host "MySql root password: $secretvalue"
-                    Write-Host "To recreate the secret:"
-                    Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
-                    $secretname="mysqlpassword"
-                    $secretvalue=$(ReadSecretPassword -secretname $secretname -namespace $namespace)            
-                    Write-Host "MySql NLP_APP_USER password: $secretvalue"
-                    Write-Host "To recreate the secret:"
-                    Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
-                    $secretname="smtprelaypassword"
-                    $secretvalue=$(ReadSecretPassword -secretname $secretname -namespace $namespace)             
-                    Write-Host "SendGrid SMTP Relay key: $secretvalue"
-                    Write-Host "To recreate the secret:"
-                    Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
+                    $secrets = $(kubectl get secrets -n $namespace -o jsonpath="{.items[?(@.type=='Opaque')].metadata.name}")
+                    Write-Host "All secrets in $namespace : $secrets"
+                    WriteSecretPasswordToOutput -namespace $namespace -secretname "mysqlrootpassword"
+                    WriteSecretPasswordToOutput -namespace $namespace -secretname "mysqlpassword"
+                    WriteSecretPasswordToOutput -namespace $namespace -secretname "smtprelaypassword"
+                    WriteSecretValueToOutput  -namespace $namespace -secretname "jobserver-external-url"
+                    WriteSecretValueToOutput  -namespace $namespace -secretname "nlpweb-external-url"
                 }
             } 
             '5' {
@@ -107,7 +101,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
                 ShowLogsOfAllPodsInNameSpace "$namespace"
             } 
             '7' {
-                $certhostname = $(ReadSecret certhostname $namespace)
+                $certhostname = $(ReadSecretValue certhostname $namespace)
                 $certpassword = $(ReadSecretPassword certpassword $namespace)
                 $url = "http://${certhostname}/certificates/client/fabricrabbitmquser_client_cert.p12"
                 Write-Host "Download the client certificate:"
@@ -123,7 +117,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
             '8' {
                 Write-Host "If you didn't setup DNS, add the following entries in your c:\windows\system32\drivers\etc\hosts file to access the urls from your browser"
                 $loadBalancerIP = $(dig +short myip.opendns.com "@resolver1.opendns.com")
-                $certhostname = $(ReadSecret certhostname $namespace)
+                $certhostname = $(ReadSecretValue certhostname $namespace)
                 Write-Host "$loadBalancerIP $certhostname"            
             } 
             '9' {

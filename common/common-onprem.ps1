@@ -115,6 +115,7 @@ function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # WriteToLog "running kubeadm init for flannel"
     # for flannel network plugin
     # sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
+    # https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/
     sudo kubeadm init --kubernetes-version=v${kubernetesserverversion} --pod-network-cidr=10.244.0.0/16 --skip-token-print --apiserver-cert-extra-sans $(hostname --fqdn)
 
     WriteToLog "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
@@ -381,12 +382,12 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
     AskForSecretValue -secretname "customerid" -prompt "Customer ID "
     WriteToLog "reading secret from kubernetes"
-    $customerid = $(ReadSecret -secretname "customerid")
+    $customerid = $(ReadSecretValue -secretname "customerid")
 
     $fullhostname = $(hostname --fqdn)
     WriteToLog "Full host name of current machine: $fullhostname"
     AskForSecretValue -secretname "dnshostname" -prompt "DNS name used to connect to the master VM (leave empty to use $fullhostname)" -namespace "default" -defaultvalue $fullhostname
-    $dnsrecordname = $(ReadSecret -secretname "dnshostname")
+    $dnsrecordname = $(ReadSecretValue -secretname "dnshostname")
 
     $sslsecret = $(kubectl get secret traefik-cert-ahmn -n kube-system --ignore-not-found=true)
 
@@ -702,10 +703,10 @@ function MountFolderFromSecrets([ValidateNotNullOrEmpty()][string] $baseUrl) {
 
     $secretname = "mountsharedfolder"
     $namespace = "default"    
-    $pathToShare = $(ReadSecretValue -secretname $secretname -valueName "path" -namespace $namespace)
-    $username = $(ReadSecretValue -secretname $secretname -valueName "username" -namespace $namespace)
-    $domain = $(ReadSecretValue -secretname $secretname -valueName "domain" -namespace $namespace)
-    $password = $(ReadSecretValue -secretname $secretname -valueName "password" -namespace $namespace)
+    $pathToShare = $(ReadSecretData -secretname $secretname -valueName "path" -namespace $namespace)
+    $username = $(ReadSecretData -secretname $secretname -valueName "username" -namespace $namespace)
+    $domain = $(ReadSecretData -secretname $secretname -valueName "domain" -namespace $namespace)
+    $password = $(ReadSecretData -secretname $secretname -valueName "password" -namespace $namespace)
 
     if ($username) {
         mountSMBWithParams -pathToShare $pathToShare -username $username -domain $domain -password $password -saveIntoSecret $False -isUNC $True
@@ -883,20 +884,20 @@ function ShowContentsOfSharedFolder() {
 }
 
 function OpenKubernetesDashboard() {
-    $dnshostname = $(ReadSecret "dnshostname")
+    $dnshostname = $(ReadSecretValue "dnshostname")
     $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
     WriteToConsole "dns entries for c:\windows\system32\drivers\etc\hosts (if needed)"
     WriteToConsole "${myip} ${dnshostname}"
     WriteToConsole "-"
     WriteToConsole "You can access the kubernetes dashboard at: https://${dnshostname}/api/ or https://${myip}/api/"
-    $secretname = $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
-    $token = $(ReadSecretValue "$secretname" "token" "kube-system")
+    $secretname = $(kubectl -n kube-system get secret | grep api-dashboard-user | awk '{print $1}')
+    $token = $(ReadSecretData "$secretname" "token" "kube-system")
     WriteToConsole "Bearer Token"
     WriteToConsole $token
     WriteToConsole " End of Bearer Token -"
 }
 function OpenTraefikDashboard() {
-    $dnshostname = $(ReadSecret "dnshostname")
+    $dnshostname = $(ReadSecretValue "dnshostname")
     $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
     WriteToConsole "dns entries for c:\windows\system32\drivers\etc\hosts (if needed)"
     WriteToConsole "${myip} ${dnshostname}"

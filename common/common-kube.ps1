@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.01.01"
+$versionkubecommon = "2018.05.01.02"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -9,7 +9,7 @@ function global:GetCommonKubeVersion() {
     return $versionkubecommon
 }
 
-function global:ReadSecretValue([ValidateNotNullOrEmpty()] $secretname, [ValidateNotNullOrEmpty()] $valueName, $namespace) {
+function global:ReadSecretData([ValidateNotNullOrEmpty()][string] $secretname, [ValidateNotNullOrEmpty()][string] $valueName, [string] $namespace) {
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
 
     $secretbase64 = kubectl get secret $secretname -o jsonpath="{.data.${valueName}}" -n $namespace --ignore-not-found=true 2> $null
@@ -22,12 +22,28 @@ function global:ReadSecretValue([ValidateNotNullOrEmpty()] $secretname, [Validat
     return "";
 }
 
-function global:ReadSecret([ValidateNotNullOrEmpty()] $secretname, $namespace) {
-    return ReadSecretValue -secretname $secretname -valueName "value" -namespace $namespace
+function global:ReadSecretValue([ValidateNotNullOrEmpty()][string] $secretname, [string]$namespace) {
+    return ReadSecretData -secretname $secretname -valueName "value" -namespace $namespace
 }
 
-function global:ReadSecretPassword([ValidateNotNullOrEmpty()] $secretname, $namespace) {
-    return ReadSecretValue -secretname $secretname -valueName "password" -namespace $namespace
+function global:ReadSecretPassword([ValidateNotNullOrEmpty()][string] $secretname, [string]$namespace) {
+    return ReadSecretData -secretname $secretname -valueName "password" -namespace $namespace
+}
+
+function global:ReadAllSecretsAsHashTable([ValidateNotNullOrEmpty()][string] $secretname, [ValidateNotNullOrEmpty()][string] $namespace) {
+    [hashtable]$Return = @{} 
+    
+    $secrets = $(kubectl get secrets -n $namespace -o jsonpath="{.items[?(@.type=='Opaque')].metadata.name}")
+    if ($secrets) {
+        foreach ($secret in $secrets.Split(" ")) {
+            $secretjson = $(kubectl get secret $secret -n $namespace -o json) | ConvertFrom-Json
+            foreach ($secretitem in $secretjson.data) {
+                $Return[$secret] = @{}
+            }
+        }
+    }
+
+    return $Return
 }
 
 function global:GeneratePassword() {
@@ -313,8 +329,8 @@ function global:CleanKubConfig() {
 
 
 function global:DeployYamlFiles([ValidateNotNullOrEmpty()][string] $namespace, [ValidateNotNullOrEmpty()][string] $baseUrl, `
-                                [ValidateNotNullOrEmpty()][string] $appfolder, [ValidateNotNullOrEmpty()][string] $folder, `
-                                [ValidateNotNullOrEmpty()][hashtable] $tokens, $resources) {
+        [ValidateNotNullOrEmpty()][string] $appfolder, [ValidateNotNullOrEmpty()][string] $folder, `
+        [ValidateNotNullOrEmpty()][hashtable] $tokens, $resources) {
     # $resources can be null
     [hashtable]$Return = @{} 
 
@@ -353,7 +369,7 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
         else {
             $sourceSecretName = $($secret.valueFromSecret.name)
             $sourceSecretNamespace = $($secret.valueFromSecret.namespace)
-            $value = ReadSecret -secretname $sourceSecretName -namespace $sourceSecretNamespace
+            $value = ReadSecretValue -secretname $sourceSecretName -namespace $sourceSecretNamespace
             Write-Information -MessageData "Setting secret [$($secret.name)] to secret [$sourceSecretName] in namespace [$sourceSecretNamespace] with value [$value]"
             SaveSecretValue -secretname "$($secret.name)" -valueName "value" -value $value -namespace "$namespace"
         }
@@ -363,7 +379,7 @@ function global:LoadStack([ValidateNotNullOrEmpty()] $namespace, [ValidateNotNul
         CleanOutNamespace -namespace $namespace
     }
     
-    $customerid = ReadSecret -secretname customerid
+    $customerid = ReadSecretValue -secretname customerid
     $customerid = $customerid.ToLower().Trim()
     Write-Information -MessageData "Customer ID: $customerid"
 
@@ -553,8 +569,8 @@ function global:DeploySimpleServices([ValidateNotNullOrEmpty()] $namespace, [Val
 }
 
 function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, [ValidateNotNullOrEmpty()] [string]$ingressInternal, `
-                                        [ValidateNotNullOrEmpty()] [string]$ingressExternal, [ValidateNotNullOrEmpty()] [string]$customerid, `
-                                        [ValidateNotNullOrEmpty()][bool] $isOnPrem, [string]$publicIp) {
+        [ValidateNotNullOrEmpty()] [string]$ingressExternal, [ValidateNotNullOrEmpty()] [string]$customerid, `
+        [ValidateNotNullOrEmpty()][bool] $isOnPrem, [string]$publicIp) {
     [hashtable]$Return = @{} 
 
     # delete existing containers
@@ -579,13 +595,13 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
     # $traefiklabels = "external,internal"
 
     [hashtable]$tokens = @{ 
-        "CUSTOMERID" = $customerid;
-        "PUBLICIP" = "$publicip";
+        "CUSTOMERID"         = $customerid;
+        "PUBLICIP"           = "$publicip";
         "#REPLACE-RUNMASTER" = "$runOnMaster";
     }    
 
-    $namespace="kube-system"
-    $appfolder="loadbalancer"
+    $namespace = "kube-system"
+    $appfolder = "loadbalancer"
     Write-Information -MessageData "Deploying configmaps"
     $folder = "configmaps"
     if ($ssl) {
@@ -753,13 +769,14 @@ function ShowLoadBalancerLogs() {
 }
 
 function GenerateKubeConfigFile() {
-    $user = "admin-user"
+    $user = "api-dashboard-user"
+    # https://kubernetes.io/docs/getting-started-guides/scratch/#preparing-credentials
     # https://stackoverflow.com/questions/47770676/how-to-create-a-kubectl-config-file-for-serviceaccount
     $secretname = $(kubectl -n kube-system get secret | grep $user | awk '{print $1}')
-    $ca = $(kubectl get secret $name -n kube-system -o jsonpath='{.data.ca\.crt}') # ca doesn't use base64 encoding
-    $token = $(ReadSecretValue "$secretname" "token" "kube-system")
-    $namespace = $(ReadSecretValue "$secretname" "namespace" "kube-system")
-    $server = $(ReadSecret -secretname "dnshostname" -namespace "default")
+    $ca = $(kubectl get secret $secretname -n kube-system -o jsonpath='{.data.ca\.crt}') # ca doesn't use base64 encoding
+    $token = $(ReadSecretData "$secretname" "token" "kube-system")
+    $namespace = $(ReadSecretData "$secretname" "namespace" "kube-system")
+    $server = $(ReadSecretValue -secretname "dnshostname" -namespace "default")
     $serverurl = "https://${server}:6443"
 
     # the multiline string below HAS to start at the beginning of the line per powershell
@@ -813,7 +830,7 @@ function troubleshootIngress([ValidateNotNullOrEmpty()][string] $namespace) {
         $servicePodSelectorMap = $(kubectl get svc $ingressServiceName -n $namespace -o jsonpath="{.spec.selector}")
         $servicePodSelectors = $servicePodSelectorMap.Replace("map[", "").Replace("]", "").Split(" ")
         $servicePodSelectorsList = ""
-        foreach($servicePodSelector in $servicePodSelectors){
+        foreach ($servicePodSelector in $servicePodSelectors) {
             $servicePodSelectorItems = $servicePodSelector.Split(":")
             $servicePodSelectorKey = $($servicePodSelectorItems[0])
             $servicePodSelectorValue = $($servicePodSelectorItems[1])
@@ -831,16 +848,29 @@ function troubleshootIngress([ValidateNotNullOrEmpty()][string] $namespace) {
     }   
 }
 
-function DeleteAllPodsInNamespace([ValidateNotNullOrEmpty()][string] $namespace){
+function DeleteAllPodsInNamespace([ValidateNotNullOrEmpty()][string] $namespace) {
     kubectl delete --all 'pods' --namespace=$namespace --ignore-not-found=true
 }
 
-function ShowSSHCommandsToContainers([ValidateNotNullOrEmpty()][string] $namespace){
+function ShowSSHCommandsToContainers([ValidateNotNullOrEmpty()][string] $namespace) {
     $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     foreach ($pod in $pods.Split(" ")) {
         Write-Host "kubectl exec -it $pod -n fabricnlp -- sh"
     }
 
+}
+
+function global:WriteSecretPasswordToOutput([ValidateNotNullOrEmpty()][string] $namespace, [ValidateNotNullOrEmpty()][string] $secretname){
+    $secretvalue=$(ReadSecretPassword -secretname $secretname -namespace $namespace)
+    Write-Host "$secretname = $secretvalue"
+    Write-Host "To recreate the secret:"
+    Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
+}
+function global:WriteSecretValueToOutput([ValidateNotNullOrEmpty()][string] $namespace, [ValidateNotNullOrEmpty()][string] $secretname){
+    $secretvalue=$(ReadSecretValue -secretname $secretname -namespace $namespace)
+    Write-Host "$secretname = $secretvalue"
+    Write-Host "To recreate the secret:"
+    Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$secretvalue"
 }
 # --------------------
 Write-Information -MessageData "end common-kube.ps1 version $versionkubecommon"

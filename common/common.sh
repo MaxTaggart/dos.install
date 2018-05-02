@@ -25,6 +25,12 @@ function InstallPrerequisites(){
     # sudo sh -c 'echo "\nDefaults timestamp_timeout=-1">>/etc/sudoers'
     Write-Status "--- updating yum packages ---"
     #sudo yum update -y -q -e 0
+    # http://man7.org/linux/man-pages/man8/yum.8.html
+    # foo=$(sudo yum -y check-update)
+    # if [ $? = 100 ];then 
+    #     sudo yum update -y
+    # fi
+
     sudo yum update -y
 
     echo "---- RAM ----"
@@ -79,6 +85,7 @@ function createShortcutFordos(){
 
     mkdir -p $HOME/bin
     installscript="$HOME/bin/dos"
+    rm -f $installscript
     if [[ ! -f "$installscript" ]]; then
         echo "#!/bin/bash" > $installscript
         echo curl -o "${HOME}/onprem-menu.ps1" -sSL "${baseUrl}/menus/onprem-menu.ps1?p="'$RANDOM' >> $installscript
