@@ -3,6 +3,11 @@ $version = "2018.05.01.03"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
+# stop whenever there is an error
+$ErrorActionPreference = "Stop"
+# show Information messages
+$InformationPreference = "Continue"
+
 # This script is meant for quick & easy install via:
 #   curl -useb https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | iex;
 #   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | pwsh -Interactive -NoExit -c -;
@@ -26,7 +31,8 @@ Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring | I
 Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring | Invoke-Expression;
 # Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
 
-Invoke-WebRequest -useb $GITHUB_URL/common/common-azure.ps1 | Invoke-Expression;
+# Invoke-WebRequest -useb $GITHUB_URL/common/common-azure.ps1 | Invoke-Expression;
+Get-Content ./common/common-azure.ps1 -Raw | Invoke-Expression;
 
 Invoke-WebRequest -useb $GITHUB_URL/common/product-menu.ps1?f=$randomstring | Invoke-Expression;
 
@@ -37,8 +43,6 @@ Invoke-WebRequest -useb $GITHUB_URL/common/troubleshooting-menu.ps1?f=$randomstr
 # }
 # Import-Module -Name .\Fabric-Install-Utilities.psm1 -Force
 
-# show Information messages
-$InformationPreference = "Continue"
 
 $userinput = ""
 while ($userinput -ne "q") {
@@ -104,14 +108,14 @@ while ($userinput -ne "q") {
             $config = $(ReadConfigFile).Config
             Write-Host $config
         
-            CreateACSCluster
-            SetupAzureLoadBalancer
+            CreateACSCluster -baseUrl $GITHUB_URL -config $config
+            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
         } 
         '2' {
             $config = $(ReadConfigFile).Config
             Write-Host $config
         
-            SetupAzureLoadBalancer
+            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
         } 
         '3' {
             Do { 

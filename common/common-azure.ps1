@@ -7,7 +7,7 @@ function global:GetCommonAzureVersion() {
     return $versionazurecommon
 }
 
-function global:CreateACSCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull] $config) {
+function global:CreateACSCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config) {
     Write-Host "Checking if you're already logged in..."
 
     Write-Host $config
@@ -501,7 +501,7 @@ function global:CreateACSCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [V
 }
 
 
-function global:SetupAzureLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull] $config) {
+function global:SetupAzureLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config) {
    
     $AKS_IP_WHITELIST = ""
     
@@ -683,7 +683,7 @@ function global:SetupAzureLoadBalancer([ValidateNotNullOrEmpty()][string] $baseU
     }        
 }
 
-function global:CreateBareMetalCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull] $config) {   
+function global:CreateBareMetalCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config) {   
     DownloadAzCliIfNeeded -version $($config.azcli.version)
     
     $AKS_SUBSCRIPTION_ID = $(GetLoggedInUserInfo).AKS_SUBSCRIPTION_ID
