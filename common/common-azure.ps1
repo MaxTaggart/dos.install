@@ -467,8 +467,8 @@ function global:CreateACSCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [V
     #     kubectl delete pod $line -n kube-system
     # } 
 
-    SetHostFileInVms -resourceGroup $AKS_PERS_RESOURCE_GROUP
-    SetupCronTab -resourceGroup $AKS_PERS_RESOURCE_GROUP
+    # SetHostFileInVms -resourceGroup $AKS_PERS_RESOURCE_GROUP
+    # SetupCronTab -resourceGroup $AKS_PERS_RESOURCE_GROUP
 
     Write-Host "Removing extra stuff that acs-engine creates"
     # k8s-master-lb-24203516
@@ -1029,8 +1029,8 @@ function global:RestartVMsInResourceGroup() {
     }            
     # UpdateOSInVMs -resourceGroup $AKS_PERS_RESOURCE_GROUP
     RestartVMsInResourceGroup -resourceGroup $AKS_PERS_RESOURCE_GROUP
-    SetHostFileInVms -resourceGroup $AKS_PERS_RESOURCE_GROUP
-    SetupCronTab -resourceGroup $AKS_PERS_RESOURCE_GROUP          
+    # SetHostFileInVms -resourceGroup $AKS_PERS_RESOURCE_GROUP
+    # SetupCronTab -resourceGroup $AKS_PERS_RESOURCE_GROUP          
 }
 
 function global:TestAzureLoadBalancer(){

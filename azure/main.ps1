@@ -48,10 +48,11 @@ while ($userinput -ne "q") {
         $currentcluster = $(kubectl config current-context 2> $null)
     }
     
-    Write-Host "================ Health Catalyst version $version, common functions $(GetCommonVersion) $(GetCommonKubeVersion) ================"
+    Write-Host "================ Health Catalyst version $version, common: $(GetCommonVersion) azure: $(GetCommonAzureVersion) kube: $(GetCommonKubeVersion) ================"
     if ($prerelease) {
         Write-Host "prerelease flag: $prerelease"
     }
+    Write-Warning "CURRENT CLUSTER: $currentcluster"    
     Write-Host "0: Change kube to point to another cluster"
     Write-Host "------ Infrastructure -------"
     Write-Host "1: Create a new Azure Container Service"
