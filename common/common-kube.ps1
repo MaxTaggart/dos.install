@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.01.02"
+$versionkubecommon = "2018.05.01.03"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -687,6 +687,8 @@ function global:LoadLoadBalancerStack([ValidateNotNullOrEmpty()] [string]$baseUr
         $files = "loadbalancer.internal.vnetonly.yaml"
     }
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
+
+    InstallStack -baseUrl $baseUrl -namespace $namespace -appfolder $folder
 
     WaitForPodsInNamespace -namespace kube-system -interval 5
 
