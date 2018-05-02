@@ -72,7 +72,7 @@ while ($userinput -ne "q") {
             ShowStatusOfCluster
         } 
         '20' {
-            showTroubleshootingMenu -baseUrl $baseUrl
+            showTroubleshootingMenu -baseUrl $baseUrl -isAzure $false
             $skip=$true
         } 
         '51' {

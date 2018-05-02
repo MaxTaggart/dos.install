@@ -5,7 +5,7 @@ function global:GetTroubleshootingMenuVersion() {
     return $versionmenutroubleshooting
 }
 
-function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl){
+function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$isAzure){
     $userinput = ""
     while ($userinput -ne "q") {
         Write-Host "================ Troubleshooting menu version $versionmenutroubleshooting, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
