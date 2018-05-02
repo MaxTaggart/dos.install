@@ -8,7 +8,7 @@ function global:GetTroubleshootingMenuVersion() {
 function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$isAzure){
     $userinput = ""
     while ($userinput -ne "q") {
-        Write-Host "================ Troubleshooting menu version $versionmenutroubleshooting, common functions kube:$(GetCommonKubeVersion) onprem:$(GetCommonOnPremVersion) ================"
+        Write-Host "================ Troubleshooting menu version $versionmenutroubleshooting, common functions kube:$(GetCommonKubeVersion) ================"
         Write-Host "0: Show status of cluster"        
         Write-Host "-----  Kubernetes ------"
         Write-Host "1: Open Kubernetes dashboard"
