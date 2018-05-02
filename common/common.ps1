@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.01.02"
+$versioncommon = "2018.05.02.02"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -1239,11 +1239,10 @@ function global:GetDNSCommands() {
         $tcpLoadBalancers = $(kubectl get svc -n $namespace -o jsonpath="{.items[?(@.spec.type=='LoadBalancer')].metadata.name}" --ignore-not-found=true)
         if ($tcpLoadBalancers) {
             $tcpLoadBalancers = $tcpLoadBalancers.Split(" ")
-            $loadBalancerTcpIP = $loadBalancerInternalIP
-            if ([string]::IsNullOrEmpty($loadBalancerInternalIP)) {$loadBalancerTcpIP = $loadBalancerIP}
             foreach ($tcpLoadBalancer in $tcpLoadBalancers) {
                 $dns = $(kubectl get svc $tcpLoadBalancer -n $namespace -o jsonpath="{.metadata.labels.dns}" --ignore-not-found=true)
                 if (![string]::IsNullOrEmpty($dns)) {
+                    $loadBalancerTcpIP = kubectl get svc $tcpLoadBalancer -n $namespace -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
                     $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns.$customerid A /f"
                     $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dns.$customerid A $loadBalancerTcpIP"    
                 }
