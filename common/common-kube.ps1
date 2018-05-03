@@ -9,7 +9,18 @@ function global:GetCommonKubeVersion() {
     return $versionkubecommon
 }
 
-function global:ReadSecretData([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $secretname, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $valueName, [string] $namespace) {
+function WriteToLog($txt) {
+    Write-Information -MessageData "$txt"
+}
+
+function WriteToConsole($txt) {
+    # Write-Information -MessageData "$txt"
+    Write-Host "===============================================" -ForegroundColor "Magenta"
+    Write-Host "$txt" -ForegroundColor "Magenta"
+    Write-Host "===============================================" -ForegroundColor "Magenta"
+}
+
+function global:ReadSecretData([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $valueName, [string] $namespace) {
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
 
     $secretbase64 = kubectl get secret $secretname -o jsonpath="{.data.${valueName}}" -n $namespace --ignore-not-found=true 2> $null
@@ -22,15 +33,15 @@ function global:ReadSecretData([Parameter(Mandatory=$true)][ValidateNotNullOrEmp
     return "";
 }
 
-function global:ReadSecretValue([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $secretname, [string]$namespace) {
+function global:ReadSecretValue([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, [string]$namespace) {
     return ReadSecretData -secretname $secretname -valueName "value" -namespace $namespace
 }
 
-function global:ReadSecretPassword([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $secretname, [string]$namespace) {
+function global:ReadSecretPassword([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, [string]$namespace) {
     return ReadSecretData -secretname $secretname -valueName "password" -namespace $namespace
 }
 
-function global:ReadAllSecretsAsHashTable([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $secretname, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function global:ReadAllSecretsAsHashTable([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     [hashtable]$Return = @{} 
     
     $secrets = $(kubectl get secrets -n $namespace -o jsonpath="{.items[?(@.type=='Opaque')].metadata.name}")
@@ -62,7 +73,7 @@ function global:GeneratePassword() {
     return $result
 }
 
-function global:SaveSecretValue([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $secretname, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $valueName, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()]$value, [string]$namespace) {
+function global:SaveSecretValue([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $valueName, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()]$value, [string]$namespace) {
     [hashtable]$Return = @{} 
 
     # secretname must be lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character
@@ -77,7 +88,7 @@ function global:SaveSecretValue([Parameter(Mandatory=$true)][ValidateNotNullOrEm
     return $Return
 }
 
-function global:AskForPassword ([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $secretname, [string]$prompt, [string]$namespace) {
+function global:AskForPassword ([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, [string]$prompt, [string]$namespace) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
@@ -102,7 +113,7 @@ function global:AskForPassword ([Parameter(Mandatory=$true)][ValidateNotNullOrEm
     return $Return
 }
 
-function global:GenerateSecretPassword ([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $secretname, [string]$namespace) {
+function global:GenerateSecretPassword ([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, [string]$namespace) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
@@ -125,7 +136,7 @@ function global:GenerateSecretPassword ([Parameter(Mandatory=$true)][ValidateNot
     return $Return
 }
 
-function global:AskForPasswordAnyCharacters ([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $secretname, [string]$prompt, [string]$namespace, [string]$defaultvalue) {
+function global:AskForPasswordAnyCharacters ([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, [string]$prompt, [string]$namespace, [string]$defaultvalue) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
@@ -154,7 +165,7 @@ function global:AskForPasswordAnyCharacters ([Parameter(Mandatory=$true)][Valida
     return $Return
 }
 
-function global:AskForSecretValue ([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $secretname, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $prompt, [string]$namespace, [string]$defaultvalue) {
+function global:AskForSecretValue ([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $prompt, [string]$namespace, [string]$defaultvalue) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
@@ -179,7 +190,7 @@ function global:AskForSecretValue ([Parameter(Mandatory=$true)][ValidateNotNullO
     return $Return
 }
 
-function global:ReadYamlAndReplaceTokens([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $templateFile, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][hashtable] $tokens  ) {
+function global:ReadYamlAndReplaceTokens([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $templateFile, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][hashtable] $tokens  ) {
     [hashtable]$Return = @{} 
     
     Write-Information -MessageData "Reading from url: ${baseUrl}/${templateFile}"
@@ -199,7 +210,7 @@ function global:ReadYamlAndReplaceTokens([Parameter(Mandatory=$true)][ValidateNo
 }
 
 # from https://github.com/majkinetor/posh/blob/master/MM_Network/Stop-ProcessByPort.ps1
-function global:Stop-ProcessByPort( [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] [int] $Port ) {    
+function global:Stop-ProcessByPort( [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [int] $Port ) {    
     [hashtable]$Return = @{} 
 
     $netstat = netstat.exe -ano | Select-Object -Skip 4
@@ -216,7 +227,7 @@ function global:Stop-ProcessByPort( [Parameter(Mandatory=$true)][ValidateNotNull
 }
 
 
-function global:CreateNamespaceIfNotExists([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function global:CreateNamespaceIfNotExists([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
@@ -227,7 +238,7 @@ function global:CreateNamespaceIfNotExists([Parameter(Mandatory=$true)][Validate
 }
 
 
-function global:CleanOutNamespace([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function global:CleanOutNamespace([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     [hashtable]$Return = @{} 
 
     Write-Information -MessageData "--- Cleaning out any old resources in $namespace ---"
@@ -271,7 +282,7 @@ function global:CleanOutNamespace([Parameter(Mandatory=$true)][ValidateNotNullOr
     return $Return
 }
 
-function global:DeleteAllSecrets([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function global:DeleteAllSecrets([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     [hashtable]$Return = @{} 
 
     Write-Information -MessageData "--- Deleting all secrets in $namespace ---"
@@ -284,7 +295,7 @@ function global:DeleteAllSecrets([Parameter(Mandatory=$true)][ValidateNotNullOrE
     return $Return
 }
 
-function global:SwitchToKubCluster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $folderToUse) {
+function global:SwitchToKubCluster([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $folderToUse) {
 
     [hashtable]$Return = @{} 
 
@@ -328,9 +339,9 @@ function global:CleanKubConfig() {
 }
 
 
-function global:DeployYamlFiles([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $appfolder, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $folder, `
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][hashtable] $tokens, $resources) {
+function global:DeployYamlFiles([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $folder, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][hashtable] $tokens, $resources) {
     # $resources can be null
     [hashtable]$Return = @{} 
 
@@ -342,7 +353,7 @@ function global:DeployYamlFiles([Parameter(Mandatory=$true)][ValidateNotNullOrEm
     }
     return $Return
 }
-function global:LoadStack([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $appfolder, $isAzure) {
+function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, $isAzure) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
@@ -422,7 +433,7 @@ function global:LoadStack([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()]
     return $Return
 }
 
-function global:WaitForPodsInNamespace([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace, $interval) {
+function global:WaitForPodsInNamespace([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, $interval) {
     [hashtable]$Return = @{} 
 
     $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
@@ -478,7 +489,7 @@ function global:WaitForPodsInNamespace([Parameter(Mandatory=$true)][ValidateNotN
     return $Return    
 }
 
-function global:DeploySimpleService([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $appfolder, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $customerid, $service) {
+function global:DeploySimpleService([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $customerid, $service) {
     [hashtable]$Return = @{} 
 
     Write-Information -MessageData "Deploying simpleservice: $($service.name)"
@@ -558,9 +569,9 @@ function global:DeploySimpleService([Parameter(Mandatory=$true)][ValidateNotNull
     return $Return
 }
 
-function global:DeploySimpleServices([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
-                                    [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $appfolder, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $customerid, `
-                                    $services) {
+function global:DeploySimpleServices([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $customerid, `
+        $services) {
     [hashtable]$Return = @{} 
 
     if ($services) {
@@ -572,9 +583,9 @@ function global:DeploySimpleServices([Parameter(Mandatory=$true)][ValidateNotNul
     return $Return
 }
 
-function global:LoadLoadBalancerStack([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] [string]$ingressInternal, `
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] [string]$ingressExternal, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] [string]$customerid, `
-        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][bool] $isOnPrem, [string]$publicIp) {
+function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$ingressInternal, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$ingressExternal, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$customerid, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $isOnPrem, [string]$publicIp) {
     [hashtable]$Return = @{} 
 
     # delete existing containers
@@ -730,7 +741,7 @@ function global:TestFunction() {
     return $Return    
 }
 
-function ShowStatusOfAllPodsInNameSpace([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function ShowStatusOfAllPodsInNameSpace([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     Write-Information -MessageData "showing status of pods in $namespace"
     $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     foreach ($pod in $pods.Split(" ")) {
@@ -738,7 +749,7 @@ function ShowStatusOfAllPodsInNameSpace([Parameter(Mandatory=$true)][ValidateNot
         kubectl describe pods $pod -n $namespace
     }
 }
-function ShowLogsOfAllPodsInNameSpace([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function ShowLogsOfAllPodsInNameSpace([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     Write-Information -MessageData "showing logs (last 30 lines) in $namespace"
     $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     foreach ($pod in $pods.Split(" ")) {
@@ -748,7 +759,7 @@ function ShowLogsOfAllPodsInNameSpace([Parameter(Mandatory=$true)][ValidateNotNu
 }
 
 function ShowStatusOfCluster() {
-    WriteToConsole "Current cluster: $(kubectl config current-context)"
+    Write-Information -MessageData "Current cluster: $(kubectl config current-context)"
     kubectl version --short
     kubectl get "deployments,pods,services,nodes,ingress" --namespace=kube-system -o wide    
 }
@@ -803,13 +814,12 @@ users:
     token: ${token}
 "@
 
-    WriteToConsole "------ CUT HERE -----"
-    WriteToConsole $kubeconfig
-    WriteToConsole "------ END CUT HERE ---"
-
+    Write-Information -MessageData "------ CUT HERE -----"
+    Write-Information -MessageData $kubeconfig
+    Write-Information -MessageData "------ END CUT HERE ---"
 }
 
-function troubleshootIngress([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function troubleshootIngress([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     $ingresses = $(kubectl get ingress -n $namespace -o jsonpath='{.items[*].metadata.name}')
     foreach ($ingress in $ingresses.Split(" ")) {
         $ingressPath = $(kubectl get ing $ingress -n $namespace -o jsonpath="{.spec.rules[].http.paths[].path}")
@@ -848,11 +858,11 @@ function troubleshootIngress([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty
     }   
 }
 
-function DeleteAllPodsInNamespace([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function DeleteAllPodsInNamespace([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     kubectl delete --all 'pods' --namespace=$namespace --ignore-not-found=true
 }
 
-function ShowSSHCommandsToContainers([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function ShowSSHCommandsToContainers([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     foreach ($pod in $pods.Split(" ")) {
         Write-Host "kubectl exec -it $pod -n fabricnlp -- sh"
@@ -860,14 +870,14 @@ function ShowSSHCommandsToContainers([Parameter(Mandatory=$true)][ValidateNotNul
 
 }
 
-function global:WriteSecretPasswordToOutput([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $secretname){
-    $secretvalue=$(ReadSecretPassword -secretname $secretname -namespace $namespace)
+function global:WriteSecretPasswordToOutput([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname) {
+    $secretvalue = $(ReadSecretPassword -secretname $secretname -namespace $namespace)
     Write-Host "$secretname = $secretvalue"
     Write-Host "To recreate the secret:"
     Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
 }
-function global:WriteSecretValueToOutput([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $secretname){
-    $secretvalue=$(ReadSecretValue -secretname $secretname -namespace $namespace)
+function global:WriteSecretValueToOutput([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname) {
+    $secretvalue = $(ReadSecretValue -secretname $secretname -namespace $namespace)
     Write-Host "$secretname = $secretvalue"
     Write-Host "To recreate the secret:"
     Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$secretvalue"

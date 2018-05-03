@@ -10,17 +10,6 @@ $kubernetesversion = "1.10.0-0"
 $kubernetescniversion = "0.6.0-0"
 $kubernetesserverversion = "1.10.0"
 
-function WriteToLog($txt) {
-    Write-Information -MessageData "$txt"
-}
-
-function WriteToConsole($txt) {
-    # Write-Information -MessageData "$txt"
-    Write-Host "===============================================" -ForegroundColor "Magenta"
-    Write-Host "$txt" -ForegroundColor "Magenta"
-    Write-Host "===============================================" -ForegroundColor "Magenta"
-}
-
 function SetupWorker([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $joincommand) {
     [hashtable]$Return = @{} 
     
