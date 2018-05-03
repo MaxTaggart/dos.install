@@ -138,7 +138,6 @@ function global:SetupCronTab([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
             Write-Information -MessageData "Running script on $vm"
             # https://stackoverflow.com/questions/878600/how-to-create-a-cron-job-using-bash-automatically-without-the-interactive-editor
             $cmd = @'
-su -s azureuser;
 whoami;
 sudo mkdir -p /opt/healthcatalyst;
 sudo curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/restartkubedns.txt -o /opt/healthcatalyst/restartkubedns.sh;
