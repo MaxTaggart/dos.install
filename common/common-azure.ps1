@@ -113,7 +113,7 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
     $AKS_FIRST_STATIC_IP = $VnetInfo.AKS_FIRST_STATIC_IP
     $AKS_SUBNET_CIDR = $VnetInfo.AKS_SUBNET_CIDR
 
-    $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = ReadSecretPassword -secretname "serviceprincipal"
+    # $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = ReadSecretPassword -secretname "serviceprincipal"
 
     CleanResourceGroup -resourceGroup ${AKS_PERS_RESOURCE_GROUP} -location $AKS_PERS_LOCATION -vnet $AKS_VNET_NAME `
         -subnet $AKS_SUBNET_NAME -subnetResourceGroup $AKS_SUBNET_RESOURCE_GROUP `

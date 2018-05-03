@@ -5,7 +5,10 @@
             "orchestratorType": "Kubernetes",
             "orchestratorVersion": "REPLACE-KUBERNETES-VERSION",
             "kubernetesConfig": {
-                "networkPolicy": "azure"
+                "networkPolicy": "azure",
+                "privateCluster": {
+                    "enabled": true
+                }                
             }
         },
         "masterProfile": {
