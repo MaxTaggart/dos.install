@@ -1,7 +1,11 @@
 param([bool]$prerelease, [bool]$local)    
-$version = "2018.05.02.01"
+$version = "2018.05.02.02"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
+
+# http://www.rlmueller.net/PSGotchas.htm
+# Trap {"Error: $_"; Break;}
+# Set-StrictMode -Version latest
 
 if ($local) {
     Write-Host "use local files: $local"    
