@@ -131,12 +131,14 @@ while ($userinput -ne "q") {
         
             CreateACSCluster -baseUrl $GITHUB_URL -config $config
             SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
+            WriteDNSCommands
         } 
         '2' {
             $config = $(ReadConfigFile).Config
             Write-Host $config
         
             SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
+            WriteDNSCommands
         } 
         '3' {
             Do { 
@@ -245,7 +247,7 @@ while ($userinput -ne "q") {
             }
         }         
         '33' {
-            LaunchAzureLoadBalancerDashboard
+            OpenTraefikDashboard
         } 
         '50' {
             showTroubleshootingMenu -baseUrl $GITHUB_URL -isAzure $true

@@ -867,5 +867,6 @@ function global:WriteSecretValueToOutput([Parameter(Mandatory=$true)][ValidateNo
     Write-Host "To recreate the secret:"
     Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$secretvalue"
 }
+
 # --------------------
 Write-Information -MessageData "end common-kube.ps1 version $versionkubecommon"

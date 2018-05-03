@@ -17,7 +17,7 @@ spec:
         k8s-app: traefik-ingress-lb-internal
         name: traefik-ingress-lb-internal
         k8s-traefik: traefik          
-        expose-internal: "true"
+        k8s-app-internal: traefik-ingress-lb
     spec:
       serviceAccountName: traefik-ingress-serviceaccount
       terminationGracePeriodSeconds: 60

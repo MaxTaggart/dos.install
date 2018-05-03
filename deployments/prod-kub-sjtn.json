@@ -3,8 +3,11 @@
     "kubectl": {
         "version": "1.10.0"
     },
+    "kubernetes": {
+        "version": "1.10.0"
+    },    
     "azcli": {
-        "version": "2.0.27"
+        "version": "2.0.30"
     },
     "azure": {
         "resourceGroup": "Prod-Kub-SJTN-RG",
@@ -12,8 +15,10 @@
         "create_windows_containers": false,
         "use_azure_networking": true,
         "acs_engine": {
-            "version": "0.14.6"
-        }
+            "version": "0.15.0"
+        },
+        "masterVMSize": "Standard_DS2_v2",
+        "workerVMSize": "Standard_DS2_v2"
     },
     "service_principal": {
         "name": "",
@@ -30,7 +35,7 @@
     "ingress": {
         "external": "whitelist",
         "internal": "vnetonly",
-        "external_ip_whitelist": "40.70.58.54"
+        "external_ip_whitelist": "40.70.58.54,192.55.208.0/24"
     },
     "networking": {
         "vnet": "CAPVnet",
