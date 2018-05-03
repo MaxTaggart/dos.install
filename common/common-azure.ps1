@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.01.02"
+$versionazurecommon = "2018.05.02.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -201,7 +201,13 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
         $templateFile = "acs.template.linuxwindows.json"    
     }
     elseif ($AKS_USE_AZURE_NETWORKING) {
-        $templateFile = "acs.template.azurenetwork.json"             
+        if ("$($config.ingress.internal)" -eq "vnetonly"){
+#            $templateFile = "acs.template.azurenetwork.private.json"
+            $templateFile = "acs.template.azurenetwork.json"
+        }
+        else {
+            $templateFile = "acs.template.azurenetwork.json"                         
+        }
     }
 
     Write-Host "Using template: $baseUrl/azure/$templateFile"
