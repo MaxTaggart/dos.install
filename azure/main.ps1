@@ -106,7 +106,6 @@ while ($userinput -ne "q") {
     Write-Host "------ Load Balancer -------"
     Write-Host "30: Test load balancer"
     Write-Host "31: Fix load balancers"
-    Write-Host "32: Show load balancer logs"
     Write-Host "33: Launch Load Balancer Dashboard"
     Write-Host "-----------"
     Write-Host "50: Troubleshooting Menu"
@@ -243,13 +242,6 @@ while ($userinput -ne "q") {
             }
             FixLoadBalancers -resourceGroup $AKS_PERS_RESOURCE_GROUP
         } 
-        '32' {
-            $pods = $(kubectl get pods -l k8s-traefik=traefik -n kube-system -o jsonpath='{.items[*].metadata.name}')
-            foreach ($pod in $pods.Split(" ")) {
-                Write-Host "=============== Pod: $pod ================="
-                kubectl logs --tail=20 $pod -n kube-system 
-            }
-        }         
         '33' {
             OpenTraefikDashboard
         } 
