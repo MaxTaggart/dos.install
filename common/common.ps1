@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.02.03"
+$versioncommon = "2018.05.02.04"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -815,6 +815,11 @@ function global:CreateResourceGroupIfNotExists([Parameter(Mandatory=$true)][Vali
 
 function global:SetNetworkSecurityGroupRule([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $networkSecurityGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $rulename, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $ruledescription, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $sourceTag, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] $port, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] $priority ) {
     [hashtable]$Return = @{} 
+
+    # the commands below don't like commas in $sourceTag so replace with space
+    # https://docs.microsoft.com/en-us/cli/azure/network/nsg/rule?view=azure-cli-latest#az-network-nsg-rule-create
+    # "Space-separated list of CIDR prefixes or IP ranges. Alternatively, specify ONE of 'VirtualNetwork', 'AzureLoadBalancer', 'Internet' or '*' to match all IPs."
+    $sourceTag = $sourceTag -replace ","," "
 
     if ([string]::IsNullOrWhiteSpace($(az network nsg rule show --name "$rulename" --nsg-name $networkSecurityGroup --resource-group $resourceGroup))) {
         Write-Information -MessageData "Creating rule: $rulename"
