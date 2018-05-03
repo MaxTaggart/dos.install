@@ -1,8 +1,11 @@
-param([bool]$prerelease)    
-$version = "2018.05.01.05"
+param([bool]$prerelease, [bool]$local)    
+$version = "2018.05.02.01"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
+if ($local) {
+    Write-Host "use local files: $local"    
+}
 # stop whenever there is an error
 $ErrorActionPreference = "Stop"
 # show Information messages
@@ -25,24 +28,45 @@ $randomstring += $set | Get-Random
 
 Write-Host "Powershell version: $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor).$($PSVersionTable.PSVersion.Build)"
 
-Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring | Invoke-Expression;
-# Get-Content ./common/common-kube.ps1 -Raw | Invoke-Expression;
+if ($local) {
+    Get-Content ./common/common-kube.ps1 -Raw | Invoke-Expression;
+}
+else {
+    Invoke-WebRequest -useb ${GITHUB_URL}/common/common-kube.ps1?f=$randomstring | Invoke-Expression;    
+}
 
-Invoke-WebRequest -useb $GITHUB_URL/common/common.ps1?f=$randomstring | Invoke-Expression;
-# Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
+if ($local) {
+    Get-Content ./common/common.ps1 -Raw | Invoke-Expression;
+}
+else {
+    Invoke-WebRequest -useb ${GITHUB_URL}/common/common.ps1?f=$randomstring | Invoke-Expression;    
+}
 
-Invoke-WebRequest -useb $GITHUB_URL/common/common-azure.ps1 | Invoke-Expression;
-# Get-Content ./common/common-azure.ps1 -Raw | Invoke-Expression;
+if ($local) {
+    Get-Content ./common/common-azure.ps1 -Raw | Invoke-Expression;
+}
+else {
+    Invoke-WebRequest -useb ${GITHUB_URL}/common/common-azure.ps1?f=$randomstring | Invoke-Expression;    
+}
 
-Invoke-WebRequest -useb $GITHUB_URL/common/product-menu.ps1?f=$randomstring | Invoke-Expression;
+if ($local) {
+    Get-Content ./common/product-menu.ps1 -Raw | Invoke-Expression;
+}
+else {
+    Invoke-WebRequest -useb ${GITHUB_URL}/common/product-menu.ps1?f=$randomstring | Invoke-Expression;    
+}
 
-Invoke-WebRequest -useb $GITHUB_URL/common/troubleshooting-menu.ps1?f=$randomstring | Invoke-Expression;
+if ($local) {
+    Get-Content ./common/troubleshooting-menu.ps1 -Raw | Invoke-Expression;
+}
+else {
+    Invoke-WebRequest -useb ${GITHUB_URL}/common/troubleshooting-menu.ps1?f=$randomstring | Invoke-Expression;    
+}
 
 # if(!(Test-Path .\Fabric-Install-Utilities.psm1)){
 #     Invoke-WebRequest -Uri https://raw.githubusercontent.com/HealthCatalyst/InstallScripts/master/common/Fabric-Install-Utilities.psm1 -Headers @{"Cache-Control"="no-cache"} -OutFile Fabric-Install-Utilities.psm1
 # }
 # Import-Module -Name .\Fabric-Install-Utilities.psm1 -Force
-
 
 $userinput = ""
 while ($userinput -ne "q") {
@@ -68,9 +92,6 @@ while ($userinput -ne "q") {
     Write-Host "7: Setup Azure DNS entries"
     Write-Host "8: Show DNS entries to make in CAFE DNS"
     Write-Host "9: Show nodes"
-    Write-Host "------ Install -------"
-    Write-Host "11: Install NLP"
-    Write-Host "12: Install Realtime"
     Write-Host "----- Troubleshooting ----"
     Write-Host "20: Show status of cluster"
     Write-Host "21: Launch Kubernetes Admin Dashboard"
@@ -177,19 +198,6 @@ while ($userinput -ne "q") {
             Write-Host "Current cluster: $(kubectl config current-context)"
             kubectl version --short
             kubectl get "nodes"
-        } 
-        '11' {
-            $namespace="fabricnlp"
-            CreateNamespaceIfNotExists $namespace
-            AskForPasswordAnyCharacters -secretname "smtprelaypassword" -prompt "Please enter SMTP relay password" -namespace $namespace
-            $dnshostname=$(ReadSecretValue -secretname "dnshostname" -namespace "default")
-            SaveSecretValue -secretname "nlpweb-external-url" -valueName "value" -value "nlp.$dnshostname" -namespace $namespace
-            SaveSecretValue -secretname "jobserver-external-url" -valueName "value" -value "nlpjobs.$dnshostname" -namespace $namespace
-            InstallStack -namespace $namespace -baseUrl $GITHUB_URL -appfolder "nlp" -isAzure 1
-        } 
-        '12' {
-            # CreateNamespaceIfNotExists "fabricrealtime"
-            InstallStack -namespace "fabricrealtime" -baseUrl $GITHUB_URL -appfolder "realtime" -isAzure 1
         } 
         '20' {
             Write-Host "Current cluster: $(kubectl config current-context)"

@@ -21,7 +21,7 @@ function WriteToConsole($txt) {
     Write-Host "===============================================" -ForegroundColor "Magenta"
 }
 
-function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $joincommand) {
+function SetupWorker([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $joincommand) {
     [hashtable]$Return = @{} 
     
     # Set-PSDebug -Trace 1   
@@ -53,7 +53,7 @@ function SetupWorker([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNu
     return $Return    
 }
 
-function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlenode) {
+function SetupMaster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlenode) {
     [hashtable]$Return = @{} 
 
     $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-setupmaster.txt"
@@ -100,7 +100,7 @@ function SetupMaster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$singlen
     return $Return    
 }
 
-function SetupNewMasterNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
+function SetupNewMasterNode([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
     $u = "$(whoami)"
@@ -256,7 +256,7 @@ function ConfigureIpTables() {
     sudo iptables -t nat -L
 }
   
-function AddFirewallPort($port, $name) {
+function AddFirewallPort([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$port, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $name) {
     if ("$(sudo firewall-cmd --query-port=${port})" -ne "yes") {
         WriteToLog "opening port $port for $name"
         sudo firewall-cmd --add-port=${port} --permanent
@@ -366,7 +366,7 @@ function ConfigureFirewall() {
 
     return $Return        
 }
-function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
+function SetupNewLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
     WriteToConsole "deleting any old resources"
@@ -434,7 +434,7 @@ function SetupNewLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl) {
     return $Return
 }
 
-function SetupNewNode([ValidateNotNullOrEmpty()][string] $baseUrl) {
+function SetupNewNode([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
 
     WriteToLog "checking if this machine can access a DNS server via host $(hostname)"
@@ -604,7 +604,7 @@ function UninstallDockerAndKubernetes() {
     return $Return
 }
 
-function lockPackageVersion([ValidateNotNullOrEmpty()][string]$packagelist) {
+function lockPackageVersion([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$packagelist) {
     $packages = $packagelist.Split(" ");
     foreach ($name in $packages) {
         sudo yum list installed $name 
@@ -613,14 +613,14 @@ function lockPackageVersion([ValidateNotNullOrEmpty()][string]$packagelist) {
         }
     }
 }
-function unlockPackageVersion([ValidateNotNullOrEmpty()][string]$packagelist) {
+function unlockPackageVersion([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$packagelist) {
     $packages = $packagelist.Split(" ");
     foreach ($name in $packages) {
         sudo yum versionlock delete $name 2>&1 >> yum.log
     }
 }
 
-function mountSharedFolder([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
+function mountSharedFolder([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
     [hashtable]$Return = @{} 
 
     Write-Host "DOS requires a network folder that can be accessed from all the worker VMs"
@@ -644,7 +644,7 @@ function mountSharedFolder([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
     return $Return    
 }
 
-function mountSMB([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
+function mountSMB([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
     [hashtable]$Return = @{} 
 
     Do {$pathToShare = Read-Host -Prompt "path to SMB share (e.g., //myserver.mydomain/myshare)"} while (!$pathToShare)
@@ -664,7 +664,7 @@ function mountSMB([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
 
 }
 
-function mountAzureFile([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
+function mountAzureFile([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
     [hashtable]$Return = @{} 
     
     Do {$storageAccountName = Read-Host -Prompt "Storage Account Name"} while (!$storageAccountName)
@@ -680,7 +680,7 @@ function mountAzureFile([ValidateNotNullOrEmpty()][bool] $saveIntoSecret) {
     return $Return    
 }
 
-function MountFolderFromSecrets([ValidateNotNullOrEmpty()][string] $baseUrl) {
+function MountFolderFromSecrets([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl) {
     [hashtable]$Return = @{} 
     WriteToConsole "waiting to let kubernetes come up"
     Do {
@@ -718,7 +718,10 @@ function MountFolderFromSecrets([ValidateNotNullOrEmpty()][string] $baseUrl) {
     return $Return    
 }
 
-function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [ValidateNotNullOrEmpty()][string] $username, [ValidateNotNullOrEmpty()][string] $domain, [ValidateNotNullOrEmpty()][string] $password, [ValidateNotNullOrEmpty()][bool] $saveIntoSecret, [ValidateNotNullOrEmpty()][bool] $isUNC) {
+function mountSMBWithParams([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $pathToShare, `
+                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $username, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $domain, `
+                         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $password, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][bool] $saveIntoSecret, `
+                          [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][bool] $isUNC) {
     [hashtable]$Return = @{} 
     $passwordlength = $($password.length)
     WriteToLog "mounting file share with path: [$pathToShare], user: [$username], domain: [$domain], password_length: [$passwordlength] saveIntoSecret: [$saveIntoSecret], isUNC: [$isUNC]"
@@ -773,7 +776,7 @@ function mountSMBWithParams([ValidateNotNullOrEmpty()][string] $pathToShare, [Va
     return $Return    
 }
 
-function ShowCommandToJoinCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$prerelease) {
+function ShowCommandToJoinCluster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$prerelease) {
     
     $joinCommand = $(sudo kubeadm token create --print-join-command)
     if ($joinCommand) {
@@ -839,7 +842,7 @@ function TroubleshootNetworking() {
     sudo tail --lines 1000 /var/log/messages | grep REJECT
 }
 
-function TestDNS([ValidateNotNullOrEmpty()][string] $baseUrl) {
+function TestDNS([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl) {
     WriteToConsole "To resolve DNS issues: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#debugging-dns-resolution"
     WriteToConsole "Checking if DNS pods are running"
     kubectl get pods --namespace=kube-system -l k8s-app=kube-dns -o wide

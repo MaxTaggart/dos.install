@@ -7,7 +7,7 @@ function global:GetCommonAzureVersion() {
     return $versionazurecommon
 }
 
-function global:CreateACSCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config) {
+function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config) {
     Write-Host "Checking if you're already logged in..."
 
     Write-Host $config
@@ -501,7 +501,7 @@ function global:CreateACSCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [V
 }
 
 
-function global:SetupAzureLoadBalancer([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config) {
+function global:SetupAzureLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNull()] $config) {
    
     $AKS_IP_WHITELIST = ""
     
@@ -683,7 +683,7 @@ function global:SetupAzureLoadBalancer([ValidateNotNullOrEmpty()][string] $baseU
     }        
 }
 
-function global:CreateBareMetalCluster([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config) {   
+function global:CreateBareMetalCluster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNull()] $config) {   
     DownloadAzCliIfNeeded -version $($config.azcli.version)
     
     $AKS_SUBSCRIPTION_ID = $(GetLoggedInUserInfo).AKS_SUBSCRIPTION_ID
@@ -837,7 +837,7 @@ function global:CreateBareMetalCluster([ValidateNotNullOrEmpty()][string] $baseU
         -image $urn
     
     Write-Host "ssh -i ${SSH_PRIVATE_KEY_FILE_UNIX_PATH} azureuser@$($VMInfo.IP)"
-    Write-Host "Run: curl -sSL https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/onprem/setupmaster.sh | bash"
+    Write-Host "Run: curl -sSL ${$baseUrl}/onprem/main.sh | bash"
     
     Write-Host "Creating linux vm 1"
     $VMInfo = CreateVM -vm "k8s-linux-agent-1" -resourceGroup $AKS_PERS_RESOURCE_GROUP `
@@ -896,10 +896,10 @@ function global:CreateBareMetalCluster([ValidateNotNullOrEmpty()][string] $baseU
     Write-Host "Storage key: $STORAGE_KEY"        
 }
 
-function global:StartVMsInResourceGroup([ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:StartVMsInResourceGroup([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     az vm start --ids $(az vm list -g $resourceGroup --query "[].id" -o tsv) 
 }
-function global:StopVMsInResourceGroup([ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:StopVMsInResourceGroup([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     az vm stop --ids $(az vm list -g $resourceGroup --query "[].id" -o tsv) 
 }
 function global:RenewAzureToken() {
