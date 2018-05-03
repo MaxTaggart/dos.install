@@ -787,7 +787,7 @@ function global:CreateBareMetalCluster([Parameter(Mandatory=$true)][ValidateNotN
         if ([string]::IsNullOrWhiteSpace($(az network nsg rule show --name "HttpPort" --nsg-name $NETWORK_SECURITY_GROUP --resource-group $AKS_PERS_RESOURCE_GROUP))) {
             Write-Host "Creating rule: HttpPort"
             az network nsg rule create -g $AKS_PERS_RESOURCE_GROUP --nsg-name $NETWORK_SECURITY_GROUP -n HttpPort --priority 500 `
-                --source-address-prefixes "$sourceTagForHttpAccess" --source-port-ranges '*' `
+                --source-address-prefixes $sourceTagForHttpAccess --source-port-ranges '*' `
                 --destination-address-prefixes '*' --destination-port-ranges 80 --access Allow `
                 --protocol Tcp --description "allow HTTP access from $sourceTagForHttpAccess." `
                 --query "provisioningState" -o tsv
@@ -795,7 +795,7 @@ function global:CreateBareMetalCluster([Parameter(Mandatory=$true)][ValidateNotN
         else {
             Write-Host "Updating rule: HttpPort"
             az network nsg rule update -g $AKS_PERS_RESOURCE_GROUP --nsg-name $NETWORK_SECURITY_GROUP -n HttpPort --priority 500 `
-                --source-address-prefixes "$sourceTagForHttpAccess" --source-port-ranges '*' `
+                --source-address-prefixes $sourceTagForHttpAccess --source-port-ranges '*' `
                 --destination-address-prefixes '*' --destination-port-ranges 80 --access Allow `
                 --protocol Tcp --description "allow HTTP access from $sourceTagForHttpAccess." `
                 --query "provisioningState" -o tsv
@@ -804,7 +804,7 @@ function global:CreateBareMetalCluster([Parameter(Mandatory=$true)][ValidateNotN
         if ([string]::IsNullOrWhiteSpace($(az network nsg rule show --name "HttpsPort" --nsg-name $NETWORK_SECURITY_GROUP --resource-group $AKS_PERS_RESOURCE_GROUP))) {
             Write-Host "Creating rule: HttpsPort"
             az network nsg rule create -g $AKS_PERS_RESOURCE_GROUP --nsg-name $NETWORK_SECURITY_GROUP -n HttpsPort --priority 501 `
-                --source-address-prefixes "$sourceTagForHttpAccess" --source-port-ranges '*' `
+                --source-address-prefixes $sourceTagForHttpAccess --source-port-ranges '*' `
                 --destination-address-prefixes '*' --destination-port-ranges 443 --access Allow `
                 --protocol Tcp --description "allow HTTPS access from $sourceTagForHttpAccess." `
                 --query "provisioningState" -o tsv
@@ -812,7 +812,7 @@ function global:CreateBareMetalCluster([Parameter(Mandatory=$true)][ValidateNotN
         else {
             Write-Host "Updating rule: HttpsPort"
             az network nsg rule update -g $AKS_PERS_RESOURCE_GROUP --nsg-name $NETWORK_SECURITY_GROUP -n HttpsPort --priority 501 `
-                --source-address-prefixes "$sourceTagForHttpAccess" --source-port-ranges '*' `
+                --source-address-prefixes $sourceTagForHttpAccess --source-port-ranges '*' `
                 --destination-address-prefixes '*' --destination-port-ranges 443 --access Allow `
                 --protocol Tcp --description "allow HTTPS access from $sourceTagForHttpAccess." `
                 --query "provisioningState" -o tsv

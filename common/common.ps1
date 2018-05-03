@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.02.04"
+$versioncommon = "2018.05.02.05"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -9,7 +9,7 @@ function global:GetCommonVersion() {
 
 function global:Coalesce($a, $b) { if ($a -ne $null) { $a } else { $b } }
 
-function global:DeleteAzureFileShare([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $sharename, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $storageAccountConnectionString) {
+function global:DeleteAzureFileShare([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $sharename, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $storageAccountConnectionString) {
     [hashtable]$Return = @{} 
 
     if ($(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv)) {
@@ -28,7 +28,7 @@ function global:DeleteAzureFileShare([Parameter(Mandatory=$true)][ValidateNotNul
 
     return $Return
 }
-function global:CreateShareInStorageAccount([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $storageAccountName, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $sharename, $deleteExisting) { 
+function global:CreateShareInStorageAccount([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $storageAccountName, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $sharename, $deleteExisting) { 
     [hashtable]$Return = @{} 
 
     $storageAccountConnectionString = az storage account show-connection-string -n $storageAccountName -g $resourceGroup -o tsv
@@ -57,7 +57,7 @@ function global:CreateShareInStorageAccount([Parameter(Mandatory=$true)][Validat
     return $Return
 
 }
-function global:CreateShare([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $sharename, $deleteExisting) {
+function global:CreateShare([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $sharename, $deleteExisting) {
     [hashtable]$Return = @{} 
 
     $storageAccountName = ReadSecretData -secretname azure-secret -valueName azurestorageaccountname 
@@ -129,7 +129,7 @@ function global:Get-FirstIP {
     INT64-toIP -int $startaddr
 }
 
-function global:SetupCronTab([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:SetupCronTab([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     [hashtable]$Return = @{} 
 
     $virtualmachines = az vm list -g $resourceGroup --query "[?storageProfile.osDisk.osType != 'Windows'].name" -o tsv
@@ -149,14 +149,14 @@ cronjob='*/10 * * * *';
 ( crontab -l | grep -v -F 'restartkubedns.sh' ; echo \"$cronjob $croncmd\" ) | crontab - ;
 crontab -l;
 '@
-            $cmd = $cmd -replace "`n","" -replace "`r",""
+            $cmd = $cmd -replace "`n", "" -replace "`r", ""
             az vm run-command invoke -g $resourceGroup -n $vm --command-id RunShellScript --scripts "$cmd"
         }
     }
     return $Return
 }
 
-function global:UpdateOSInVMs([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:UpdateOSInVMs([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     [hashtable]$Return = @{} 
 
     $virtualmachines = az vm list -g $resourceGroup --query "[?storageProfile.osDisk.osType != 'Windows'].name" -o tsv
@@ -169,7 +169,7 @@ function global:UpdateOSInVMs([Parameter(Mandatory=$true)][ValidateNotNullOrEmpt
 }
 
 
-function global:RestartVMsInResourceGroup([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:RestartVMsInResourceGroup([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     [hashtable]$Return = @{} 
 
     # az vm run-command invoke -g Prod-Kub-AHMN-RG -n k8s-master-37819884-0 --command-id RunShellScript --scripts "apt-get update && sudo apt-get upgrade"
@@ -202,7 +202,7 @@ function global:RestartVMsInResourceGroup([Parameter(Mandatory=$true)][ValidateN
     return $Return
 }
 
-function global:FixEtcdRestartIssueOnMaster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:FixEtcdRestartIssueOnMaster([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
 
     [hashtable]$Return = @{} 
 
@@ -218,7 +218,7 @@ function global:FixEtcdRestartIssueOnMaster([Parameter(Mandatory=$true)][Validat
 }
 
 
-function global:SetHostFileInVms( [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:SetHostFileInVms( [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     [hashtable]$Return = @{} 
 
     $AKS_PERS_LOCATION = az group show --name $resourceGroup --query "location" -o tsv
@@ -258,7 +258,7 @@ function global:SetHostFileInVms( [Parameter(Mandatory=$true)][ValidateNotNullOr
 }
 
 
-function global:CleanResourceGroup([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $location, [string] $vnet, [string] $subnet, [string] $subnetResourceGroup, [string] $storageAccount) {
+function global:CleanResourceGroup([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $location, [string] $vnet, [string] $subnet, [string] $subnetResourceGroup, [string] $storageAccount) {
     [hashtable]$Return = @{} 
 
     Write-Information -MessageData "checking if resource group already exists"
@@ -384,7 +384,7 @@ function global:CleanResourceGroup([Parameter(Mandatory=$true)][ValidateNotNullO
     return $Return
 }
 
-function global:CreateStorageIfNotExists([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, $deleteStorageAccountIfExists) {
+function global:CreateStorageIfNotExists([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, $deleteStorageAccountIfExists) {
     #Create an hashtable variable 
     [hashtable]$Return = @{} 
 
@@ -440,7 +440,7 @@ function global:CreateStorageIfNotExists([Parameter(Mandatory=$true)][ValidateNo
     return $Return
 }
 
-function global:GetVnet([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $subscriptionId) {
+function global:GetVnet([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subscriptionId) {
     #Create an hashtable variable 
     [hashtable]$Return = @{} 
 
@@ -542,7 +542,7 @@ function global:GetVnet([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][s
     Return $Return     
 }
 
-function global:GetVnetInfo([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $subscriptionId, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $subnetResourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $vnetName, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $subnetName) {
+function global:GetVnetInfo([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subscriptionId, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subnetResourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $vnetName, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subnetName) {
     [hashtable]$Return = @{} 
 
     # verify the subnet exists
@@ -592,7 +592,7 @@ function global:Test-CommandExists {
     Finally {$ErrorActionPreference = $oldPreference}
 } #end function test-CommandExists
 
-function global:Get-ProcessByPort( [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] [int] $Port ) {    
+function global:Get-ProcessByPort( [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [int] $Port ) {    
     $netstat = netstat.exe -ano | Select-Object -Skip 4
     $p_line = $netstat | Where-Object { $p = ( -split $_ | Select-Object -Index 1) -split ':' | Select-Object -Last 1; $p -eq $Port } | Select-Object -First 1
     if (!$p_line) { return; } 
@@ -615,7 +615,7 @@ function global:FindOpenPort($portArray) {
     return $Return
 }
 
-function global:AddFolderToPathEnvironmentVariable([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $folder) {
+function global:AddFolderToPathEnvironmentVariable([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $folder) {
     [hashtable]$Return = @{} 
 
     # add the c:\kubernetes folder to system PATH
@@ -637,7 +637,7 @@ function global:AddFolderToPathEnvironmentVariable([Parameter(Mandatory=$true)][
     }
     return $Return
 }
-function global:DownloadAzCliIfNeeded([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $version) {
+function global:DownloadAzCliIfNeeded([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $version) {
     [hashtable]$Return = @{} 
 
     # install az cli from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
@@ -682,7 +682,7 @@ function global:DownloadAzCliIfNeeded([Parameter(Mandatory=$true)][ValidateNotNu
     return $Return
 }
 
-function global:CreateSSHKey([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $localFolder) {
+function global:CreateSSHKey([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $localFolder) {
     #Create an hashtable variable 
     [hashtable]$Return = @{} 
 
@@ -798,7 +798,7 @@ function global:GetResourceGroupAndLocation([string] $defaultResourceGroup) {
 
 }
 
-function global:CreateResourceGroupIfNotExists([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $location ) {
+function global:CreateResourceGroupIfNotExists([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $location ) {
     [hashtable]$Return = @{} 
 
     Write-Information -MessageData "Using resource group [$resourceGroup]"
@@ -813,34 +813,34 @@ function global:CreateResourceGroupIfNotExists([Parameter(Mandatory=$true)][Vali
     Return $Return         
 }
 
-function global:SetNetworkSecurityGroupRule([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $networkSecurityGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $rulename, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $ruledescription, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $sourceTag, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] $port, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] $priority ) {
+function global:SetNetworkSecurityGroupRule([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $networkSecurityGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $rulename, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $ruledescription, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $sourceTag, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] $port, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] $priority ) {
     [hashtable]$Return = @{} 
 
     # the commands below don't like commas in $sourceTag so replace with space
     # https://docs.microsoft.com/en-us/cli/azure/network/nsg/rule?view=azure-cli-latest#az-network-nsg-rule-create
     # "Space-separated list of CIDR prefixes or IP ranges. Alternatively, specify ONE of 'VirtualNetwork', 'AzureLoadBalancer', 'Internet' or '*' to match all IPs."
-    $sourceTag = $sourceTag -replace ","," "
 
+    # we have to use @ splat operator here or az cli doesn't pick up strings with spaces properly
     if ([string]::IsNullOrWhiteSpace($(az network nsg rule show --name "$rulename" --nsg-name $networkSecurityGroup --resource-group $resourceGroup))) {
         Write-Information -MessageData "Creating rule: $rulename"
         az network nsg rule create -g $resourceGroup --nsg-name $networkSecurityGroup -n "$rulename" --priority $priority `
-            --source-address-prefixes "${sourceTag}" --source-port-ranges '*' `
+            --source-address-prefixes @($sourceTag.Split(",")) --source-port-ranges '*' `
             --destination-address-prefixes '*' --destination-port-ranges $port --access Allow `
             --protocol Tcp --description "$ruledescription" `
             --query "provisioningState" -o tsv
     }
     else {
         Write-Information -MessageData "Updating rule: $rulename"
-
         az network nsg rule update -g $resourceGroup --nsg-name $networkSecurityGroup -n "$rulename" --priority $priority `
-            --source-address-prefixes "${sourceTag}" --source-port-ranges '*' `
+            --source-address-prefixes @($sourceTag.Split(",")) --source-port-ranges '*' `
             --destination-address-prefixes '*' --destination-port-ranges $port --access Allow `
             --protocol Tcp --description "$ruledescription" `
             --query "provisioningState" -o tsv
+  
     }
     return $Return
 }
-function global:DeleteNetworkSecurityGroupRule([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $networkSecurityGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $rulename ) {
+function global:DeleteNetworkSecurityGroupRule([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $networkSecurityGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $rulename ) {
     [hashtable]$Return = @{} 
 
     if (![string]::IsNullOrWhiteSpace($(az network nsg rule show --name "$rulename" --nsg-name $networkSecurityGroup --resource-group $resourceGroup))) {
@@ -850,7 +850,7 @@ function global:DeleteNetworkSecurityGroupRule([Parameter(Mandatory=$true)][Vali
     return $Return 
 }
 
-function global:DownloadKubectl([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $localFolder, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $version) {
+function global:DownloadKubectl([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $localFolder, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $version) {
     [hashtable]$Return = @{} 
     
     # download kubectl
@@ -884,7 +884,7 @@ function global:DownloadKubectl([Parameter(Mandatory=$true)][ValidateNotNullOrEm
     return $Return
 }
 
-function global:DownloadFile([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $url, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $targetFile) {
+function global:DownloadFile([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $url, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $targetFile) {
     [hashtable]$Return = @{} 
 
     # https://learn-powershell.net/2013/02/08/powershell-and-events-object-events/
@@ -923,7 +923,7 @@ function global:DownloadFile([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty
     return $Return
     #endregion Download file from website    
 }
-function global:DownloadFileOld([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] $url, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()] $targetFile) {
+function global:DownloadFileOld([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] $url, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] $targetFile) {
     [hashtable]$Return = @{} 
 
     # from https://stackoverflow.com/questions/21422364/is-there-any-way-to-monitor-the-progress-of-a-download-using-a-webclient-object
@@ -958,7 +958,7 @@ function global:DownloadFileOld([Parameter(Mandatory=$true)][ValidateNotNullOrEm
     return $Return
 }
 
-function global:FixLoadBalancerBackendPools([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $loadbalancer) {
+function global:FixLoadBalancerBackendPools([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $loadbalancer) {
     [hashtable]$Return = @{} 
 
     $loadbalancerBackendPoolName = $resourceGroup # the name may change in the future so we should look it up
@@ -1023,7 +1023,7 @@ function global:FixLoadBalancerBackendPools([Parameter(Mandatory=$true)][Validat
     return $Return
 }
 
-function global:FixLoadBalancerBackendPorts([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $loadbalancer) {
+function global:FixLoadBalancerBackendPorts([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $loadbalancer) {
     [hashtable]$Return = @{} 
 
     # 2. fix the ports in load balancing rules
@@ -1094,7 +1094,7 @@ function global:FixLoadBalancerBackendPorts([Parameter(Mandatory=$true)][Validat
     }
     return $Return
 }
-function global:FixLoadBalancers([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:FixLoadBalancers([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     [hashtable]$Return = @{} 
 
     # hacks here to get around bugs in the acs-engine loadbalancer code
@@ -1124,7 +1124,7 @@ function global:FixLoadBalancers([Parameter(Mandatory=$true)][ValidateNotNullOrE
     # end hacks
 }
 
-function global:SetupDNS([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $dnsResourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $dnsrecordname, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $externalIP) {
+function global:SetupDNS([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $dnsResourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $dnsrecordname, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $externalIP) {
     [hashtable]$Return = @{} 
 
     Write-Information -MessageData "Setting DNS zones"
@@ -1142,7 +1142,7 @@ function global:SetupDNS([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][
     return $Return
 }
 
-function global:ShowNameServerEntries([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $dnsResourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $dnsrecordname) {
+function global:ShowNameServerEntries([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $dnsResourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $dnsrecordname) {
     [hashtable]$Return = @{} 
 
     # list out the name servers
@@ -1160,20 +1160,24 @@ function global:GetLoadBalancerIPs() {
     $loadbalancer = "traefik-ingress-service-public"
     $loadbalancerInternal = "traefik-ingress-service-internal" 
 
+    [int] $counter = 0
     Write-Information -MessageData "Waiting for IP to get assigned to the load balancer (Note: It can take upto 5 minutes for Azure to finish creating the load balancer)"
     Do { 
         Start-Sleep -Seconds 10
-        Write-Information -MessageData "."
+        $counter = $counter + 1
+        Write-Information -MessageData "$counter"
         $externalIP = $(kubectl get svc $loadbalancer -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}')
     }
     while ([string]::IsNullOrWhiteSpace($externalIP) -and ($startDate.AddMinutes($timeoutInMinutes) -gt (Get-Date)))
     Write-Information -MessageData "External IP: $externalIP"
     
     if ($AKS_CLUSTER_ACCESS_TYPE -eq "2") {
+        $counter = 0
         Write-Information -MessageData "Waiting for IP to get assigned to the internal load balancer (Note: It can take upto 5 minutes for Azure to finish creating the load balancer)"
         Do { 
             Start-Sleep -Seconds 10
-            Write-Information -MessageData "."
+            $counter = $counter + 1
+            Write-Information -MessageData "$counter"
             $internalIP = $(kubectl get svc $loadbalancerInternal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}')
         }
         while ([string]::IsNullOrWhiteSpace($internalIP) -and ($startDate.AddMinutes($timeoutInMinutes) -gt (Get-Date)))
@@ -1185,7 +1189,7 @@ function global:GetLoadBalancerIPs() {
     
     return $Return
 }
-function global:CheckUrl([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $url, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $hostHeader) {
+function global:CheckUrl([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $url, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $hostHeader) {
 
     [hashtable]$Return = @{} 
 
@@ -1237,7 +1241,7 @@ function global:GetDNSCommands() {
     $externalDNSEntries = $(kubectl get ing --all-namespaces -l expose=external -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true).Split(" ")
 
     ForEach ($dns in $externalDNSEntries) { 
-        if (($internalDNSEntries.Contains($dns))) {
+        if ($internalDNSEntries -and ($internalDNSEntries.Contains($dns))) {
             # already included in internal load balancer
         }
         else {
@@ -1285,7 +1289,7 @@ function global:WriteDNSCommands() {
     return $Return
 }
 
-function global:GetPublicNameofMasterVM([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:GetPublicNameofMasterVM([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     [hashtable]$Return = @{} 
 
     $resourceGroupLocation = az group show --name $resourceGroup --query "location" -o tsv
@@ -1296,7 +1300,7 @@ function global:GetPublicNameofMasterVM([Parameter(Mandatory=$true)][ValidateNot
     return $Return
 }
 
-function global:GetPrivateIPofMasterVM([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:GetPrivateIPofMasterVM([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     [hashtable]$Return = @{} 
 
     $virtualmachines = az vm list -g $resourceGroup --query "[?storageProfile.osDisk.osType != 'Windows'].name" -o tsv
@@ -1310,7 +1314,7 @@ function global:GetPrivateIPofMasterVM([Parameter(Mandatory=$true)][ValidateNotN
     return $Return
 }
 
-function global:CreateVM([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $vm, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $subnetId, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $networkSecurityGroup, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $publicKeyFile, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $image) {
+function global:CreateVM([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $vm, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subnetId, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $networkSecurityGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $publicKeyFile, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $image) {
     [hashtable]$Return = @{} 
 
     $publicIP = "${vm}PublicIP"
@@ -1384,7 +1388,7 @@ function global:TestConnection() {
 }
 
 
-function global:GetUrlAndIPForLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:GetUrlAndIPForLoadBalancer([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
 
     [hashtable]$Return = @{} 
 
@@ -1684,7 +1688,7 @@ function global:GetResourceGroup() {
 
     return $Return
 }
-function global:CreateAzureStorage([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function global:CreateAzureStorage([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($namespace)) {
@@ -1707,7 +1711,7 @@ function global:CreateAzureStorage([Parameter(Mandatory=$true)][ValidateNotNullO
 
     return $Return
 }
-function global:DeleteAzureStorage([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function global:DeleteAzureStorage([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($namespace)) {
@@ -1729,7 +1733,7 @@ function global:DeleteAzureStorage([Parameter(Mandatory=$true)][ValidateNotNullO
     return $Return
 }
 
-function global:CreateOnPremStorage([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function global:CreateOnPremStorage([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($namespace)) {
@@ -1748,7 +1752,7 @@ function global:CreateOnPremStorage([Parameter(Mandatory=$true)][ValidateNotNull
 
     return $Return
 }
-function global:DeleteOnPremStorage([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function global:DeleteOnPremStorage([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($namespace)) {
@@ -1767,7 +1771,7 @@ function global:DeleteOnPremStorage([Parameter(Mandatory=$true)][ValidateNotNull
     return $Return
 }
 
-function global:WaitForLoadBalancers([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:WaitForLoadBalancers([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     [hashtable]$Return = @{} 
 
     $loadBalancerIP = kubectl get svc traefik-ingress-service-public -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
@@ -1787,7 +1791,7 @@ function global:WaitForLoadBalancers([Parameter(Mandatory=$true)][ValidateNotNul
     return $Return
 }
 
-function global:InstallStack([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $appfolder, $isAzure ) {
+function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, $isAzure ) {
     [hashtable]$Return = @{} 
 
     if ($isAzure) {
@@ -1812,7 +1816,7 @@ function global:InstallStack([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty
 }
 
 
-function global:DeleteNamespaceAndData([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $namespace, $isAzure) {
+function global:DeleteNamespaceAndData([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, $isAzure) {
     [hashtable]$Return = @{} 
 
     CleanOutNamespace -namespace $namespace
