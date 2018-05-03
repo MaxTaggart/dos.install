@@ -899,6 +899,7 @@ function OpenKubernetesDashboard() {
     WriteToConsole $token
     WriteToConsole " End of Bearer Token -"
 }
+
 function OpenTraefikDashboard() {
     $dnshostname = $(ReadSecretValue "dnshostname")
     $myip = $(host $(hostname) | awk '/has address/ { print $4 ; exit }')
@@ -908,7 +909,6 @@ function OpenTraefikDashboard() {
     WriteToConsole "You can access the traefik dashboard at: https://${dnshostname}/external/ or https://${myip}/external/"
     WriteToConsole "You can access the traefik dashboard at: https://${dnshostname}/internal/ or https://${myip}/internal/"
 }
-
 function ShowKubernetesServiceStatus() {
     sudo systemctl status kubelet -l
     sudo journalctl -xe --priority 0..3

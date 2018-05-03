@@ -1046,11 +1046,14 @@ function global:TestAzureLoadBalancer(){
     Write-Host "curl --header 'Host: $url' 'http://$ip/dashboard' -k" 
 }
 
-function global:LaunchAzureLoadBalancerDashboard(){
+function global:OpenTraefikDashboard(){
     $customerid = ReadSecretValue -secretname customerid
     $customerid = $customerid.ToLower().Trim()
-    Write-Host "Launching http://$customerid.healthcatalyst.net/dashboard in the web browser"
-    Start-Process -FilePath "http://$customerid.healthcatalyst.net/dashboard";
+    Write-Host "Launching http://$customerid.healthcatalyst.net/internal in the web browser"
+    Start-Process -FilePath "http://$customerid.healthcatalyst.net/internal";
+    Write-Host "Launching http://$customerid.healthcatalyst.net/external in the web browser"
+    Start-Process -FilePath "http://$customerid.healthcatalyst.net/external";
 }
+
 # --------------------
 Write-Information -MessageData "end common-azure.ps1 version $versionazurecommon"

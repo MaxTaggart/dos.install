@@ -245,7 +245,7 @@ while ($userinput -ne "q") {
             }
         }         
         '33' {
-            LaunchAzureLoadBalancerDashboard
+            OpenTraefikDashboard
         } 
         '50' {
             showTroubleshootingMenu -baseUrl $GITHUB_URL -isAzure $true
