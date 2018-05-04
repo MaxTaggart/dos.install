@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.02.01"
+$versionazurecommon = "2018.05.04.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -8,6 +8,11 @@ function global:GetCommonAzureVersion() {
 }
 
 function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config) {
+
+    $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-createacscluster.txt"
+    WriteToConsole "Logging to $logfile"
+    Start-Transcript -Path "$logfile"
+
     Write-Host "Checking if you're already logged in..."
 
     Write-Host $config
@@ -201,9 +206,8 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
         $templateFile = "acs.template.linuxwindows.json"    
     }
     elseif ($AKS_USE_AZURE_NETWORKING) {
-        if ("$($config.ingress.internal)" -eq "vnetonly"){
-#            $templateFile = "acs.template.azurenetwork.private.json"
-            $templateFile = "acs.template.azurenetwork.json"
+        if ($($config.azure.privatecluster)){
+            $templateFile = "acs.template.azurenetwork.private.json"
         }
         else {
             $templateFile = "acs.template.azurenetwork.json"                         
@@ -504,11 +508,16 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
     Write-Host "Run the following to see status of the cluster"
     Write-Host "kubectl get deployments,pods,services,ingress,secrets --namespace=kube-system -o wide"
 
+    Stop-Transcript
 }
 
 
 function global:SetupAzureLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNull()] $config) {
    
+    $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-SetupAzureLoadBalancer.txt"
+    WriteToConsole "Logging to $logfile"
+    Start-Transcript -Path "$logfile"
+
     $AKS_IP_WHITELIST = ""
     
     $userInfo = $(GetLoggedInUserInfo)
@@ -687,6 +696,9 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory=$true)][ValidateNotN
         Write-Host "To access the urls from your browser, add the following entries in your c:\windows\system32\drivers\etc\hosts file"
         Write-Host "$EXTERNAL_IP $dnsrecordname"
     }        
+
+    Stop-Transcript
+
 }
 
 function global:CreateBareMetalCluster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNull()] $config) {   
