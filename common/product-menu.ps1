@@ -1,4 +1,4 @@
-$versionmenucommon = "2018.05.01.01"
+$versionmenucommon = "2018.05.07.01"
 
 Write-Information -MessageData "Including product-menu.ps1 version $versionmenucommon"
 function global:GetCommonMenuVersion() {
@@ -135,10 +135,10 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
                 troubleshootIngress "$namespace"
             } 
             '10' {
-                DeleteAllPodsInNamespace -namespace=$namespace
+                DeleteAllPodsInNamespace -namespace $namespace
             } 
             '11' {
-                ShowSSHCommandsToContainers -namespace=$namespace
+                ShowSSHCommandsToContainers -namespace $namespace
             } 
             '12' {
                 Write-Warning "This will delete all data in this namespace and clear out any secrets"
