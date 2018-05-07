@@ -121,7 +121,16 @@
                     "examples": [
                         "Standard_DS2_v2"
                     ]
-                }                                
+                },
+                "privatecluster": {
+                    "$id": "/properties/azure/properties/privatecluster",
+                    "type": "boolean",
+                    "title": "Private only cluster. Even SSH or kubectl will require a connection to the vnet",
+                    "default": false,
+                    "examples": [
+                        true
+                    ]
+                }                                        
             }
         },
         "service_principal": {
