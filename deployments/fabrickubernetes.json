@@ -48,7 +48,7 @@
         "create_nsg_rules": false
     },
     "dns": {
-        "name": "fabrickubernetes.eastus.cloudapp.azure.com",
+        "name": "fabrickubernetes.healthcatalyst.net",
         "create_dns_entries": false,
         "dns_resource_group": "dns"
     }
