@@ -1,19 +1,25 @@
 {
     "$schema": "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/deployments/schema.json",
     "kubectl": {
-        "version": ""
+        "version": "1.10.0"
     },
+    "kubernetes": {
+        "version": "1.10.0"
+    },    
     "azcli": {
-        "version": "2.0.27"
+        "version": "2.0.30"
     },
     "azure": {
+        "subscription": "Health Catalyst - Fabric",
         "resourceGroup": "fabrickubernetes",
         "location": "eastus",
         "create_windows_containers": false,
         "use_azure_networking": true,
         "acs_engine": {
-            "version": "v0.14.6"
-        }
+            "version": "0.15.0"
+        },
+        "masterVMSize": "Standard_DS2_v2",
+        "workerVMSize": "Standard_DS2_v2"
     },
     "service_principal": {
         "name": "",
@@ -29,7 +35,8 @@
     "ingress": {
         "external": "public",
         "internal": "public",
-        "external_ip_whitelist": ""
+        "external_ip_whitelist": "",
+        "fixloadbalancer": false
     },
     "networking": {
         "vnet": "kubnettest",
@@ -41,6 +48,7 @@
         "create_nsg_rules": false
     },
     "dns": {
+        "name": "fabrickubernetes.eastus.cloudapp.azure.com",
         "create_dns_entries": false,
         "dns_resource_group": "dns"
     }
