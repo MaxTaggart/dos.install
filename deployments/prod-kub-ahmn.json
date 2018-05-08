@@ -10,6 +10,7 @@
         "version": "2.0.30"
     },
     "azure": {
+        "subscription": "CAFE(Converted to EA)",
         "resourceGroup": "Prod-Kub-AHMN-RG",
         "location": "westus",
         "create_windows_containers": false,

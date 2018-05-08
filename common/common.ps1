@@ -720,7 +720,7 @@ function global:CreateSSHKey([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
         
 }
 
-function global:GetLoggedInUserInfo() {
+function global:CheckUserIsLoggedIn() {
 
     #Create an hashtable variable 
     [hashtable]$Return = @{} 
@@ -755,6 +755,49 @@ function global:GetLoggedInUserInfo() {
     Write-Information -MessageData "SubscriptionId: ${subscriptionId}"
 
     az account get-access-token --subscription $subscriptionId
+
+    $Return.AKS_SUBSCRIPTION_NAME = "$subscriptionName"    
+    $Return.AKS_SUBSCRIPTION_ID = "$subscriptionId"
+    $Return.IS_CAFE_ENVIRONMENT = $($subscriptionName -match "CAFE" )
+    return $Return
+}
+
+function global:SetCurrentAzureSubscription([Parameter(Mandatory=$true)][ValidateNotNull()][string] $subscriptionId) {
+
+    #Create an hashtable variable 
+    [hashtable]$Return = @{} 
+
+    $currentsubscriptionName = $(az account show --query "name"  --output tsv)
+    $currentsubscriptionId = $(az account show --query "id" --output tsv)
+
+    Write-Information -MessageData "Current SubscriptionId: ${currentsubscriptionId}, newSubcriptionID: ${subcriptionID}"
+
+    az account list --refresh
+
+    if($subscriptionId -eq $currentsubscriptionName -or ($subscriptionId -eq $currentsubscriptionId)){
+        # nothing to do
+        Write-Information -MessageData "Subscription is already set properly so no need to anything"
+    }
+    else {
+        Write-Information -MessageData "Setting subscription to $newSubcriptionID"
+        az account set --subscription $subscriptionId
+        $currentsubscriptionName = $(az account show --query "name"  --output tsv)
+        $currentsubscriptionId = $(az account show --query "id" --output tsv)            
+    }
+
+    az account get-access-token --subscription $currentsubscriptionId
+
+    return $Return
+}
+function global:GetCurrentAzureSubscription() {
+
+    #Create an hashtable variable 
+    [hashtable]$Return = @{} 
+
+    $subscriptionName = $(az account show --query "name"  --output tsv)
+    $subscriptionId = $(az account show --query "id" --output tsv)
+
+    Write-Information -MessageData "Current SubscriptionId: ${subscriptionId}"
 
     $Return.AKS_SUBSCRIPTION_NAME = "$subscriptionName"    
     $Return.AKS_SUBSCRIPTION_ID = "$subscriptionId"
@@ -1391,8 +1434,11 @@ function global:GetUrlAndIPForLoadBalancer([Parameter(Mandatory = $true)][Valida
 
     [hashtable]$Return = @{} 
 
-    $userInfo = $(GetLoggedInUserInfo)
-    $IS_CAFE_ENVIRONMENT = $userInfo.IS_CAFE_ENVIRONMENT
+    CheckUserIsLoggedIn   
+    
+    $subscriptionInfo = $(GetCurrentAzureSubscription)
+    
+    $IS_CAFE_ENVIRONMENT = $subscriptionInfo.IS_CAFE_ENVIRONMENT
 
     $loadBalancerIP = kubectl get svc traefik-ingress-service-public -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
     $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}'
@@ -1794,7 +1840,7 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
     [hashtable]$Return = @{} 
 
     if ($isAzure) {
-        $userInfo = $(GetLoggedInUserInfo)
+        CheckUserIsLoggedIn
     }
     
     if ($namespace -ne "kube-system") {

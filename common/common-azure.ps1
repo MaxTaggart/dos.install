@@ -19,9 +19,15 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
 
     DownloadAzCliIfNeeded -version $($config.azcli.version)
 
-    $userInfo = $(GetLoggedInUserInfo)
-    $AKS_SUBSCRIPTION_ID = $userInfo.AKS_SUBSCRIPTION_ID
-    $IS_CAFE_ENVIRONMENT = $userInfo.IS_CAFE_ENVIRONMENT
+    CheckUserIsLoggedIn
+
+    Write-Host "subscription in config: $($config.azure.subscription)"
+    SetCurrentAzureSubscription -subscriptionId $($config.azure.subscription)
+    
+    $subscriptionInfo = $(GetCurrentAzureSubscription)
+
+    $AKS_SUBSCRIPTION_ID = $subscriptionInfo.AKS_SUBSCRIPTION_ID
+    $IS_CAFE_ENVIRONMENT = $subscriptionInfo.IS_CAFE_ENVIRONMENT
 
     $customerid = $($config.customerid)
 
@@ -31,6 +37,8 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
     $AKS_PERS_LOCATION = $config.azure.location
 
     CreateResourceGroupIfNotExists -resourceGroup $AKS_PERS_RESOURCE_GROUP -location $AKS_PERS_LOCATION
+
+    # CreateKeyVault -resourceGroup $AKS_PERS_RESOURCE_GROUP -location $AKS_PERS_LOCATION
 
     $AKS_SUPPORT_WINDOWS_CONTAINERS = $config.azure.create_windows_containers
     $AKS_USE_AZURE_NETWORKING = $config.azure.use_azure_networking
@@ -64,6 +72,10 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
     $SSHKeyInfo = CreateSSHKey -resourceGroup $AKS_PERS_RESOURCE_GROUP -localFolder $AKS_LOCAL_FOLDER
     $AKS_SSH_KEY = $SSHKeyInfo.AKS_SSH_KEY
     $SSH_PRIVATE_KEY_FILE_UNIX_PATH = $SSHKeyInfo.SSH_PRIVATE_KEY_FILE_UNIX_PATH
+
+    # SaveKeyInVault -resourceGroup $AKS_PERS_RESOURCE_GROUP -key "SSH" -value $AKS_SSH_KEY
+    # you can retrieve via https://${$AKS_PERS_RESOURCE_GROUP}.vault.azure.net/secrets/SSH
+    
     DownloadKubectl -localFolder $AKS_LOCAL_FOLDER -version $($config.kubectl.version)
 
     # download acs-engine
@@ -520,7 +532,10 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory=$true)][ValidateNotN
 
     $AKS_IP_WHITELIST = ""
     
-    $userInfo = $(GetLoggedInUserInfo)
+    CheckUserIsLoggedIn
+
+    SetCurrentAzureSubscription -subscriptionId $($config.azure.subscription)
+    
     # $AKS_SUBSCRIPTION_ID = $userInfo.AKS_SUBSCRIPTION_ID
     # $IS_CAFE_ENVIRONMENT = $userInfo.IS_CAFE_ENVIRONMENT
     
@@ -704,7 +719,13 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory=$true)][ValidateNotN
 function global:CreateBareMetalCluster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNull()] $config) {   
     DownloadAzCliIfNeeded -version $($config.azcli.version)
     
-    $AKS_SUBSCRIPTION_ID = $(GetLoggedInUserInfo).AKS_SUBSCRIPTION_ID
+    CheckUserIsLoggedIn
+    
+    SetCurrentAzureSubscription -subscriptionId $($config.azure.subscription)
+    
+    $subscriptionInfo = $(GetCurrentAzureSubscription)
+    
+    $AKS_SUBSCRIPTION_ID = $subscriptionInfo.AKS_SUBSCRIPTION_ID
     
     $customerid = $($config.customerid)
     
@@ -1072,6 +1093,12 @@ function global:OpenTraefikDashboard(){
     Write-Host "Launching http://$customerid.healthcatalyst.net/external in the web browser"
     Start-Process -FilePath "http://$customerid.healthcatalyst.net/external";
 }
+function global:CreateKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $location){
+    az keyvault create --name "${resourceGroup}-keyvault" --resource-group "$resourceGroup" --location "$location"
+}
 
+function global:SaveKeyInVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup,[Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $key,[Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $value){
+    az keyvault secret set --vault-name "${resourceGroup}-keyvault" --name "$key" --value "$value"
+}
 # --------------------
 Write-Information -MessageData "end common-azure.ps1 version $versionazurecommon"
