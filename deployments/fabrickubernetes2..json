@@ -1,0 +1,55 @@
+{
+    "$schema": "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/deployments/schema.json",
+    "kubectl": {
+        "version": "1.10.0"
+    },
+    "kubernetes": {
+        "version": "1.10.0"
+    },    
+    "azcli": {
+        "version": "2.0.30"
+    },
+    "azure": {
+        "subscription": "PlatformStaff-DevTest",
+        "resourceGroup": "fabrickubernetes2",
+        "location": "westus",
+        "create_windows_containers": false,
+        "use_azure_networking": true,
+        "acs_engine": {
+            "version": "0.15.0"
+        },
+        "masterVMSize": "Standard_DS2_v2",
+        "workerVMSize": "Standard_DS2_v2"
+    },
+    "service_principal": {
+        "name": "",
+        "delete_if_exists": true
+    },
+    "storage_account": {
+        "delete_if_exists": false
+    },
+    "local_folder": "c:\\kubernetes",
+    "customerid": "hcut",
+    "ssl": false,
+    "allow_kubectl_from_outside_vnet": true,
+    "ingress": {
+        "external": "public",
+        "internal": "public",
+        "external_ip_whitelist": "",
+        "fixloadbalancer": false
+    },
+    "networking": {
+        "vnet": "kubnettest",
+        "subnet": "kubsubnet",
+        "subnet_resource_group": "Networks"
+    },
+    "network_security_group": {
+        "name": "",
+        "create_nsg_rules": false
+    },
+    "dns": {
+        "name": "fabrickubernetes2.westus.cloudapp.azure.com",
+        "create_dns_entries": false,
+        "dns_resource_group": "dns"
+    }
+}

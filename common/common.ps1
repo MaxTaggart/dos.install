@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.02.05"
+$versioncommon = "2018.05.08.01"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -762,7 +762,7 @@ function global:CheckUserIsLoggedIn() {
     return $Return
 }
 
-function global:SetCurrentAzureSubscription([Parameter(Mandatory=$true)][ValidateNotNull()][string] $subscriptionId) {
+function global:SetCurrentAzureSubscription([Parameter(Mandatory = $true)][ValidateNotNull()][string] $subscriptionId) {
 
     #Create an hashtable variable 
     [hashtable]$Return = @{} 
@@ -770,16 +770,16 @@ function global:SetCurrentAzureSubscription([Parameter(Mandatory=$true)][Validat
     $currentsubscriptionName = $(az account show --query "name"  --output tsv)
     $currentsubscriptionId = $(az account show --query "id" --output tsv)
 
-    Write-Information -MessageData "Current SubscriptionId: ${currentsubscriptionId}, newSubcriptionID: ${subcriptionID}"
+    Write-Information -MessageData "Current SubscriptionId: ${currentsubscriptionId}, newSubcriptionID: ${subscriptionId}"
 
     az account list --refresh
 
-    if($subscriptionId -eq $currentsubscriptionName -or ($subscriptionId -eq $currentsubscriptionId)){
+    if ($subscriptionId -eq $currentsubscriptionName -or ($subscriptionId -eq $currentsubscriptionId)) {
         # nothing to do
         Write-Information -MessageData "Subscription is already set properly so no need to anything"
     }
     else {
-        Write-Information -MessageData "Setting subscription to $newSubcriptionID"
+        Write-Information -MessageData "Setting subscription to $subscriptionId"
         az account set --subscription $subscriptionId
         $currentsubscriptionName = $(az account show --query "name"  --output tsv)
         $currentsubscriptionId = $(az account show --query "id" --output tsv)            
@@ -1280,21 +1280,26 @@ function global:GetDNSCommands() {
 
     # now get DNS entries for external facing services
     $loadBalancerIP = kubectl get svc traefik-ingress-service-public -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
-    $externalDNSEntries = $(kubectl get ing --all-namespaces -l expose=external -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true).Split(" ")
+    $externalDNSEntriesText = $(kubectl get ing --all-namespaces -l expose=external -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true)
+    
+    if ($externalDNSEntriesText) {
 
-    ForEach ($dns in $externalDNSEntries) { 
-        if ($internalDNSEntries -and ($internalDNSEntries.Contains($dns))) {
-            # already included in internal load balancer
-        }
-        else {
-            if ([string]::IsNullOrEmpty($loadBalancerIP)) {
-                throw "loadBalancerIP cannot be found"
+        $externalDNSEntries = $externalDNSEntriesText.Split(" ")
+
+        ForEach ($dns in $externalDNSEntries) { 
+            if ($internalDNSEntries -and ($internalDNSEntries.Contains($dns))) {
+                # already included in internal load balancer
             }
-            $dnsWithoutDomain = $dns -replace ".healthcatalyst.net", ""
-            $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dnsWithoutDomain A /f"
-            $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dnsWithoutDomain A $loadBalancerIP"
-            # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns PTR /f"
-            # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd 10.in-addr-arpa $loadBalancerIP PTR $dns"        
+            else {
+                if ([string]::IsNullOrEmpty($loadBalancerIP)) {
+                    throw "loadBalancerIP cannot be found"
+                }
+                $dnsWithoutDomain = $dns -replace ".healthcatalyst.net", ""
+                $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dnsWithoutDomain A /f"
+                $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dnsWithoutDomain A $loadBalancerIP"
+                # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns PTR /f"
+                # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd 10.in-addr-arpa $loadBalancerIP PTR $dns"        
+            }
         }
     }
 

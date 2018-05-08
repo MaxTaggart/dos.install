@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.04.01"
+$versionazurecommon = "2018.05.08.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -489,7 +489,10 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
     #     kubectl delete pod $line -n kube-system
     # } 
 
-    SetHostFileInVms -resourceGroup $AKS_PERS_RESOURCE_GROUP
+    if($($config.azure.sethostfile))
+    {
+        SetHostFileInVms -resourceGroup $AKS_PERS_RESOURCE_GROUP
+    }
     SetupCronTab -resourceGroup $AKS_PERS_RESOURCE_GROUP
 
     Write-Host "Removing extra stuff that acs-engine creates"
