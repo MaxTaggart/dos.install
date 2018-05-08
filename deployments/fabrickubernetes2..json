@@ -48,7 +48,7 @@
         "create_nsg_rules": false
     },
     "dns": {
-        "name": "fabrickubernetes2.westus.cloudapp.azure.com",
+        "name": "hcut.healthcatalyst.net",
         "create_dns_entries": false,
         "dns_resource_group": "dns"
     }

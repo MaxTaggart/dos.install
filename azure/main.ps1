@@ -96,6 +96,7 @@ while ($userinput -ne "q") {
     Write-Host "7: Setup Azure DNS entries"
     Write-Host "8: Show DNS entries to make in CAFE DNS"
     Write-Host "9: Show nodes"
+    Write-Host "10: Show DNS entries for /etc/hosts"
     Write-Host "----- Troubleshooting ----"
     Write-Host "20: Show status of cluster"
     Write-Host "21: Launch Kubernetes Admin Dashboard"
@@ -204,6 +205,14 @@ while ($userinput -ne "q") {
             kubectl version --short
             kubectl get "nodes"
         } 
+        '10' {
+            Write-Host "If you didn't setup DNS, add the following entries in your c:\windows\system32\drivers\etc\hosts file to access the urls from your browser"
+            $loadBalancerIPResult = GetLoadBalancerIPs
+            $EXTERNAL_IP = $loadBalancerIPResult.ExternalIP
+
+            $dnshostname = $(ReadSecretValue -secretname "dnshostname" -namespace "default")
+            Write-Host "$EXTERNAL_IP $dnshostname"            
+        }         
         '20' {
             Write-Host "Current cluster: $(kubectl config current-context)"
             kubectl version --short
