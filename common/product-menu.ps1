@@ -5,6 +5,20 @@ function global:GetCommonMenuVersion() {
     return $versionmenucommon
 }
 
+function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $namespace, [bool] $isAzure) {
+    if ($namespace -eq "fabricrealtime") {
+        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "realtime" -isAzure $isAzure
+    }
+    elseif ($namespace -eq "fabricnlp") {
+        $namespace = "fabricnlp"
+        CreateNamespaceIfNotExists $namespace
+        AskForPasswordAnyCharacters -secretname "smtprelaypassword" -prompt "Please enter SMTP relay password" -namespace $namespace
+        $dnshostname = $(ReadSecretValue -secretname "dnshostname" -namespace "default")
+        SaveSecretValue -secretname "nlpweb-external-url" -valueName "value" -value "nlp.$dnshostname" -namespace $namespace
+        SaveSecretValue -secretname "jobserver-external-url" -valueName "value" -value "nlpjobs.$dnshostname" -namespace $namespace
+        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "nlp" -isAzure $isAzure                         
+    }
+}
 function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $namespace, [bool] $isAzure) {
     $folder = $namespace.Replace("fabric", "")
     $userinput = ""
@@ -29,18 +43,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
         $userinput = Read-Host "Please make a selection"
         switch ($userinput) {
             '1' {
-                if ($namespace -eq "fabricrealtime") {
-                    InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "realtime" -isAzure 1
-                }
-                elseif ($namespace -eq "fabricnlp") {
-                    $namespace="fabricnlp"
-                    CreateNamespaceIfNotExists $namespace
-                    AskForPasswordAnyCharacters -secretname "smtprelaypassword" -prompt "Please enter SMTP relay password" -namespace $namespace
-                    $dnshostname=$(ReadSecretValue -secretname "dnshostname" -namespace "default")
-                    SaveSecretValue -secretname "nlpweb-external-url" -valueName "value" -value "nlp.$dnshostname" -namespace $namespace
-                    SaveSecretValue -secretname "jobserver-external-url" -valueName "value" -value "nlpjobs.$dnshostname" -namespace $namespace
-                    InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "nlp" -isAzure 1                            
-                }
+                InstallProduct -baseUrl $baseUrl -namespace $namespace -isAzure $isAzure
             } 
             '2' {
                 kubectl get 'deployments,pods,services,ingress,secrets,persistentvolumeclaims,persistentvolumes,nodes' --namespace=$namespace -o wide
@@ -135,7 +138,9 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
                 troubleshootIngress "$namespace"
             } 
             '10' {
-                DeleteAllPodsInNamespace -namespace $namespace
+                # this gets the new solr pods going before the old solr ones have released locks
+                #                DeleteAllPodsInNamespace -namespace $namespace
+                InstallProduct -baseUrl $baseUrl -namespace $namespace -isAzure $isAzure
             } 
             '11' {
                 ShowSSHCommandsToContainers -namespace $namespace
