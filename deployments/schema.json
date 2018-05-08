@@ -53,6 +53,15 @@
             "$id": "/properties/azure",
             "type": "object",
             "properties": {
+                "subscription": {
+                    "$id": "/properties/azure/properties/subscription",
+                    "type": "string",
+                    "title": "Azure subscription name or ID",
+                    "default": "",
+                    "examples": [
+                        "Health Catalyst - Fabric"
+                    ]
+                },
                 "resourceGroup": {
                     "$id": "/properties/azure/properties/resourceGroup",
                     "type": "string",

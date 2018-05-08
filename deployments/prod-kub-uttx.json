@@ -7,6 +7,7 @@
         "version": "2.0.27"
     },
     "azure": {
+        "subscription": "CAFE(Converted to EA)",
         "resourceGroup": "Prod-Kub-UTTX-RG",
         "location": "westus",
         "create_windows_containers": false,

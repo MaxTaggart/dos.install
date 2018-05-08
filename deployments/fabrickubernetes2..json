@@ -3,18 +3,23 @@
     "kubectl": {
         "version": "1.10.0"
     },
+    "kubernetes": {
+        "version": "1.10.0"
+    },    
     "azcli": {
-        "version": "2.0.27"
+        "version": "2.0.30"
     },
     "azure": {
-        "subscription": "Health Catalyst - Fabric",
-        "resourceGroup": "baremetal",
-        "location": "eastus",
+        "subscription": "PlatformStaff-DevTest",
+        "resourceGroup": "fabrickubernetes2",
+        "location": "westus",
         "create_windows_containers": false,
         "use_azure_networking": true,
         "acs_engine": {
-            "version": "v0.13.0"
-        }
+            "version": "0.15.0"
+        },
+        "masterVMSize": "Standard_DS2_v2",
+        "workerVMSize": "Standard_DS2_v2"
     },
     "service_principal": {
         "name": "",
@@ -30,19 +35,20 @@
     "ingress": {
         "external": "public",
         "internal": "public",
-        "external_ip_whitelist": ""
+        "external_ip_whitelist": "",
+        "fixloadbalancer": false
     },
     "networking": {
-        "vnet": "baremetal-vnet",
-        "subnet": "default",
-        "subnet_resource_group": "Imran"
+        "vnet": "kubnettest",
+        "subnet": "kubsubnet",
+        "subnet_resource_group": "Networks"
     },
     "network_security_group": {
         "name": "",
-        "create_nsg_rules": true
+        "create_nsg_rules": false
     },
     "dns": {
-        "name": "baremetal.healthcatalyst.net",
+        "name": "fabrickubernetes2.westus.cloudapp.azure.com",
         "create_dns_entries": false,
         "dns_resource_group": "dns"
     }

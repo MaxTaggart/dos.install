@@ -1,0 +1,1 @@
+.\azure\main.ps1 -prerelease $true -local $true

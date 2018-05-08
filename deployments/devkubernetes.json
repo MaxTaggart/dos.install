@@ -10,6 +10,7 @@
         "version": "2.0.30"
     },
     "azure": {
+        "subscription": "Health Catalyst - Fabric",
         "resourceGroup": "devkubernetes",
         "location": "westus",
         "create_windows_containers": false,

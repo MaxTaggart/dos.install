@@ -1,11 +1,11 @@
-$versionmenutroubleshooting = "2018.05.01.02"
+$versionmenutroubleshooting = "2018.05.08.01"
 
 Write-Information -MessageData "Including troubleshooting-menu.ps1 version $versionmenucommon"
 function global:GetTroubleshootingMenuVersion() {
     return $versionmenutroubleshooting
 }
 
-function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$isAzure){
+function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [bool]$isAzure) {
     $userinput = ""
     while ($userinput -ne "q") {
         Write-Host "================ Troubleshooting menu version $versionmenutroubleshooting, common functions kube:$(GetCommonKubeVersion) ================"
@@ -37,7 +37,12 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [b
                 ShowStatusOfCluster
             }                 
             '1' {
-                OpenKubernetesDashboard
+                if ($isAzure) {
+                    LaunchAzureKubernetesDashboard
+                }
+                else {
+                    OpenKubernetesDashboard
+                }
             } 
             '2' {
                 TroubleshootNetworking
