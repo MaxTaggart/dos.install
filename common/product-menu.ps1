@@ -1,4 +1,4 @@
-$versionmenucommon = "2018.05.07.01"
+$versionmenucommon = "2018.05.11.01"
 
 Write-Information -MessageData "Including product-menu.ps1 version $versionmenucommon"
 function global:GetCommonMenuVersion() {
@@ -38,6 +38,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
         Write-Host "10: Restart $namespace"
         Write-Host "11: Show commands to SSH to $namespace containers"
         Write-Host "12: Delete all data in $namespace"        
+        Write-Host "13: Show command to run Fabric.Realtime tester"        
         Write-Host "-----------"
         Write-Host "q: Go back to main menu"
         $userinput = Read-Host "Please make a selection"
@@ -153,6 +154,9 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
                 if ($confirmation -eq "y") {
                     DeleteNamespaceAndData -namespace "$namespace" -isAzure $isAzure
                 }
+            } 
+            '13' {
+                RunRealtimeTester -baseUrl $baseUrl
             } 
             'q' {
                 return

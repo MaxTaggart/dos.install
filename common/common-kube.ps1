@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.01.03"
+$versionkubecommon = "2018.05.11.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -881,6 +881,15 @@ function global:WriteSecretValueToOutput([Parameter(Mandatory = $true)][Validate
     Write-Host "$secretname = $secretvalue"
     Write-Host "To recreate the secret:"
     Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$secretvalue"
+}
+
+function global:RunRealtimeTester([ValidateNotNullOrEmpty()][string] $baseUrl){
+    # show commands to download the tester and run it passing in certhostname and password
+    $certhostname = $(ReadSecretValue certhostname $namespace)
+    $certpassword = $(ReadSecretPassword certpassword $namespace)
+
+    Write-Host "Run on your client machine in a PowerShell window:"
+    Write-Host "curl -useb $baseUrl/realtime/realtimetester.ps1 | iex $certhostname $certpassword"
 }
 
 # --------------------
