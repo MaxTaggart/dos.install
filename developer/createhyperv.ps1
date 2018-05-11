@@ -82,3 +82,5 @@ function New-LinuxVM {
 }
 
 New-LinuxVM -InstallISOPath C:\hyperv\CentOS-7-x86_64-Minimal-1708.iso -VMSwitchName "Default Switch"
+
+# New-LinuxVM -InstallISOPath C:\hyperv\SLE-12-SP3-Server-DVD-x86_64-GM-DVD1.iso -VMSwitchName "Default Switch"

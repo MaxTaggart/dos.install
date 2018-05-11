@@ -7,7 +7,7 @@ function global:GetCommonAzureVersion() {
     return $versionazurecommon
 }
 
-function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config) {
+function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config, [ValidateNotNull()][bool] $useAKS) {
 
     $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-createacscluster.txt"
     WriteToConsole "Logging to $logfile"
@@ -210,7 +210,10 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
 
     # choose the right template based on user choice
     $templateFile = "acs.template.json"
-    if (!"$AKS_VNET_NAME") {
+    if ($useAKS) {
+        $templateFile = "aks\kube-deploy.parameters.json"  
+    }
+    elseif (!"$AKS_VNET_NAME") {
         $templateFile = "acs.template.nosubnet.json"    
     }
     elseif ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
@@ -218,7 +221,7 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
         $templateFile = "acs.template.linuxwindows.json"    
     }
     elseif ($AKS_USE_AZURE_NETWORKING) {
-        if ($($config.azure.privatecluster)){
+        if ($($config.azure.privatecluster)) {
             $templateFile = "acs.template.azurenetwork.private.json"
         }
         else {
@@ -301,26 +304,33 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
 
     # to get valid kubernetes versions: acs-engine orchestrators --orchestrator kubernetes
 
-    Write-Host "Checking if acs-engine supports kubernetes version= $kubernetesVersion"
-    acs-engine orchestrators --orchestrator kubernetes --version "$kubernetesVersion"
+    if ($useAKS) {
 
-    Write-Host "Generating ACS engine template"
-
-    # acs-engine deploy --subscription-id "$AKS_SUBSCRIPTION_ID" `
-    #                     --dns-prefix $dnsNamePrefix --location $AKS_PERS_LOCATION `
-    #                     --resource-group $AKS_PERS_RESOURCE_GROUP `
-    #                     --api-model "$output" `
-    #                     --output-directory "$acsoutputfolder"
-
-    acs-engine generate $output --output-directory $acsoutputfolder
-
-    if ($?) {            
-        Write-Host "ACS Engine generated the template successfully"            
     }
-    else {            
-        exit 1          
-    } 
+    else {
+        Write-Host "Checking if acs-engine supports kubernetes version= $kubernetesVersion"
+        acs-engine orchestrators --orchestrator kubernetes --version "$kubernetesVersion"    
+    }
 
+    if (!$useAKS) {
+
+        Write-Host "Generating ACS engine template"
+
+        # acs-engine deploy --subscription-id "$AKS_SUBSCRIPTION_ID" `
+        #                     --dns-prefix $dnsNamePrefix --location $AKS_PERS_LOCATION `
+        #                     --resource-group $AKS_PERS_RESOURCE_GROUP `
+        #                     --api-model "$output" `
+        #                     --output-directory "$acsoutputfolder"
+
+        acs-engine generate $output --output-directory $acsoutputfolder
+
+        if ($?) {            
+            Write-Host "ACS Engine generated the template successfully"            
+        }
+        else {            
+            exit 1          
+        } 
+    }
 
     if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
 
@@ -355,16 +365,21 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
     #     --master-vnet-subnet-id="$mysubnetid" `
     #     --agent-vnet-subnet-id="$mysubnetid"
 
+    $deploymentfile="$acsoutputfolder\azuredeploy.json"
+    if($useAKS){
+        $deploymentfile="aks\kube-managed.json"
+    }
+    
     Write-Host "Validating deployment"
     az group deployment validate `
-        --template-file "$acsoutputfolder\azuredeploy.json" `
+        --template-file "$deploymentfile" `
         --resource-group $AKS_PERS_RESOURCE_GROUP `
         --parameters "$acsoutputfolder\azuredeploy.parameters.json"
 
     Write-Host "Starting deployment..."
 
     az group deployment create `
-        --template-file "$acsoutputfolder\azuredeploy.json" `
+        --template-file "$deploymentfile" `
         --resource-group $AKS_PERS_RESOURCE_GROUP -n $AKS_CLUSTER_NAME `
         --parameters "$acsoutputfolder\azuredeploy.parameters.json" `
         --verbose	
@@ -489,8 +504,7 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
     #     kubectl delete pod $line -n kube-system
     # } 
 
-    if($($config.azure.sethostfile))
-    {
+    if ($($config.azure.sethostfile)) {
         SetHostFileInVms -resourceGroup $AKS_PERS_RESOURCE_GROUP
     }
     SetupCronTab -resourceGroup $AKS_PERS_RESOURCE_GROUP
@@ -527,7 +541,7 @@ function global:CreateACSCluster([Parameter(Mandatory=$true)][ValidateNotNullOrE
 }
 
 
-function global:SetupAzureLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNull()] $config) {
+function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNull()] $config) {
    
     $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-SetupAzureLoadBalancer.txt"
     WriteToConsole "Logging to $logfile"
@@ -719,7 +733,7 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory=$true)][ValidateNotN
 
 }
 
-function global:CreateBareMetalCluster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory=$true)][ValidateNotNull()] $config) {   
+function global:CreateBareMetalCluster([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNull()] $config) {   
     DownloadAzCliIfNeeded -version $($config.azcli.version)
     
     CheckUserIsLoggedIn
@@ -938,10 +952,10 @@ function global:CreateBareMetalCluster([Parameter(Mandatory=$true)][ValidateNotN
     Write-Host "Storage key: $STORAGE_KEY"        
 }
 
-function global:StartVMsInResourceGroup([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:StartVMsInResourceGroup([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     az vm start --ids $(az vm list -g $resourceGroup --query "[].id" -o tsv) 
 }
-function global:StopVMsInResourceGroup([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+function global:StopVMsInResourceGroup([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     az vm stop --ids $(az vm list -g $resourceGroup --query "[].id" -o tsv) 
 }
 function global:RenewAzureToken() {
@@ -1075,12 +1089,12 @@ function global:RestartAzureVMsInResourceGroup() {
     SetupCronTab -resourceGroup $AKS_PERS_RESOURCE_GROUP          
 }
 
-function global:TestAzureLoadBalancer(){
+function global:TestAzureLoadBalancer() {
     $AKS_PERS_RESOURCE_GROUP = ReadSecretData -secretname azure-secret -valueName resourcegroup
 
-    $urlAndIPForLoadBalancer=$(GetUrlAndIPForLoadBalancer "$AKS_PERS_RESOURCE_GROUP")
-    $url=$($urlAndIPForLoadBalancer.Url)
-    $ip=$($urlAndIPForLoadBalancer.IP)
+    $urlAndIPForLoadBalancer = $(GetUrlAndIPForLoadBalancer "$AKS_PERS_RESOURCE_GROUP")
+    $url = $($urlAndIPForLoadBalancer.Url)
+    $ip = $($urlAndIPForLoadBalancer.IP)
                             
     # Invoke-WebRequest -useb -Headers @{"Host" = "nlp.$customerid.healthcatalyst.net"} -Uri http://$loadBalancerIP/nlpweb | Select-Object -Expand Content
 
@@ -1088,7 +1102,7 @@ function global:TestAzureLoadBalancer(){
     Write-Host "curl --header 'Host: $url' 'http://$ip/dashboard' -k" 
 }
 
-function global:OpenTraefikDashboard(){
+function global:OpenTraefikDashboard() {
     $customerid = ReadSecretValue -secretname customerid
     $customerid = $customerid.ToLower().Trim()
     Write-Host "Launching http://$customerid.healthcatalyst.net/internal in the web browser"
@@ -1096,11 +1110,11 @@ function global:OpenTraefikDashboard(){
     Write-Host "Launching http://$customerid.healthcatalyst.net/external in the web browser"
     Start-Process -FilePath "http://$customerid.healthcatalyst.net/external";
 }
-function global:CreateKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $location){
+function global:CreateKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $location) {
     az keyvault create --name "${resourceGroup}-keyvault" --resource-group "$resourceGroup" --location "$location"
 }
 
-function global:SaveKeyInVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup,[Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $key,[Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $value){
+function global:SaveKeyInVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $key, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $value) {
     az keyvault secret set --vault-name "${resourceGroup}-keyvault" --name "$key" --value "$value"
 }
 # --------------------

@@ -1,0 +1,24 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "dnsNamePrefix": {
+        "value": "REPLACE-DNS-NAME-PREFIX"
+      },
+      "sshRSAPublicKey": {
+        "value": "REPLACE-SSH-KEY"
+      },
+      "kubernetesVersion": {
+        "value": "REPLACE-KUBERNETES-VERSION"
+      },
+      "vnetSubnetID": {
+        "value": "REPLACE-SUBNET"
+      },
+      "servicePrincipalClientId": {
+        "value": "REPLACE-CLIENTID"
+      },
+      "servicePrincipalClientSecret": {
+        "value": "REPLACE-CLIENTSECRET"
+      }
+    }
+  }

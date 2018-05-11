@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.04.18.07"
+$versiononpremcommon = "2018.05.11.07"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -645,7 +645,8 @@ function mountSMB([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][bool] $
 
     Do {$username = Read-Host -Prompt "username"} while (!$username)
 
-    Do {$password = Read-Host -Prompt "password"} while (!$password)
+    Do {$password = Read-Host -assecurestring -Prompt "password"} while ($($password.Length) -lt 1)
+    $password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
 
     mountSMBWithParams -pathToShare $pathToShare -username $username -domain $domain -password $password -saveIntoSecret $saveIntoSecret -isUNC $True
 

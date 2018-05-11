@@ -34,13 +34,13 @@
     "allow_kubectl_from_outside_vnet": true,
     "ingress": {
         "external": "public",
-        "internal": "public",
+        "internal": "vnetonly",
         "external_ip_whitelist": "",
         "fixloadbalancer": false
     },
     "networking": {
         "vnet": "kubnettest",
-        "subnet": "kubsubnet",
+        "subnet": "kubsubnet2",
         "subnet_resource_group": "Networks"
     },
     "network_security_group": {
