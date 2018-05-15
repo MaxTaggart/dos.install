@@ -34,15 +34,16 @@
     "ssl": false,
     "allow_kubectl_from_outside_vnet": false,
     "ingress": {
-        "external": "public",
-        "internal": "vnetonly",
-        "external_ip_whitelist": "",
-        "loadbalancerconfig": {
-            "privateIpAddress": "10.9.12.25",
-            "vnet": "CAPVnet",
-            "subnet": "HCUT",
-            "subnet_resource_group": "capresourcegroup"
-        }        
+        "external": {
+            "type": "vnetonly",
+            "ipAddress": "10.9.12.24",
+            "subnet": "HCUT"
+        },
+        "internal": {
+            "type": "vnetonly",
+            "ipAddress": "10.13.0.125",
+            "subnet": "HCUT-Cluster"
+        }      
     },
     "networking": {
         "vnet": "CAPVnet",

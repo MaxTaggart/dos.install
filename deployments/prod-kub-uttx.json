@@ -28,9 +28,12 @@
     "ssl": true,
     "allow_kubectl_from_outside_vnet": false,
     "ingress": {
-        "external": "vnetonly",
-        "internal": "vnetonly",
-        "external_ip_whitelist": ""
+        "external": {
+            "type": "vnetonly"
+        },
+        "internal": {
+            "type": "vnetonly"
+        }
     },
     "networking": {
         "vnet": "CAPVnet",

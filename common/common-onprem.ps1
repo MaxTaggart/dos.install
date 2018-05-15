@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.05.11.07"
+$versiononpremcommon = "2018.05.15.01"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -414,11 +414,16 @@ function SetupNewLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpt
         kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$certfolder/tls.crt" --from-file="$certfolder/tls.key"
     }
 
-    $ingressInternal = "public"
-    $ingressExternal = "onprem"
-    $publicIp = ""
+    $ingressInternalType = "public"
+    $ingressExternalType = "onprem"
+    $externalIp = ""
+    $internalIp = ""
 
-    LoadLoadBalancerStack -baseUrl $baseUrl -ssl 1 -ingressInternal $ingressInternal -ingressExternal $ingressExternal -customerid $customerid -isOnPrem $true -publicIp $publicIp    
+    LoadLoadBalancerStack -baseUrl $baseUrl -ssl 1 -customerid $customerid `
+                        -ingressInternalType $ingressInternalType -ingressExternalType $ingressExternalType `
+                        -isOnPrem $true `
+                        -externalSubnetName "" -externalIp "$externalIp" `
+                        -internalSubnetName "" -internalIp "$internalIp"
 
     return $Return
 }
