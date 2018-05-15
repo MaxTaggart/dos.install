@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.15.01"
+$versionkubecommon = "2018.05.15.02"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -588,10 +588,10 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
                                     [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$ingressExternalType, `
                                     [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$customerid, `
                                     [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $isOnPrem, `
-                                    [Parameter(Mandatory = $true)][string]$externalIp, `
-                                    [Parameter(Mandatory = $true)][string]$internalIp, `
-                                    [Parameter(Mandatory = $true)][string]$externalSubnetName, `
-                                    [Parameter(Mandatory = $true)][string]$internalSubnetName) 
+                                    [string]$externalIp, `
+                                    [string]$internalIp, `
+                                    [string]$externalSubnetName, `
+                                    [string]$internalSubnetName) 
 {
     [hashtable]$Return = @{} 
 

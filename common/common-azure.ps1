@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.15.01"
+$versionazurecommon = "2018.05.15.02"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -693,10 +693,12 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     
     Write-Host "baseUrl: $baseUrl"
 
+    $externalSubnetName=""
     if($($config.ingress.external.subnet)){
         $externalSubnetName=$($config.ingress.external.subnet);
     }
 
+    $externalIp=""
     if($($config.ingress.external.ipAddress)){
         $externalIp = $($config.ingress.external.ipAddress);
     }
@@ -711,10 +713,12 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
         Write-Host "Using Public IP: [$externalip]"
     }
 
+    $internalSubnetName=""
     if($($config.ingress.internal.subnet)){
         $internalSubnetName=$($config.ingress.internal.subnet);
     }
 
+    $internalIp=""
     if($($config.ingress.internal.ipAddress)){
         $internalIp = $($config.ingress.internal.ipAddress);
     }
