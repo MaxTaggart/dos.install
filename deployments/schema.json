@@ -267,15 +267,6 @@
                                 ""
                             ]
                         },
-                        "vnet": {
-                            "$id": "/properties/ingress/properties/external/properties/vnet",
-                            "type": "string",
-                            "title": "",
-                            "default": "",
-                            "examples": [
-                                ""
-                            ]
-                        },
                         "subnet": {
                             "$id": "/properties/ingress/properties/external/properties/subnet",
                             "type": "string",
@@ -284,17 +275,7 @@
                             "examples": [
                                 ""
                             ]
-                        },
-                        "subnet_resource_group": {
-                            "$id": "/properties/ingress/properties/external/properties/subnet_resource_group",
-                            "type": "string",
-                            "title": "",
-                            "default": "",
-                            "examples": [
-                                ""
-                            ]
-                        }
-                    }
+                        }                    }
                 }
             },
             "internal": {
@@ -334,26 +315,8 @@
                             ""
                         ]
                     },
-                    "vnet": {
-                        "$id": "/properties/ingress/properties/internal/properties/vnet",
-                        "type": "string",
-                        "title": "",
-                        "default": "",
-                        "examples": [
-                            ""
-                        ]
-                    },
                     "subnet": {
                         "$id": "/properties/ingress/properties/internal/properties/subnet",
-                        "type": "string",
-                        "title": "",
-                        "default": "",
-                        "examples": [
-                            ""
-                        ]
-                    },
-                    "subnet_resource_group": {
-                        "$id": "/properties/ingress/properties/internal/properties/subnet_resource_group",
                         "type": "string",
                         "title": "",
                         "default": "",
