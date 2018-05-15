@@ -231,17 +231,38 @@
                         },
                         "tcp": {
                             "$id": "/properties/resources/properties/ingress/properties/tcp",
-                            "type": "array",
-                            "items": {
-                                "$id": "/properties/resources/properties/ingress/properties/tcp/items",
-                                "type": "string",
-                                "title": "The 0th Schema ",
-                                "default": "",
-                                "examples": [
-                                    "mysqlserver.yaml",
-                                    "interfaceengine.yaml",
-                                    "rabbitmq.yaml"
-                                ]
+                            "type": "object",
+                            "properties": {
+                                "azure": {
+                                    "$id": "/properties/resources/properties/ingress/properties/tcp/properties/azure",
+                                    "type": "array",
+                                    "items": {
+                                        "$id": "/properties/resources/properties/ingress/properties/tcp/properties/azure/items",
+                                        "type": "string",
+                                        "title": "TCP ingress resources for Azure",
+                                        "default": "",
+                                        "examples": [
+                                            "mysqlserver.yaml",
+                                            "interfaceengine.yaml",
+                                            "rabbitmq.yaml"
+                                        ]
+                                    }
+                                },
+                                "onprem": {
+                                    "$id": "/properties/resources/properties/ingress/properties/tcp/properties/onprem",
+                                    "type": "array",
+                                    "items": {
+                                        "$id": "/properties/resources/properties/ingress/properties/tcp/properties/onprem/items",
+                                        "type": "string",
+                                        "title": "TCP ingress resources for Onprem",
+                                        "default": "",
+                                        "examples": [
+                                            "mysqlserver.yaml",
+                                            "interfaceengine.yaml",
+                                            "rabbitmq.yaml"
+                                        ]
+                                    }
+                                }
                             }
                         }
                     }
