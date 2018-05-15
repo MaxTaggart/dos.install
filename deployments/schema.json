@@ -267,6 +267,48 @@
                     "examples": [
                         false
                     ]
+                },
+                "loadbalancerconfig": {
+                    "$id": "/properties/azure/properties/loadbalancerconfig",
+                    "type": "object",
+                    "properties": {
+                        "privateIpAddress": {
+                            "$id": "/properties/ingress/properties/loadbalancerconfig/properties/privateIpAddress",
+                            "type": "string",
+                            "title": "Change Internal Loadbalancer to this IP address",
+                            "default": "",
+                            "examples": [
+                                ""
+                            ]
+                        },
+                        "vnet": {
+                            "$id": "/properties/ingress/properties/loadbalancerconfig/properties/vnet",
+                            "type": "string",
+                            "title": "vnet",
+                            "default": "",
+                            "examples": [
+                                ""
+                            ]
+                        },
+                        "subnet": {
+                            "$id": "/properties/ingress/properties/loadbalancerconfig/properties/subnet",
+                            "type": "string",
+                            "title": "subnet",
+                            "default": "",
+                            "examples": [
+                                ""
+                            ]
+                        },
+                        "subnet_resource_group": {
+                            "$id": "/properties/ingress/properties/loadbalancerconfig/properties/subnet_resource_group",
+                            "type": "string",
+                            "title": "subnet_resource_group",
+                            "default": "",
+                            "examples": [
+                                ""
+                            ]
+                        }                                                                                                       
+                    }
                 }
             }
         },

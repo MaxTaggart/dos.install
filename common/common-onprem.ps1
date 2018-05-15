@@ -618,7 +618,9 @@ function mountSharedFolder([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()
     Write-Host "3. I've already mounted a shared folder at /mnt/data/"
     Write-Host ""
 
-    Do {$mountChoice = Read-Host -Prompt "Choose a number"} while (!$mountChoice)
+    $inputArray = @(1,2,3)
+
+    Do {$mountChoice = Read-Host -Prompt "Choose a number"} while (!$mountChoice -or ($inputArray -notcontains $mountChoice))
 
     if ($mountChoice -eq "1") {
         mountAzureFile -saveIntoSecret $saveIntoSecret
