@@ -1,0 +1,21 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: rabbitmq-direct-port
+  namespace: fabricrealtime
+  annotations:
+    # from https://radu-matei.com/blog/k8s-appsvc/
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+#    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: $INTERNALSUBNET$
+  labels:
+    dns: rabbitmq
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+  - name: rabbitmqport
+    protocol: TCP
+    port: 5671
+    targetPort: 5671
+  type: LoadBalancer
+---

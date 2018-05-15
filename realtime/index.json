@@ -66,11 +66,18 @@
                 "rabbitmq.yaml",
                 "interfaceengine.yaml"
             ],
-            "tcp": [
-                "mysqlserver.yaml",
-                "interfaceengine.yaml",
-                "rabbitmq.yaml"
-            ]
+            "tcp": {
+                "azure": [
+                    "mysqlserver.yaml",
+                    "interfaceengine.yaml",
+                    "rabbitmq.yaml"                    
+                ],
+                "onprem":[
+                    "mysqlserver.yaml",
+                    "interfaceengine.yaml",
+                    "rabbitmq.yaml"
+                ]
+            }
         }
     }
 }

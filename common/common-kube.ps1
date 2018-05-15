@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.15.02"
+$versionkubecommon = "2018.05.15.03"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -436,7 +436,12 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
     
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/http" -tokens $tokens -resources $($config.resources.ingress.http)
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp" -tokens $tokens -resources $($config.resources.ingress.tcp)
+    if($isAzure){
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp" -tokens $tokens -resources $($config.resources.ingress.tcp.azure)
+    }
+    else {
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp" -tokens $tokens -resources $($config.resources.ingress.tcp.onprem)
+    }
 
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -tokens $tokens -resources $($config.resources.ingress.jobs)
     

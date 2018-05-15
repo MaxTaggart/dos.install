@@ -69,9 +69,12 @@
                 "nlpweb.path.yaml",
                 "nlpjobs.path.yaml"
             ],
-            "tcp": [
-                "mysqlserver.internal.yaml"
-            ]
+            "tcp":
+            {
+                "azure": [
+                    "mysqlserver.internal.yaml"                    
+                ]
+            }
         },
         "jobs": [
             "mysqlserver-backup-cron.yaml"

@@ -1,0 +1,21 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: interfaceengine-direct-port
+  namespace: fabricrealtime
+  annotations:
+    # from https://radu-matei.com/blog/k8s-appsvc/
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+#    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: $INTERNALSUBNET$
+  labels:
+    dns: interfaceengine    
+spec:
+  selector:
+    app: interfaceengine
+  ports:
+  - name: interfaceengineport
+    protocol: TCP
+    port: 6661
+    targetPort: 6661
+  type: LoadBalancer
+---
