@@ -1852,7 +1852,15 @@ function global:WaitForLoadBalancers([Parameter(Mandatory = $true)][ValidateNotN
     return $Return
 }
 
-function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, $isAzure ) {
+function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
+                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
+                            $isAzure, `
+                            [string]$externalIp, `
+                            [string]$internalIp, `
+                            [string]$externalSubnetName, `
+                            [string]$internalSubnetName ) 
+{
     [hashtable]$Return = @{} 
 
     if ($isAzure) {
@@ -1868,7 +1876,9 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
         }
     }
 
-    LoadStack -namespace $namespace -baseUrl $baseUrl -appfolder "$appfolder" -isAzure $isAzure
+    LoadStack -namespace $namespace -baseUrl $baseUrl -appfolder "$appfolder" -isAzure $isAzure `
+                -externalIp $externalIp -internalIp $internalIp `
+                -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName
     
     if ($isAzure) {
         WaitForLoadBalancers -resourceGroup $(GetResourceGroup).ResourceGroup

@@ -353,7 +353,15 @@ function global:DeployYamlFiles([Parameter(Mandatory = $true)][ValidateNotNullOr
     }
     return $Return
 }
-function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, $isAzure) {
+function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
+                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
+                            $isAzure, `
+                            [string]$externalIp, `
+                            [string]$internalIp, `
+                            [string]$externalSubnetName, `
+                            [string]$internalSubnetName) 
+{
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
@@ -396,8 +404,13 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
     $customerid = $customerid.ToLower().Trim()
     Write-Information -MessageData "Customer ID: $customerid"
 
-    [hashtable] $tokens = @{
-        "CUSTOMERID" = $customerid
+    [hashtable]$tokens = @{ 
+        "CUSTOMERID"        = $customerid;
+        "EXTERNALSUBNET"    = "$externalSubnetName";
+        "EXTERNALIP"        = "$externalIp";
+        "#REPLACE-RUNMASTER"= "$runOnMaster";
+        "INTERNALSUBNET"    = "$internalSubnetName";
+        "INTERNALIP"        = "$internalIp";
     }
 
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "dns" -tokens $tokens -resources $($config.resources.dns)
