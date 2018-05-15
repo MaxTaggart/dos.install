@@ -36,11 +36,17 @@
     "ingress": {
         "external": "public",
         "internal": "vnetonly",
-        "external_ip_whitelist": ""
+        "external_ip_whitelist": "",
+        "loadbalancerconfig": {
+            "privateIpAddress": "10.9.12.25",
+            "vnet": "CAPVnet",
+            "subnet": "HCUT",
+            "subnet_resource_group": "capresourcegroup"
+        }        
     },
     "networking": {
         "vnet": "CAPVnet",
-        "subnet": "HCUT",
+        "subnet": "HCUT-Cluster",
         "subnet_resource_group": "capresourcegroup"
     },
     "network_security_group": {
