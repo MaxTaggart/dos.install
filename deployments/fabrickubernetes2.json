@@ -5,7 +5,7 @@
     },
     "kubernetes": {
         "version": "1.10.0"
-    },    
+    },
     "azcli": {
         "version": "2.0.30"
     },
@@ -36,7 +36,13 @@
         "external": "public",
         "internal": "vnetonly",
         "external_ip_whitelist": "",
-        "fixloadbalancer": false
+        "fixloadbalancer": false,
+        "loadbalancerconfig": {
+            "privateIpAddress": "10.0.0.112",
+            "vnet": "kubnettest",
+            "subnet": "kubsubnet",
+            "subnet_resource_group": "Networks"
+        }
     },
     "networking": {
         "vnet": "kubnettest",

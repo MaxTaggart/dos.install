@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.08.01"
+$versioncommon = "2018.05.14.01"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -541,11 +541,21 @@ function global:GetVnet([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()]
     Return $Return     
 }
 
+function global:GetSubnetId([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subscriptionId, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subnetResourceGroup, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $vnetName, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subnetName) {
+
+    [hashtable]$Return = @{} 
+
+    $Return.SubnetId = "/subscriptions/${subscriptionId}/resourceGroups/${subnetResourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnetName}/subnets/${subnetName}"
+    Return $Return                     
+}
 function global:GetVnetInfo([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subscriptionId, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subnetResourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $vnetName, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subnetName) {
     [hashtable]$Return = @{} 
 
     # verify the subnet exists
-    $mysubnetid = "/subscriptions/${subscriptionId}/resourceGroups/${subnetResourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnetName}/subnets/${subnetName}"
+    $mysubnetid = $(GetSubnetId -subscriptionId $subscriptionId -subnetResourceGroup $subnetResourceGroup -vnetName $vnetName -subnetName $subnetName).SubnetId
     
     $subnetexists = az resource show --ids $mysubnetid --query "id" -o tsv
     if (!"$subnetexists") {
@@ -1136,6 +1146,7 @@ function global:FixLoadBalancerBackendPorts([Parameter(Mandatory = $true)][Valid
     }
     return $Return
 }
+
 function global:FixLoadBalancers([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     [hashtable]$Return = @{} 
 
@@ -1259,17 +1270,20 @@ function global:GetDNSCommands() {
     $loadBalancerInternalIP = kubectl get svc traefik-ingress-service-internal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
 
     if (![string]::IsNullOrEmpty($loadBalancerInternalIP)) {
-        $internalDNSEntries = $(kubectl get ing --all-namespaces -l expose=internal -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true).Split(" ")
-        ForEach ($dns in $internalDNSEntries) { 
-            if ([string]::IsNullOrEmpty($loadBalancerInternalIP)) {
-                throw "loadBalancerInternalIP cannot be found"
-            }
-            $dnsWithoutDomain = $dns -replace ".healthcatalyst.net", ""
-            $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dnsWithoutDomain A /f"
-            $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dnsWithoutDomain A $loadBalancerInternalIP"
-            # these are reverse DNS entries that don't seem to be needed
-            # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns PTR /f"
-            # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd 10.in-addr-arpa $loadBalancerInternalIP PTR $dns"
+        $internalDNSEntriesList = $(kubectl get ing --all-namespaces -l expose=internal -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true)
+        if($internalDNSEntriesList){
+            $internalDNSEntries = $internalDNSEntriesList.Split(" ")
+            ForEach ($dns in $internalDNSEntries) { 
+                if ([string]::IsNullOrEmpty($loadBalancerInternalIP)) {
+                    throw "loadBalancerInternalIP cannot be found"
+                }
+                $dnsWithoutDomain = $dns -replace ".healthcatalyst.net", ""
+                $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dnsWithoutDomain A /f"
+                $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd healthcatalyst.net $dnsWithoutDomain A $loadBalancerInternalIP"
+                # these are reverse DNS entries that don't seem to be needed
+                # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recorddelete healthcatalyst.net $dns PTR /f"
+                # $myCommands += "dnscmd cafeaddc-01.cafe.healthcatalyst.com /recordadd 10.in-addr-arpa $loadBalancerInternalIP PTR $dns"
+            }    
         }
         $customerid = ReadSecretValue -secretname customerid
         $customerid = $customerid.ToLower().Trim()
@@ -1283,7 +1297,6 @@ function global:GetDNSCommands() {
     $externalDNSEntriesText = $(kubectl get ing --all-namespaces -l expose=external -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true)
     
     if ($externalDNSEntriesText) {
-
         $externalDNSEntries = $externalDNSEntriesText.Split(" ")
 
         ForEach ($dns in $externalDNSEntries) { 
@@ -1880,6 +1893,50 @@ function global:DeleteNamespaceAndData([Parameter(Mandatory = $true)][ValidateNo
     DeleteAllSecrets -namespace $namespace
 
     return $Return
+}
+
+function global:MoveInternalLoadBalancerToIP([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subscriptionId, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subnetResourceGroup, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $vnetName, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subnetName, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $newIpAddress) {
+    
+    [hashtable]$Return = @{} 
+
+    # find loadbalancer with name 
+    $loadbalancer = "${resourceGroup}-internal"
+    Write-Information -MessageData "Moving load balancer $loadbalancer to private Ip $newIpAddress"
+
+    $loadbalancerExists = $(az network lb show --name $loadbalancer --resource-group $resourceGroup --query "name" -o tsv)
+
+    if ([string]::IsNullOrWhiteSpace($loadbalancerExists)) {
+        Write-Information -MessageData "Loadbalancer $loadbalancer does not exist so no need to move it"
+        return
+    }
+    else {
+        Write-Information -MessageData "loadbalancer $loadbalancer exists with name: $loadbalancerExists"
+    }
+
+    $frontendlist = $(az network lb frontend-ip list -g $resourceGroup --lb-name $loadbalancer --query "[].name" -o tsv)
+
+    $mysubnetid = $(GetSubnetId -subscriptionId $subscriptionId -subnetResourceGroup $subnetResourceGroup -vnetName $vnetName -subnetName $subnetName).SubnetId
+
+    if ($frontendlist) {
+        $frontends = $frontendlist.Split(" ");
+        foreach ($frontend in $frontends) {
+            $currentPrivateIpAddress = $(az network lb frontend-ip show -g $resourceGroup --lb-name $loadbalancer -n $frontend --query "privateIpAddress" -o tsv)
+            if ($currentPrivateIpAddress -ne $newIpAddress) {
+                Write-Information -MessageData "Setting frontend ip [$frontend] of internal loadbalancer [$loadbalancer] from [$currentPrivateIpAddress] to privateIP: [$newIpAddress]"
+                az network lb frontend-ip update -g $resourceGroup --lb-name $loadbalancer -n $frontend --subnet $mysubnetid --private-ip-address $newIpAddress            
+            }
+            else {
+                Write-Information -MessageData "internal loadbalancer already set to privateIP: [$newIpAddress]"                
+            }
+        }
+
+        return $Return
+    }
 }
 #-------------------
 Write-Information -MessageData "end common.ps1 version $versioncommon"

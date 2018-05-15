@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.08.01"
+$versionazurecommon = "2018.05.14.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -717,6 +717,12 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
         FixLoadBalancers -resourceGroup $AKS_PERS_RESOURCE_GROUP
     }
     
+    if($($config.ingress.loadbalancerconfig)){
+        MoveInternalLoadBalancerToIP -subscriptionId $($(GetCurrentAzureSubscription).AKS_SUBSCRIPTION_ID) -resourceGroup $AKS_PERS_RESOURCE_GROUP `
+                                    -subnetResourceGroup $config.ingress.loadbalancerconfig.subnet_resource_group -vnetName $config.ingress.loadbalancerconfig.vnet `
+                                    -subnetName $config.ingress.loadbalancerconfig.subnet -newIpAddress $config.ingress.loadbalancerconfig.privateIpAddress
+    }
+
     $dnsrecordname = $($config.dns.name)
     
     SaveSecretValue -secretname "dnshostname" -valueName "value" -value $dnsrecordname
