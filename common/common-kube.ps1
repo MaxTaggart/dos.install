@@ -437,10 +437,10 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/http" -tokens $tokens -resources $($config.resources.ingress.http)
 
     if($isAzure){
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp" -tokens $tokens -resources $($config.resources.ingress.tcp.azure)
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/azure" -tokens $tokens -resources $($config.resources.ingress.tcp.azure)
     }
     else {
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp" -tokens $tokens -resources $($config.resources.ingress.tcp.onprem)
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/onprem" -tokens $tokens -resources $($config.resources.ingress.tcp.onprem)
     }
 
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -tokens $tokens -resources $($config.resources.ingress.jobs)
