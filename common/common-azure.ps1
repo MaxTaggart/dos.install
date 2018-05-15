@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.14.01"
+$versionazurecommon = "2018.05.15.02"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -567,9 +567,9 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     $customerid = $customerid.ToLower().Trim()
     Write-Host "Customer ID: $customerid"
     
-    $ingressExternal = $config.ingress.external
-    $ingressInternal = $config.ingress.internal
-    $AKS_IP_WHITELIST = $config.ingress.external_ip_whitelist
+    $ingressExternalType = $config.ingress.external.type
+    $ingressInternalType = $config.ingress.internal.type
+    $AKS_IP_WHITELIST = $config.ingress.external.whitelist
     
     # read the vnet and subnet info from kubernetes secret
     $AKS_VNET_NAME = $config.networking.vnet
@@ -578,7 +578,7 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     
     Write-Host "Found vnet info from secret: vnet: $AKS_VNET_NAME, subnet: $AKS_SUBNET_NAME, subnetResourceGroup: $AKS_SUBNET_RESOURCE_GROUP"
     
-    if ($ingressExternal -eq "whitelist") {
+    if ($ingressExternalType -eq "whitelist") {
         Write-Host "Whitelist: $AKS_IP_WHITELIST"
     
         SaveSecretValue -secretname whitelistip -valueName iprange -value "${AKS_IP_WHITELIST}"
@@ -692,19 +692,42 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     }
     
     Write-Host "baseUrl: $baseUrl"
-    
-    if ("$($config.ingress.external)" -ne "vnetonly") {
+
+    $externalSubnetName=""
+    if($($config.ingress.external.subnet)){
+        $externalSubnetName=$($config.ingress.external.subnet);
+    }
+
+    $externalIp=""
+    if($($config.ingress.external.ipAddress)){
+        $externalIp = $($config.ingress.external.ipAddress);
+    }
+    elseif ("$($config.ingress.external.type)" -ne "vnetonly") {
         Write-Host "Setting up a public load balancer"
     
-        $publicip = az network public-ip show -g $AKS_PERS_RESOURCE_GROUP -n IngressPublicIP --query "ipAddress" -o tsv;
-        if ([string]::IsNullOrWhiteSpace($publicip)) {
+        $externalip = az network public-ip show -g $AKS_PERS_RESOURCE_GROUP -n IngressPublicIP --query "ipAddress" -o tsv;
+        if ([string]::IsNullOrWhiteSpace($externalip)) {
             az network public-ip create -g $AKS_PERS_RESOURCE_GROUP -n IngressPublicIP --location $AKS_PERS_LOCATION --allocation-method Static
-            $publicip = az network public-ip show -g $AKS_PERS_RESOURCE_GROUP -n IngressPublicIP --query "ipAddress" -o tsv;
+            $externalip = az network public-ip show -g $AKS_PERS_RESOURCE_GROUP -n IngressPublicIP --query "ipAddress" -o tsv;
         }  
-        Write-Host "Using Public IP: [$publicip]"
+        Write-Host "Using Public IP: [$externalip]"
+    }
+
+    $internalSubnetName=""
+    if($($config.ingress.internal.subnet)){
+        $internalSubnetName=$($config.ingress.internal.subnet);
+    }
+
+    $internalIp=""
+    if($($config.ingress.internal.ipAddress)){
+        $internalIp = $($config.ingress.internal.ipAddress);
     }
     
-    LoadLoadBalancerStack -baseUrl $baseUrl -ssl $($config.ssl) -ingressInternal "$ingressInternal" -ingressExternal "$ingressExternal" -customerid $customerid -isOnPrem $false -publicIp $publicIp
+    LoadLoadBalancerStack -baseUrl $baseUrl -ssl $($config.ssl) `
+                            -ingressInternalType "$ingressInternalType" -ingressExternalType "$ingressExternalType" `
+                            -customerid $customerid -isOnPrem $false `
+                            -externalSubnetName "$externalSubnetName" -externalIp "$externalip" `
+                            -internalSubnetName "$internalSubnetName" -internalIp "$internalIp"
     
     # setting up traefik
     # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
@@ -717,11 +740,11 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
         FixLoadBalancers -resourceGroup $AKS_PERS_RESOURCE_GROUP
     }
     
-    if($($config.ingress.loadbalancerconfig)){
-        MoveInternalLoadBalancerToIP -subscriptionId $($(GetCurrentAzureSubscription).AKS_SUBSCRIPTION_ID) -resourceGroup $AKS_PERS_RESOURCE_GROUP `
-                                    -subnetResourceGroup $config.ingress.loadbalancerconfig.subnet_resource_group -vnetName $config.ingress.loadbalancerconfig.vnet `
-                                    -subnetName $config.ingress.loadbalancerconfig.subnet -newIpAddress $config.ingress.loadbalancerconfig.privateIpAddress
-    }
+    # if($($config.ingress.loadbalancerconfig)){
+    #     MoveInternalLoadBalancerToIP -subscriptionId $($(GetCurrentAzureSubscription).AKS_SUBSCRIPTION_ID) -resourceGroup $AKS_PERS_RESOURCE_GROUP `
+    #                                 -subnetResourceGroup $config.ingress.loadbalancerconfig.subnet_resource_group -vnetName $config.ingress.loadbalancerconfig.vnet `
+    #                                 -subnetName $config.ingress.loadbalancerconfig.subnet -newIpAddress $config.ingress.loadbalancerconfig.privateIpAddress
+    # }
 
     $dnsrecordname = $($config.dns.name)
     

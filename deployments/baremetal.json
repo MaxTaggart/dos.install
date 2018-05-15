@@ -28,9 +28,12 @@
     "ssl": false,
     "allow_kubectl_from_outside_vnet": true,
     "ingress": {
-        "external": "public",
-        "internal": "public",
-        "external_ip_whitelist": ""
+        "external": {
+            "type": "public"
+        },
+        "internal": {
+            "type": "public"
+        }
     },
     "networking": {
         "vnet": "baremetal-vnet",

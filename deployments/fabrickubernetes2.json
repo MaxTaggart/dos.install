@@ -20,7 +20,7 @@
         },
         "masterVMSize": "Standard_DS2_v2",
         "workerVMSize": "Standard_DS2_v2",
-        "privatecluster": true
+        "privatecluster": false
     },
     "service_principal": {
         "name": "",
@@ -34,15 +34,13 @@
     "ssl": false,
     "allow_kubectl_from_outside_vnet": true,
     "ingress": {
-        "external": "public",
-        "internal": "vnetonly",
-        "external_ip_whitelist": "",
-        "fixloadbalancer": false,
-        "loadbalancerconfig": {
-            "privateIpAddress": "10.0.0.112",
-            "vnet": "kubnettest",
-            "subnet": "kubsubnet",
-            "subnet_resource_group": "Networks"
+        "external":{
+            "type": "public"
+        },
+        "internal": {
+            "type": "vnetonly",
+            "ipAddress": "10.0.0.112",
+            "subnet": "kubsubnet"
         }
     },
     "networking": {

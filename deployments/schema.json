@@ -1,5 +1,5 @@
 {
-    "$id": "http://example.com/example.json",
+    "$id": "http://example.com/schema.json",
     "type": "object",
     "definitions": {},
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -33,7 +33,7 @@
                     ]
                 }
             }
-        },        
+        },
         "azcli": {
             "$id": "/properties/azcli",
             "type": "object",
@@ -139,7 +139,7 @@
                     "examples": [
                         true
                     ]
-                }                                        
+                }
             }
         },
         "service_principal": {
@@ -232,32 +232,99 @@
             "properties": {
                 "external": {
                     "$id": "/properties/ingress/properties/external",
-                    "type": "string",
-                    "enum": ["public", "onprem", "whitelist", "vnetonly"],
-                    "title": "The External Schema ",
-                    "default": "",
-                    "examples": [
-                        "public"
-                    ]
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "$id": "/properties/ingress/properties/external/properties/type",
+                            "type": "string",
+                            "enum": [
+                                "public",
+                                "onprem",
+                                "whitelist",
+                                "vnetonly"
+                            ],
+                            "title": "Type of loadbalancer",
+                            "default": "",
+                            "examples": [
+                                "public"
+                            ]
+                        },
+                        "whitelist": {
+                            "$id": "/properties/ingress/properties/external/properties/whitelist",
+                            "type": "string",
+                            "title": "whitelist IP range",
+                            "default": "",
+                            "examples": [
+                                ""
+                            ]
+                        },
+                        "ipAddress": {
+                            "$id": "/properties/ingress/properties/external/properties/ipAddress",
+                            "type": "string",
+                            "title": "",
+                            "default": "",
+                            "examples": [
+                                ""
+                            ]
+                        },
+                        "subnet": {
+                            "$id": "/properties/ingress/properties/external/properties/subnet",
+                            "type": "string",
+                            "title": "",
+                            "default": "",
+                            "examples": [
+                                ""
+                            ]
+                        }
+                    }
                 },
                 "internal": {
                     "$id": "/properties/ingress/properties/internal",
-                    "type": "string",
-                    "enum": ["public", "onprem", "vnetonly"],
-                    "title": "The Internal Schema ",
-                    "default": "",
-                    "examples": [
-                        "private"
-                    ]
-                },
-                "external_ip_whitelist": {
-                    "$id": "/properties/ingress/properties/external_ip_whitelist",
-                    "type": "string",
-                    "title": "Provide an address range using CIDR notation (e.g. 192.168.99.0/24); an IP address (e.g. 192.168.99.0); or a list of address ranges or IP addresses (e.g. 192.168.99.0/24,10.0.0.0/24,44.66.0.0/24).",
-                    "default": "",
-                    "examples": [
-                        ""
-                    ]
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "$id": "/properties/ingress/properties/internal/properties/type",
+                            "type": "string",
+                            "enum": [
+                                "public",
+                                "onprem",
+                                "whitelist",
+                                "vnetonly"
+                            ],
+                            "title": "Type of loadbalancer",
+                            "default": "",
+                            "examples": [
+                                "public"
+                            ]
+                        },
+                        "whitelist": {
+                            "$id": "/properties/ingress/properties/internal/properties/whitelist",
+                            "type": "string",
+                            "title": "whitelist IP range",
+                            "default": "",
+                            "examples": [
+                                ""
+                            ]
+                        },
+                        "ipAddress": {
+                            "$id": "/properties/ingress/properties/internal/properties/ipAddress",
+                            "type": "string",
+                            "title": "",
+                            "default": "",
+                            "examples": [
+                                ""
+                            ]
+                        },
+                        "subnet": {
+                            "$id": "/properties/ingress/properties/internal/properties/subnet",
+                            "type": "string",
+                            "title": "",
+                            "default": "",
+                            "examples": [
+                                ""
+                            ]
+                        }
+                    }
                 },
                 "fixloadbalancer": {
                     "$id": "/properties/fixloadbalancer",
@@ -267,48 +334,6 @@
                     "examples": [
                         false
                     ]
-                },
-                "loadbalancerconfig": {
-                    "$id": "/properties/azure/properties/loadbalancerconfig",
-                    "type": "object",
-                    "properties": {
-                        "privateIpAddress": {
-                            "$id": "/properties/ingress/properties/loadbalancerconfig/properties/privateIpAddress",
-                            "type": "string",
-                            "title": "Change Internal Loadbalancer to this IP address",
-                            "default": "",
-                            "examples": [
-                                ""
-                            ]
-                        },
-                        "vnet": {
-                            "$id": "/properties/ingress/properties/loadbalancerconfig/properties/vnet",
-                            "type": "string",
-                            "title": "vnet",
-                            "default": "",
-                            "examples": [
-                                ""
-                            ]
-                        },
-                        "subnet": {
-                            "$id": "/properties/ingress/properties/loadbalancerconfig/properties/subnet",
-                            "type": "string",
-                            "title": "subnet",
-                            "default": "",
-                            "examples": [
-                                ""
-                            ]
-                        },
-                        "subnet_resource_group": {
-                            "$id": "/properties/ingress/properties/loadbalancerconfig/properties/subnet_resource_group",
-                            "type": "string",
-                            "title": "subnet_resource_group",
-                            "default": "",
-                            "examples": [
-                                ""
-                            ]
-                        }                                                                                                       
-                    }
                 }
             }
         },

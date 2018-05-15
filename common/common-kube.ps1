@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.11.01"
+$versionkubecommon = "2018.05.15.02"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -583,9 +583,16 @@ function global:DeploySimpleServices([Parameter(Mandatory = $true)][ValidateNotN
     return $Return
 }
 
-function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$ingressInternal, `
-        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$ingressExternal, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$customerid, `
-        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $isOnPrem, [string]$publicIp) {
+function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, `
+                                    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$ingressInternalType, `
+                                    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$ingressExternalType, `
+                                    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$customerid, `
+                                    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $isOnPrem, `
+                                    [string]$externalIp, `
+                                    [string]$internalIp, `
+                                    [string]$externalSubnetName, `
+                                    [string]$internalSubnetName) 
+{
     [hashtable]$Return = @{} 
 
     # delete existing containers
@@ -610,9 +617,12 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     # $traefiklabels = "external,internal"
 
     [hashtable]$tokens = @{ 
-        "CUSTOMERID"         = $customerid;
-        "PUBLICIP"           = "$publicip";
-        "#REPLACE-RUNMASTER" = "$runOnMaster";
+        "CUSTOMERID"        = $customerid;
+        "EXTERNALSUBNET"    = "$externalSubnetName";
+        "EXTERNALIP"        = "$externalIp";
+        "#REPLACE-RUNMASTER"= "$runOnMaster";
+        "INTERNALSUBNET"    = "$internalSubnetName";
+        "INTERNALIP"        = "$internalIp";
     }    
 
     $namespace = "kube-system"
@@ -631,11 +641,11 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     Write-Information -MessageData "Deploying pods"
     $folder = "pods"
 
-    if ($ingressExternal -eq "onprem" ) {
+    if ($ingressExternalType -eq "onprem" ) {
         $files = "traefik-onprem.yaml"
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
-    elseif ($ingressInternal -eq "public" ) {
+    elseif ($ingressInternalType -eq "public" ) {
         $files = "traefik-azure.both.yaml"
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }
@@ -659,15 +669,15 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
 
     $folder = "services/external"
 
-    if ($ingressExternal -eq "onprem" ) {
+    if ($ingressExternalType -eq "onprem" ) {
         Write-Information -MessageData "Setting up external load balancer"
         $files = "loadbalancer.onprem.yaml"
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
     }    
-    elseif ("$ingressExternal" -ne "vnetonly") {
+    elseif ("$ingressExternalType" -ne "vnetonly") {
         Write-Information -MessageData "Setting up a public load balancer"
 
-        Write-Information -MessageData "Using Public IP: [$publicip]"
+        Write-Information -MessageData "Using External IP: [$externalIp]"
 
         Write-Information -MessageData "Setting up external load balancer"
         $files = "loadbalancer.external.public.yaml"
@@ -680,14 +690,15 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     }
 
 
-    if ($ingressExternal -eq "onprem" ) {
+    if ($ingressExternalType -eq "onprem" ) {
     }
-    elseif ("$ingressInternal" -eq "public") {
+    elseif ("$ingressInternalType" -eq "public") {
         Write-Information -MessageData "Setting up an internal load balancer"
         $files = "loadbalancer.internal.public.yaml"
     }
     else {
         Write-Information -MessageData "Setting up an internal load balancer"
+        Write-Information -MessageData "Using Internal IP: [$internalIp]"
         $files = "loadbalancer.internal.vnetonly.yaml"
     }
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
