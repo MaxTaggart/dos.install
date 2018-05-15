@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.14.01"
+$versioncommon = "2018.05.14.02"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -1224,18 +1224,16 @@ function global:GetLoadBalancerIPs() {
     while ([string]::IsNullOrWhiteSpace($externalIP) -and ($startDate.AddMinutes($timeoutInMinutes) -gt (Get-Date)))
     Write-Information -MessageData "External IP: $externalIP"
     
-    if ($AKS_CLUSTER_ACCESS_TYPE -eq "2") {
-        $counter = 0
-        Write-Information -MessageData "Waiting for IP to get assigned to the internal load balancer (Note: It can take upto 5 minutes for Azure to finish creating the load balancer)"
-        Do { 
-            Start-Sleep -Seconds 10
-            $counter = $counter + 1
-            Write-Information -MessageData "$counter"
-            $internalIP = $(kubectl get svc $loadbalancerInternal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}')
-        }
-        while ([string]::IsNullOrWhiteSpace($internalIP) -and ($startDate.AddMinutes($timeoutInMinutes) -gt (Get-Date)))
-        Write-Information -MessageData "Internal IP: $internalIP"
+    $counter = 0
+    Write-Information -MessageData "Waiting for IP to get assigned to the internal load balancer (Note: It can take upto 5 minutes for Azure to finish creating the load balancer)"
+    Do { 
+        Start-Sleep -Seconds 10
+        $counter = $counter + 1
+        Write-Information -MessageData "$counter"
+        $internalIP = $(kubectl get svc $loadbalancerInternal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}')
     }
+    while ([string]::IsNullOrWhiteSpace($internalIP) -and ($startDate.AddMinutes($timeoutInMinutes) -gt (Get-Date)))
+    Write-Information -MessageData "Internal IP: $internalIP"
 
     $Return.ExternalIP = $externalIP
     $Return.InternalIP = $internalIP
@@ -1271,7 +1269,7 @@ function global:GetDNSCommands() {
 
     if (![string]::IsNullOrEmpty($loadBalancerInternalIP)) {
         $internalDNSEntriesList = $(kubectl get ing --all-namespaces -l expose=internal -o jsonpath="{.items[*]..spec.rules[*].host}" --ignore-not-found=true)
-        if($internalDNSEntriesList){
+        if ($internalDNSEntriesList) {
             $internalDNSEntries = $internalDNSEntriesList.Split(" ")
             ForEach ($dns in $internalDNSEntries) { 
                 if ([string]::IsNullOrEmpty($loadBalancerInternalIP)) {
