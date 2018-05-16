@@ -130,6 +130,8 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     $AKS_FIRST_STATIC_IP = $VnetInfo.AKS_FIRST_STATIC_IP
     $AKS_SUBNET_CIDR = $VnetInfo.AKS_SUBNET_CIDR
 
+    # Azure minimum IP: https://github.com/Azure/azure-container-networking/blob/master/docs/acs.md
+
     # $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = ReadSecretPassword -secretname "serviceprincipal"
 
     CleanResourceGroup -resourceGroup ${AKS_PERS_RESOURCE_GROUP} -location $AKS_PERS_LOCATION -vnet $AKS_VNET_NAME `
