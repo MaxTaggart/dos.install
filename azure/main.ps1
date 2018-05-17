@@ -1,5 +1,5 @@
 param([bool]$prerelease, [bool]$local)    
-$version = "2018.05.02.02"
+$version = "2018.05.16.01"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
@@ -134,6 +134,7 @@ while ($userinput -ne "q") {
             Write-Host $config
         
             CreateACSCluster -baseUrl $GITHUB_URL -config $config
+            ConfigureKubernetes -config $config
             SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
             WriteDNSCommands
         } 

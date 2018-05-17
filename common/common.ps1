@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.14.02"
+$versioncommon = "2018.05.16.01"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -439,107 +439,6 @@ function global:CreateStorageIfNotExists([Parameter(Mandatory = $true)][Validate
     return $Return
 }
 
-function global:GetVnet([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subscriptionId) {
-    #Create an hashtable variable 
-    [hashtable]$Return = @{} 
-
-    Write-Information -MessageData "Subscription Id; $subscriptionId"
-
-    $confirmation = 'y'
-    # Do { $confirmation = Read-Host "Would you like to connect to an existing virtual network? (y/n)"}
-    # while ([string]::IsNullOrWhiteSpace($confirmation))
-    
-    if ($confirmation -eq 'y') {
-
-        # see if we had previously connected to a vnet
-        $vnetName = ReadSecretData -secretname azure-vnet -valueName vnet
-        $subnetName = ReadSecretData -secretname azure-vnet -valueName subnet
-        $subnetResourceGroup = ReadSecretData -secretname azure-vnet -valueName subnetResourceGroup
-
-        
-        if ([string]::IsNullOrEmpty($vnetName)) {
-        }
-        else {
-            Do {
-                $confirmation = Read-Host "Kubernetes secret shows vnet=$vnetName and subnet=$subnetName.  Do you want to use these? (y/n)"
-            }
-            while ([string]::IsNullOrEmpty($confirmation))
-
-            if ($confirmation -eq "n") {
-                $vnetName = ""
-            }
-        }
-
-        if ([string]::IsNullOrEmpty($vnetName)) {
-            Write-Information -MessageData "Finding existing vnets..."
-            # az network vnet list --query "[].[name,resourceGroup ]" -o tsv    
-    
-            $vnets = az network vnet list --query "[].[name]" -o tsv
-    
-            Do { 
-                Write-Host "------  Existing vnets -------"
-                for ($i = 1; $i -le $vnets.count; $i++) {
-                    Write-Host "$i. $($vnets[$i-1])"
-                }    
-                Write-Host "------  End vnets -------"
-    
-                Do {
-                    $index = Read-Host "Enter number of vnet to use (1 - $($vnets.count))"
-                }
-                while ([string]::IsNullOrWhiteSpace($index)) 
-
-                $vnetName = $($vnets[$index - 1])
-            }
-            while ([string]::IsNullOrWhiteSpace($vnetName))    
-    
-            Write-Information -MessageData "Searching for vnet named $vnetName ..."
-            $subnetResourceGroup = az network vnet list --query "[?name == '$vnetName'].resourceGroup" -o tsv
-            Write-Information -MessageData "Using subnet resource group: [$subnetResourceGroup]"
-    
-            Write-Information -MessageData "Finding existing subnets in $vnetName ..."
-            $subnets = az network vnet subnet list --resource-group $subnetResourceGroup --vnet-name $vnetName --query "[].name" -o tsv
-            
-            if ($subnets.count -eq 1) {
-                Write-Information -MessageData "There is only one subnet called $subnets so choosing that"
-                $subnetName = $subnets
-            }
-            else {
-                Do { 
-                    Write-Host "------  Subnets in $vnetName -------"
-                    for ($i = 1; $i -le $subnets.count; $i++) {
-                        Write-Host "$i. $($subnets[$i-1])"
-                    }    
-                    Write-Host "------  End Subnets -------"
-        
-                    Write-Host "NOTE: Each customer should have their own subnet.  Do not put multiple customers in the same subnet"
-                    $index = Read-Host "Enter number of subnet to use (1 - $($subnets.count))"
-                    $subnetName = $($subnets[$index - 1])
-                }
-                while ([string]::IsNullOrWhiteSpace($subnetName)) 
-            }        
-        }
-    
-        $vnetinfo = $(GetVnetInfo -subscriptionId $subscriptionId -subnetResourceGroup $subnetResourceGroup -vnetName $vnetName -subnetName $subnetName)
-    }
-    else {
-        # create a vnet
-        # create a subnet
-    
-        # az network vnet create -g MyResourceGroup -n MyVnet --address-prefix 10.0.0.0/16 --subnet-name MySubnet --subnet-prefix 10.0.0.0/24    
-    }
-    
-        
-    #Assign all return values in to hashtable
-    $Return.AKS_VNET_NAME = $vnetName
-    $Return.AKS_SUBNET_NAME = $subnetName
-    $Return.AKS_SUBNET_RESOURCE_GROUP = $subnetResourceGroup
-    $Return.AKS_FIRST_STATIC_IP = $vnetinfo.AKS_FIRST_STATIC_IP
-    $Return.AKS_SUBNET_ID = $vnetinfo.AKS_SUBNET_ID
-    $Return.AKS_SUBNET_CIDR = $vnetinfo.AKS_SUBNET_CIDR
-
-    #Return the hashtable
-    Return $Return     
-}
 
 function global:GetSubnetId([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subscriptionId, `
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $subnetResourceGroup, `

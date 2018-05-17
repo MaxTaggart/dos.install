@@ -1,13 +1,13 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.15.02"
+$versionazurecommon = "2018.05.16.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
     return $versionazurecommon
 }
 
-function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNull()] $config, [ValidateNotNull()][bool] $useAKS) {
+function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNull()] $config, [ValidateNotNull()][bool] $useAKS) {
 
     $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-createacscluster.txt"
     WriteToConsole "Logging to $logfile"
@@ -131,8 +131,6 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     $AKS_SUBNET_CIDR = $VnetInfo.AKS_SUBNET_CIDR
 
     # Azure minimum IP: https://github.com/Azure/azure-container-networking/blob/master/docs/acs.md
-
-    # $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = ReadSecretPassword -secretname "serviceprincipal"
 
     CleanResourceGroup -resourceGroup ${AKS_PERS_RESOURCE_GROUP} -location $AKS_PERS_LOCATION -vnet $AKS_VNET_NAME `
         -subnet $AKS_SUBNET_NAME -subnetResourceGroup $AKS_SUBNET_RESOURCE_GROUP `
@@ -460,6 +458,23 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     Write-Host "You can connect to master VM in Git Bash for debugging using:"
     Write-Host "ssh -i ${SSH_PRIVATE_KEY_FILE_UNIX_PATH} azureuser@${MASTER_VM_NAME}"
 
+    Stop-Transcript
+}
+
+function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNull()] $config){
+    # $WINDOWS_PASSWORD
+
+    $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-configurekubernetes.txt"
+    WriteToConsole "Logging to $logfile"
+    Start-Transcript -Path "$logfile"
+
+    $resourceGroup = $($config.azure.resourceGroup)
+    Write-Host "Resource Group: $resourceGroup"
+    $customerid = $($config.customerid)
+    Write-Host "CustomerID: $customerid"
+
+    $storageAccountName="${resourceGroup}storage"
+
     Write-Host "Check nodes via kubectl"
     # set the environment variable so kubectl gets the new config
     $env:KUBECONFIG = "${HOME}\.kube\config"
@@ -477,18 +492,14 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     # create storage account
 
     Write-Host "Get storage account key"
-    $STORAGE_KEY = az storage account keys list --resource-group $AKS_PERS_RESOURCE_GROUP --account-name $AKS_PERS_STORAGE_ACCOUNT_NAME --query "[0].value" --output tsv
+    $storageKey = az storage account keys list --resource-group $resourceGroup --account-name $storageAccountName --query "[0].value" --output tsv
 
     # Write-Host "Storagekey: [$STORAGE_KEY]"
 
     Write-Host "Creating kubernetes secret for Azure Storage Account: azure-secret"
-    kubectl create secret generic azure-secret --from-literal=resourcegroup="${AKS_PERS_RESOURCE_GROUP}" --from-literal=azurestorageaccountname="${AKS_PERS_STORAGE_ACCOUNT_NAME}" --from-literal=azurestorageaccountkey="${STORAGE_KEY}"
+    kubectl create secret generic azure-secret --from-literal=resourcegroup="${resourceGroup}" --from-literal=azurestorageaccountname="${storageAccountName}" --from-literal=azurestorageaccountkey="${storageKey}"
     Write-Host "Creating kubernetes secret for customerid: customerid"
     kubectl create secret generic customerid --from-literal=value=$customerid
-    Write-Host "Creating kubernetes secret for vnet: azure-vnet"
-    kubectl create secret generic azure-vnet --from-literal=vnet="${AKS_VNET_NAME}" --from-literal=subnet="${AKS_SUBNET_NAME}" --from-literal=subnetResourceGroup="${AKS_SUBNET_RESOURCE_GROUP}"
-    Write-Host "Creating kubernetes secret for service principal"
-    kubectl create secret generic serviceprincipal --from-literal=clientid="$AKS_SERVICE_PRINCIPAL_CLIENTID" --from-literal=password="$AKS_SERVICE_PRINCIPAL_CLIENTSECRET"
     if (![string]::IsNullOrEmpty($WINDOWS_PASSWORD)) {
         Write-Host "Creating kubernetes secret for windows VM"
         kubectl create secret generic windowspassword --from-literal=password="$WINDOWS_PASSWORD"
@@ -507,9 +518,9 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     # } 
 
     if ($($config.azure.sethostfile)) {
-        SetHostFileInVms -resourceGroup $AKS_PERS_RESOURCE_GROUP
+        SetHostFileInVms -resourceGroup $resourceGroup
+        SetupCronTab -resourceGroup $resourceGroup
     }
-    SetupCronTab -resourceGroup $AKS_PERS_RESOURCE_GROUP
 
     Write-Host "Removing extra stuff that acs-engine creates"
     # k8s-master-lb-24203516
@@ -541,7 +552,6 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
 
     Stop-Transcript
 }
-
 
 function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNull()] $config) {
    
