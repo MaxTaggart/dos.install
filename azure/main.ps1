@@ -1,5 +1,5 @@
 param([bool]$prerelease, [bool]$local)    
-$version = "2018.05.16.01"
+$version = "2018.05.16.02"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
@@ -88,7 +88,7 @@ while ($userinput -ne "q") {
     Write-Host "0: Change kube to point to another cluster"
     Write-Host "------ Infrastructure -------"
     Write-Host "1: Create a new Azure Container Service"
-    Write-Host "2: Setup Load Balancer"
+    Write-Host "2: Configure existing Azure Container Service"
     Write-Host "3: Start VMs in Resource Group"
     Write-Host "4: Stop VMs in Resource Group"
     Write-Host "5: Renew Azure token"
@@ -142,6 +142,7 @@ while ($userinput -ne "q") {
             $config = $(ReadConfigFile).Config
             Write-Host $config
         
+            ConfigureKubernetes -config $config
             SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
             WriteDNSCommands
         } 
