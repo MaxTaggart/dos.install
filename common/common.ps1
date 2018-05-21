@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.16.01"
+$versioncommon = "2018.05.21.01"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -1775,13 +1775,34 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
         }
     }
 
-    LoadStack -namespace $namespace -baseUrl $baseUrl -appfolder "$appfolder" -isAzure $isAzure `
+    $configpath = "$baseUrl/${appfolder}/index.json"
+    Write-Information -MessageData "Loading stack manifest from $configpath"
+    
+    $config = $(Invoke-WebRequest -useb $configpath | ConvertFrom-Json)
+
+    LoadStack -namespace $namespace -baseUrl $baseUrl -appfolder "$appfolder" -config $config `
+                -isAzure $isAzure `
                 -externalIp $externalIp -internalIp $internalIp `
                 -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName
     
     if ($isAzure) {
         WaitForLoadBalancers -resourceGroup $(GetResourceGroup).ResourceGroup
-    }    
+    }
+    
+    # open ports specified
+    if($config.ports){
+        Write-Information -MessageData "Opening ports"
+        if($isAzure){
+            foreach ($portEntry in $ports) {
+                OpenPortInAzure -port $portEntry.port -name $portEntry.name -protocol $portEntry.protocol -type $portEntry.type
+            }
+        }
+        else {
+            foreach ($portEntry in $ports) {
+                OpenPortOnPrem -port $portEntry.port -name $portEntry.name -protocol $portEntry.protocol -type $portEntry.type
+            }
+        }
+    }
     return $Return
 }
 

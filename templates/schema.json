@@ -47,6 +47,7 @@
                         "$id": "/properties/ports/items/properties/protocol",
                         "type": "string",
                         "title": "protocol of the port",
+                        
                         "enum": [
                             "tcp",
                             "udp"
@@ -64,6 +65,8 @@
                 },
                 "required": [
                     "port",
+                    "protocol",
+                    "name",
                     "type"
                 ],
                 "additionalProperties": false

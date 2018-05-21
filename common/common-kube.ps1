@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.15.03"
+$versionkubecommon = "2018.05.21.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -356,6 +356,7 @@ function global:DeployYamlFiles([Parameter(Mandatory = $true)][ValidateNotNullOr
 function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
                             [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
                             [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
+                            [Parameter(Mandatory = $true)]$config,
                             $isAzure, `
                             [string]$externalIp, `
                             [string]$internalIp, `
@@ -369,14 +370,6 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
         kubectl create namespace $namespace
     }
     
-    $configpath = "$baseUrl/${appfolder}/index.json"
-    Write-Information -MessageData "Loading stack manifest from $configpath"
-    
-    $config = $(Invoke-WebRequest -useb $configpath | ConvertFrom-Json)
-
-    # $configpath="./$appfolder/index.json"
-    # $config = $(Get-Content "$configpath" -Raw | ConvertFrom-Json)
-
     Write-Information -MessageData "Installing stack $($config.name) version $($config.version) from $configpath"
 
     foreach ($secret in $($config.secrets.password)) {

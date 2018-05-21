@@ -22,13 +22,19 @@
             "name": "Mirth",
             "port": 6661,
             "protocol": "tcp",
-            "type": "internal"
+            "type": "external"
         },
         {
             "name": "RabbitMq",
             "port": 5671,
             "protocol": "tcp",
-            "type": "internal"            
+            "type": "external"            
+        },
+        {
+            "name": "MySql",
+            "port": 3307,
+            "protocol": "tcp",
+            "type": "internal"
         }
     ],
     "resources": {

@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.16.01"
+$versionazurecommon = "2018.05.21.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -1158,5 +1158,14 @@ function global:CreateKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrE
 function global:SaveKeyInVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $key, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $value) {
     az keyvault secret set --vault-name "${resourceGroup}-keyvault" --name "$key" --value "$value"
 }
+
+function OpenPortInAzure([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][number]$port, `
+                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$name, `
+                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$protocol, `
+                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$type) 
+{
+
+}
+
 # --------------------
 Write-Information -MessageData "end common-azure.ps1 version $versionazurecommon"
