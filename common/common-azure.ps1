@@ -1164,6 +1164,22 @@ function OpenPortInAzure([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][
                         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$protocol, `
                         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$type) 
 {
+    # if ([string]::IsNullOrWhiteSpace($(az network nsg rule show --name "$name" --nsg-name $NETWORK_SECURITY_GROUP --resource-group $AKS_PERS_RESOURCE_GROUP))) {
+    #     Write-Host "Creating rule: $name"
+    #     az network nsg rule create -g $AKS_PERS_RESOURCE_GROUP --nsg-name $NETWORK_SECURITY_GROUP -n $name --priority 501 `
+    #         --source-address-prefixes $sourceTagForHttpAccess --source-port-ranges '*' `
+    #         --destination-address-prefixes '*' --destination-port-ranges 443 --access Allow `
+    #         --protocol Tcp --description "allow HTTPS access from $sourceTagForHttpAccess." `
+    #         --query "provisioningState" -o tsv
+    # }
+    # else {
+    #     Write-Host "Updating rule: HttpsPort"
+    #     az network nsg rule update -g $AKS_PERS_RESOURCE_GROUP --nsg-name $NETWORK_SECURITY_GROUP -n $name --priority 501 `
+    #         --source-address-prefixes $sourceTagForHttpAccess --source-port-ranges '*' `
+    #         --destination-address-prefixes '*' --destination-port-ranges 443 --access Allow `
+    #         --protocol Tcp --description "allow HTTPS access from $sourceTagForHttpAccess." `
+    #         --query "provisioningState" -o tsv
+    # }    
 
 }
 
