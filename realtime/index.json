@@ -17,6 +17,20 @@
             }
         }]
     },
+    "ports": [
+        {
+            "name": "Mirth",
+            "port": 6661,
+            "protocol": "tcp",
+            "type": "internal"
+        },
+        {
+            "name": "RabbitMq",
+            "port": 5671,
+            "protocol": "tcp",
+            "type": "internal"            
+        }
+    ],
     "resources": {
         "dns": [],
         "configmaps": [],

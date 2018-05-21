@@ -32,23 +32,37 @@
                     "port": {
                         "$id": "/properties/ports/items/properties/port",
                         "type": "number",
-                        "title": "Port Number"
+                        "title": "Port Number",
+                        "exclusiveMinimum": 0
                     },
                     "name":{
                         "$id": "/properties/ports/items/properties/name",
                         "type": "string",
                         "title": "Name of the port"
                     },
-                    "type":{
-                        "$id": "/properties/ports/items/properties/type",
+                    "protocol":{
+                        "$id": "/properties/ports/items/properties/protocol",
                         "type": "string",
-                        "title": "type of the port",
+                        "title": "protocol of the port",
                         "enum": [
                             "tcp",
                             "udp"
                         ]
-                    }
-                }
+                    },
+                    "type":{
+                        "$id": "/properties/ports/items/properties/type",
+                        "type": "string",
+                        "title": "Type of the port",
+                        "enum": [
+                            "internal",
+                            "external"
+                        ]
+                    }                    
+                },
+                "required": [
+                    "port",
+                    "type"
+                ]
             }
         },
         "secrets": {
