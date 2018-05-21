@@ -1,5 +1,5 @@
 {
-    "$id": "http://example.com/example.json",
+    "$id": "http://healthcatalyst.com/products/schema.json",
     "type": "object",
     "definitions": {},
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -62,7 +62,8 @@
                 "required": [
                     "port",
                     "type"
-                ]
+                ],
+                "additionalProperties": false
             }
         },
         "secrets": {
@@ -117,18 +118,21 @@
                                     "namespace": {
                                         "$id": "/properties/secrets/properties/value/items/properties/valueFromSecret/properties/namespace",
                                         "type": "string",
-                                        "title": "The Namespace Schema ",
+                                        "title": "The Namespace Schema",
                                         "default": "",
                                         "examples": [
                                             "default"
                                         ]
                                     }
-                                }
+                                },
+                                "additionalProperties": false
                             }
-                        }
+                        },
+                        "additionalProperties": false
                     }
                 }
-            }
+            },
+            "additionalProperties": false
         },
         "resources": {
             "$id": "/properties/resources",
@@ -182,7 +186,8 @@
                                 ]
                             }
                         }
-                    }
+                    },
+                    "additionalProperties": false
                 },
                 "volumeclaims": {
                     "$id": "/properties/resources/properties/volumeclaims",
@@ -251,7 +256,8 @@
                                 ]
                             }
                         }
-                    }
+                    },
+                    "additionalProperties": false
                 },
                 "ingress": {
                     "$id": "/properties/resources/properties/ingress",
@@ -308,7 +314,8 @@
                                 }
                             }
                         }
-                    }
+                    },
+                    "additionalProperties": false
                 },
                 "jobs": {
                     "$id": "/properties/resources/properties/jobs",
@@ -323,7 +330,14 @@
                         ]
                     }
                 }
-            }
+            },
+            "additionalProperties": false
         }
-    }
+    },
+    "required": [
+        "name",
+        "version",
+        "resources"
+    ],
+    "additionalProperties": false
 }

@@ -1,5 +1,5 @@
 {
-    "$id": "http://example.com/schema.json",
+    "$id": "http://healthcatalyst.com/deployments/schema.json",
     "type": "object",
     "definitions": {},
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -17,7 +17,8 @@
                         ""
                     ]
                 }
-            }
+            },
+            "additionalProperties": false
         },
         "kubernetes": {
             "$id": "/properties/kubernetes",
@@ -29,10 +30,11 @@
                     "title": "Version of kubernetes server to install in Azure",
                     "default": "",
                     "examples": [
-                        ""
+                        "1.10.0"
                     ]
                 }
-            }
+            },
+            "additionalProperties": false
         },
         "azcli": {
             "$id": "/properties/azcli",
@@ -47,7 +49,8 @@
                         "2.0.27"
                     ]
                 }
-            }
+            },
+            "additionalProperties": false
         },
         "azure": {
             "$id": "/properties/azure",
@@ -111,7 +114,8 @@
                                 "v0.13.0"
                             ]
                         }
-                    }
+                    },
+                    "additionalProperties": false
                 },
                 "masterVMSize": {
                     "$id": "/properties/azure/properties/masterVMSize",
@@ -141,6 +145,12 @@
                     ]
                 }
             }
+            ,"required": [
+                "subscription",
+                "resourceGroup",
+                "location"
+            ],
+            "additionalProperties": false
         },
         "service_principal": {
             "$id": "/properties/service_principal",
@@ -164,7 +174,8 @@
                         true
                     ]
                 }
-            }
+            },
+            "additionalProperties": false
         },
         "storage_account": {
             "$id": "/properties/storage_account",
@@ -179,7 +190,8 @@
                         false
                     ]
                 }
-            }
+            },
+            "additionalProperties": false
         },
         "local_folder": {
             "$id": "/properties/local_folder",
@@ -276,7 +288,8 @@
                                 ""
                             ]
                         }
-                    }
+                    },
+                    "additionalProperties": false
                 },
                 "internal": {
                     "$id": "/properties/ingress/properties/internal",
@@ -324,7 +337,8 @@
                                 ""
                             ]
                         }
-                    }
+                    },
+                    "additionalProperties": false
                 },
                 "fixloadbalancer": {
                     "$id": "/properties/fixloadbalancer",
@@ -335,7 +349,8 @@
                         false
                     ]
                 }
-            }
+            },
+            "additionalProperties": false
         },
         "networking": {
             "$id": "/properties/networking",
@@ -368,7 +383,8 @@
                         "capresourcegroup"
                     ]
                 }
-            }
+            },
+            "additionalProperties": false
         },
         "network_security_group": {
             "$id": "/properties/network_security_group",
@@ -392,7 +408,8 @@
                         true
                     ]
                 }
-            }
+            },
+            "additionalProperties": false
         },
         "dns": {
             "$id": "/properties/dns",
@@ -425,7 +442,8 @@
                         "dns"
                     ]
                 }
-            }
+            },
+            "additionalProperties": false
         }
     }
 }
