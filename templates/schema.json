@@ -22,6 +22,35 @@
                 "4.0.0.2"
             ]
         },
+        "ports": {
+            "$id": "/properties/ports",
+            "type": "array",
+            "items": {
+                "$id": "/properties/ports/items",
+                "type": "object",
+                "properties": {
+                    "port": {
+                        "$id": "/properties/ports/items/properties/port",
+                        "type": "number",
+                        "title": "Port Number"
+                    },
+                    "name":{
+                        "$id": "/properties/ports/items/properties/name",
+                        "type": "string",
+                        "title": "Name of the port"
+                    },
+                    "type":{
+                        "$id": "/properties/ports/items/properties/type",
+                        "type": "string",
+                        "title": "type of the port",
+                        "enum": [
+                            "tcp",
+                            "udp"
+                        ]
+                    }
+                }
+            }
+        },
         "secrets": {
             "$id": "/properties/secrets",
             "type": "object",
