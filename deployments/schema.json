@@ -4,6 +4,9 @@
     "definitions": {},
     "$schema": "http://json-schema.org/draft-07/schema#",
     "properties": {
+        "$schema": {
+            "type": "string"
+        },
         "kubectl": {
             "$id": "/properties/kubectl",
             "type": "object",
@@ -144,8 +147,8 @@
                         true
                     ]
                 }
-            }
-            ,"required": [
+            },
+            "required": [
                 "subscription",
                 "resourceGroup",
                 "location"
