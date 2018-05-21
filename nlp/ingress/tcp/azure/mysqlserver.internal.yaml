@@ -5,7 +5,8 @@ metadata:
   namespace: fabricnlp
   annotations:
     # from https://radu-matei.com/blog/k8s-appsvc/
-    service.beta.kubernetes.io/azure-load-balancer-internal: "true"  
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+#    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: $INTERNALSUBNET$
   labels:
     dns: mysql    
 spec:
@@ -16,5 +17,5 @@ spec:
     protocol: TCP
     port: 3306
     targetPort: 3306
-  type: LoadBalancer  
+  type: LoadBalancer
 ---

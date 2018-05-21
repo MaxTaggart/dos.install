@@ -14,7 +14,8 @@
         "use_azure_networking": true,
         "acs_engine": {
             "version": "0.14.6"
-        }
+        },
+        "sethostfile": true
     },
     "service_principal": {
         "name": "",

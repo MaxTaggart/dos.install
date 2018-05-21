@@ -17,6 +17,26 @@
             }
         }]
     },
+    "ports": [
+        {
+            "name": "Mirth",
+            "port": 6661,
+            "protocol": "tcp",
+            "type": "external"
+        },
+        {
+            "name": "RabbitMq",
+            "port": 5671,
+            "protocol": "tcp",
+            "type": "external"            
+        },
+        {
+            "name": "MySql",
+            "port": 3307,
+            "protocol": "tcp",
+            "type": "internal"
+        }
+    ],
     "resources": {
         "dns": [],
         "configmaps": [],
@@ -66,11 +86,18 @@
                 "rabbitmq.yaml",
                 "interfaceengine.yaml"
             ],
-            "tcp": [
-                "mysqlserver.yaml",
-                "interfaceengine.yaml",
-                "rabbitmq.yaml"
-            ]
+            "tcp": {
+                "azure": [
+                    "mysqlserver.yaml",
+                    "interfaceengine.yaml",
+                    "rabbitmq.yaml"                    
+                ],
+                "onprem":[
+                    "mysqlserver.yaml",
+                    "interfaceengine.yaml",
+                    "rabbitmq.yaml"
+                ]
+            }
         }
     }
 }

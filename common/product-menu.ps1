@@ -5,9 +5,16 @@ function global:GetCommonMenuVersion() {
     return $versionmenucommon
 }
 
-function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $namespace, [bool] $isAzure) {
+function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $namespace, `
+                        $isAzure, `
+                        [string]$externalIp, `
+                        [string]$internalIp, `
+                        [string]$externalSubnetName, `
+                        [string]$internalSubnetName )
+{
     if ($namespace -eq "fabricrealtime") {
-        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "realtime" -isAzure $isAzure
+        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "realtime" -isAzure $isAzure `
+                    -externalIp "" -internalIp "" -externalSubnetName "" -internalSubnetName ""
     }
     elseif ($namespace -eq "fabricnlp") {
         $namespace = "fabricnlp"
@@ -16,7 +23,8 @@ function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNo
         $dnshostname = $(ReadSecretValue -secretname "dnshostname" -namespace "default")
         SaveSecretValue -secretname "nlpweb-external-url" -valueName "value" -value "nlp.$dnshostname" -namespace $namespace
         SaveSecretValue -secretname "jobserver-external-url" -valueName "value" -value "nlpjobs.$dnshostname" -namespace $namespace
-        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "nlp" -isAzure $isAzure                         
+        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "nlp" -isAzure $isAzure `
+                    -externalIp "" -internalIp "" -externalSubnetName "" -internalSubnetName ""                    
     }
 }
 function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $namespace, [bool] $isAzure) {

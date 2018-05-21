@@ -19,7 +19,8 @@
             "version": "0.15.0"
         },
         "masterVMSize": "Standard_DS2_v2",
-        "workerVMSize": "Standard_DS2_v2"
+        "workerVMSize": "Standard_DS2_v2",
+        "sethostfile": true        
     },
     "service_principal": {
         "name": "",

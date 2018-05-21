@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.15.02"
+$versionkubecommon = "2018.05.21.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -353,7 +353,16 @@ function global:DeployYamlFiles([Parameter(Mandatory = $true)][ValidateNotNullOr
     }
     return $Return
 }
-function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, $isAzure) {
+function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
+                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
+                            [Parameter(Mandatory = $true)]$config,
+                            $isAzure, `
+                            [string]$externalIp, `
+                            [string]$internalIp, `
+                            [string]$externalSubnetName, `
+                            [string]$internalSubnetName) 
+{
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
@@ -361,14 +370,6 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
         kubectl create namespace $namespace
     }
     
-    $configpath = "$baseUrl/${appfolder}/index.json"
-    Write-Information -MessageData "Loading stack manifest from $configpath"
-    
-    $config = $(Invoke-WebRequest -useb $configpath | ConvertFrom-Json)
-
-    # $configpath="./$appfolder/index.json"
-    # $config = $(Get-Content "$configpath" -Raw | ConvertFrom-Json)
-
     Write-Information -MessageData "Installing stack $($config.name) version $($config.version) from $configpath"
 
     foreach ($secret in $($config.secrets.password)) {
@@ -396,8 +397,13 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
     $customerid = $customerid.ToLower().Trim()
     Write-Information -MessageData "Customer ID: $customerid"
 
-    [hashtable] $tokens = @{
-        "CUSTOMERID" = $customerid
+    [hashtable]$tokens = @{ 
+        "CUSTOMERID"        = $customerid;
+        "EXTERNALSUBNET"    = "$externalSubnetName";
+        "EXTERNALIP"        = "$externalIp";
+        "#REPLACE-RUNMASTER"= "$runOnMaster";
+        "INTERNALSUBNET"    = "$internalSubnetName";
+        "INTERNALIP"        = "$internalIp";
     }
 
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "dns" -tokens $tokens -resources $($config.resources.dns)
@@ -423,7 +429,12 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
     
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/http" -tokens $tokens -resources $($config.resources.ingress.http)
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp" -tokens $tokens -resources $($config.resources.ingress.tcp)
+    if($isAzure){
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/azure" -tokens $tokens -resources $($config.resources.ingress.tcp.azure)
+    }
+    else {
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/onprem" -tokens $tokens -resources $($config.resources.ingress.tcp.onprem)
+    }
 
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -tokens $tokens -resources $($config.resources.ingress.jobs)
     

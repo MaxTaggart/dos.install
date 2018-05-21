@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.05.15.01"
+$versiononpremcommon = "2018.05.21.01"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -912,5 +912,12 @@ function ShowKubernetesServiceStatus() {
     sudo journalctl -u kube-apiserve
 }
 
+function OpenPortOnPrem([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][number]$port, `
+                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$name, `
+                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$protocol, `
+                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$type) 
+{
+    AddFirewallPort -port "${port}/${protocol}" -name "$name"
+}
 # 
 Write-Information -MessageData "end common-onprem.ps1 version $versiononpremcommon"

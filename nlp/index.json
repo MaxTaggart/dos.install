@@ -2,6 +2,14 @@
     "$schema": "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/templates/schema.json",
     "name": "Fabric NLP",
     "version": "2018.04.11.01",
+    "ports": [
+        {
+            "name": "MySql",
+            "port": 3306,
+            "protocol": "tcp",
+            "type": "internal"
+        }
+    ],
     "secrets": {
         "password": [
             "mysqlrootpassword",
@@ -69,9 +77,12 @@
                 "nlpweb.path.yaml",
                 "nlpjobs.path.yaml"
             ],
-            "tcp": [
-                "mysqlserver.internal.yaml"
-            ]
+            "tcp":
+            {
+                "azure": [
+                    "mysqlserver.internal.yaml"                    
+                ]
+            }
         },
         "jobs": [
             "mysqlserver-backup-cron.yaml"

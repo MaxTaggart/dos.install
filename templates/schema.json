@@ -1,13 +1,16 @@
 {
-    "$id": "http://example.com/example.json",
+    "$id": "http://healthcatalyst.com/products/schema.json",
     "type": "object",
     "definitions": {},
     "$schema": "http://json-schema.org/draft-07/schema#",
     "properties": {
+        "$schema": {
+            "type": "string"
+        },
         "name": {
             "$id": "/properties/name",
             "type": "string",
-            "title": "The Name Schema ",
+            "title": "Name of product",
             "default": "",
             "examples": [
                 "Fabric Realtime"
@@ -21,6 +24,53 @@
             "examples": [
                 "4.0.0.2"
             ]
+        },
+        "ports": {
+            "$id": "/properties/ports",
+            "type": "array",
+            "items": {
+                "$id": "/properties/ports/items",
+                "type": "object",
+                "properties": {
+                    "port": {
+                        "$id": "/properties/ports/items/properties/port",
+                        "type": "number",
+                        "title": "Port Number",
+                        "exclusiveMinimum": 0
+                    },
+                    "name": {
+                        "$id": "/properties/ports/items/properties/name",
+                        "type": "string",
+                        "title": "Name of the port"
+                    },
+                    "protocol": {
+                        "$id": "/properties/ports/items/properties/protocol",
+                        "type": "string",
+                        "title": "protocol of the port",
+                        
+                        "enum": [
+                            "tcp",
+                            "udp"
+                        ]
+                    },
+                    "type": {
+                        "$id": "/properties/ports/items/properties/type",
+                        "type": "string",
+                        "title": "Type of the port",
+                        "enum": [
+                            "internal",
+                            "external"
+                        ]
+                    }
+                },
+                "required": [
+                    "port",
+                    "protocol",
+                    "name",
+                    "type"
+                ],
+                "additionalProperties": false
+            }
         },
         "secrets": {
             "$id": "/properties/secrets",
@@ -74,18 +124,21 @@
                                     "namespace": {
                                         "$id": "/properties/secrets/properties/value/items/properties/valueFromSecret/properties/namespace",
                                         "type": "string",
-                                        "title": "The Namespace Schema ",
+                                        "title": "The Namespace Schema",
                                         "default": "",
                                         "examples": [
                                             "default"
                                         ]
                                     }
-                                }
+                                },
+                                "additionalProperties": false
                             }
-                        }
+                        },
+                        "additionalProperties": false
                     }
                 }
-            }
+            },
+            "additionalProperties": false
         },
         "resources": {
             "$id": "/properties/resources",
@@ -139,7 +192,8 @@
                                 ]
                             }
                         }
-                    }
+                    },
+                    "additionalProperties": false
                 },
                 "volumeclaims": {
                     "$id": "/properties/resources/properties/volumeclaims",
@@ -208,7 +262,8 @@
                                 ]
                             }
                         }
-                    }
+                    },
+                    "additionalProperties": false
                 },
                 "ingress": {
                     "$id": "/properties/resources/properties/ingress",
@@ -231,20 +286,42 @@
                         },
                         "tcp": {
                             "$id": "/properties/resources/properties/ingress/properties/tcp",
-                            "type": "array",
-                            "items": {
-                                "$id": "/properties/resources/properties/ingress/properties/tcp/items",
-                                "type": "string",
-                                "title": "The 0th Schema ",
-                                "default": "",
-                                "examples": [
-                                    "mysqlserver.yaml",
-                                    "interfaceengine.yaml",
-                                    "rabbitmq.yaml"
-                                ]
+                            "type": "object",
+                            "properties": {
+                                "azure": {
+                                    "$id": "/properties/resources/properties/ingress/properties/tcp/properties/azure",
+                                    "type": "array",
+                                    "items": {
+                                        "$id": "/properties/resources/properties/ingress/properties/tcp/properties/azure/items",
+                                        "type": "string",
+                                        "title": "TCP ingress resources for Azure",
+                                        "default": "",
+                                        "examples": [
+                                            "mysqlserver.yaml",
+                                            "interfaceengine.yaml",
+                                            "rabbitmq.yaml"
+                                        ]
+                                    }
+                                },
+                                "onprem": {
+                                    "$id": "/properties/resources/properties/ingress/properties/tcp/properties/onprem",
+                                    "type": "array",
+                                    "items": {
+                                        "$id": "/properties/resources/properties/ingress/properties/tcp/properties/onprem/items",
+                                        "type": "string",
+                                        "title": "TCP ingress resources for Onprem",
+                                        "default": "",
+                                        "examples": [
+                                            "mysqlserver.yaml",
+                                            "interfaceengine.yaml",
+                                            "rabbitmq.yaml"
+                                        ]
+                                    }
+                                }
                             }
                         }
-                    }
+                    },
+                    "additionalProperties": false
                 },
                 "jobs": {
                     "$id": "/properties/resources/properties/jobs",
@@ -259,7 +336,14 @@
                         ]
                     }
                 }
-            }
+            },
+            "additionalProperties": false
         }
-    }
+    },
+    "required": [
+        "name",
+        "version",
+        "resources"
+    ],
+    "additionalProperties": false
 }
