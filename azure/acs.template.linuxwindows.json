@@ -3,25 +3,25 @@
     "properties": {
         "orchestratorProfile": {
             "orchestratorType": "Kubernetes",
-            "orchestratorRelease": "1.9",
+            "orchestratorVersion": "REPLACE-KUBERNETES-VERSION",
             "kubernetesConfig": {
-                "networkPolicy": "none",
-                "dockerEngineVersion": "1.12.*"
+                "networkPolicy": "azure"
             }
         },
         "masterProfile": {
             "count": 1,
             "dnsPrefix": "REPLACE-DNS-NAME-PREFIX",
-            "vmSize": "Standard_D2_v2",
+            "vmSize": "REPLACE-MASTER_VMSIZE",
             "vnetSubnetId": "REPLACE-SUBNET",
             "firstConsecutiveStaticIP": "REPLACE-FIRST-STATIC-IP",
             "vnetCidr": "REPLACE_VNET_CIDR",
             "storageProfile": "ManagedDisks"
         },
-        "agentPoolProfiles": [{
+        "agentPoolProfiles": [
+            {
                 "name": "linuxagent",
                 "count": 2,
-                "vmSize": "Standard_D2_v2",
+                "vmSize": "REPLACE-WORKER-VMSIZE",
                 "vnetSubnetId": "REPLACE-SUBNET",
                 "availabilityProfile": "AvailabilitySet",
                 "storageProfile": "ManagedDisks"
@@ -29,26 +29,30 @@
             {
                 "name": "windowsagent",
                 "osType": "Windows",
-                "OSDiskSizeGB": 300,
+                "OSDiskSizeGB": 127,
                 "count": 1,
-                "vmSize": "Standard_D2_v2",
+                "vmSize": "REPLACE-WORKER-VMSIZE",
                 "vnetSubnetId": "REPLACE-SUBNET",
                 "availabilityProfile": "AvailabilitySet",
-                "storageProfile": "ManagedDisks",
-                "diskSizesGB": [1020]
+                "storageProfile": "ManagedDisks"
             }
         ],
         "linuxProfile": {
             "adminUsername": "azureuser",
             "ssh": {
-                "publicKeys": [{
-                    "keyData": "REPLACE-SSH-KEY"
-                }]
+                "publicKeys": [
+                    {
+                        "keyData": "REPLACE-SSH-KEY"
+                    }
+                ]
             }
         },
         "windowsProfile": {
             "adminUsername": "azureuser",
-            "adminPassword": "REPLACE-WINDOWS-PASSWORD"
+            "adminPassword": "REPLACE-WINDOWS-PASSWORD",
+            "windowsPublisher": "MicrosoftWindowsServer",
+            "windowsOffer": "WindowsServerSemiAnnual",
+            "windowsSku": "Datacenter-Core-1803-with-Containers-smalldisk"            
         },
         "servicePrincipalProfile": {
             "clientId": "REPLACE-CLIENTID",

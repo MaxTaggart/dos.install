@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.05.21.03"
+$versiononpremcommon = "2018.05.21.04"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -747,7 +747,8 @@ function mountSMBWithParams([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty(
         WriteToLog "Mounting as UNC folder"
         WriteToLog "sudo mount --verbose -t cifs $pathToShare /mnt/data -o username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm"
         sudo mount --verbose -t cifs $pathToShare /mnt/data -o "username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm"
-        if($? -ne $true){
+        $result=$?
+        if($result -ne $true){
             throw "Unable to mount $pathToShare with username=$username,domain=$domain"
         }
         echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm" | sudo tee -a /etc/fstab > /dev/null
@@ -755,7 +756,8 @@ function mountSMBWithParams([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty(
     else {
         WriteToLog "Mounting as non-UNC folder"
         sudo mount --verbose -t cifs $pathToShare /mnt/data -o "username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino"
-        if($? -ne $true){
+        $result=$?
+        if($result -ne $true){
             throw "Unable to mount $pathToShare with username=$username"
         }
         echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null       
