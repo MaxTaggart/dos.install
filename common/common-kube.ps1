@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.21.01"
+$versionkubecommon = "2018.05.22.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -349,21 +349,28 @@ function global:DeployYamlFiles([Parameter(Mandatory = $true)][ValidateNotNullOr
         Write-Information -MessageData "-- Deploying $folder --"
         foreach ($file in $resources) {
             $(ReadYamlAndReplaceTokens -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -tokens $tokens).Content | kubectl apply -f -
+            $result = $?
+            if ($result -ne $True) {
+                throw "Error applying kubernetes template: ${appfolder}/${folder}/${file}"
+            }
         }
     }
     return $Return
 }
 function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
-                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
-                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
-                            [Parameter(Mandatory = $true)]$config,
-                            $isAzure, `
-                            [string]$externalIp, `
-                            [string]$internalIp, `
-                            [string]$externalSubnetName, `
-                            [string]$internalSubnetName) 
-{
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
+        [Parameter(Mandatory = $true)]$config,
+    $isAzure, `
+        [string]$externalIp, `
+        [string]$internalIp, `
+        [string]$externalSubnetName, `
+        [string]$internalSubnetName) {
     [hashtable]$Return = @{} 
+
+
+    if(!$externalSubnetName){$externalSubnetName=$($config.networking.subnet)}
+    if(!$internalSubnetName){$internalSubnetName=$($config.networking.subnet)}
 
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
         Write-Information -MessageData "namespace $namespace does not exist so creating it"
@@ -398,12 +405,12 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
     Write-Information -MessageData "Customer ID: $customerid"
 
     [hashtable]$tokens = @{ 
-        "CUSTOMERID"        = $customerid;
-        "EXTERNALSUBNET"    = "$externalSubnetName";
-        "EXTERNALIP"        = "$externalIp";
-        "#REPLACE-RUNMASTER"= "$runOnMaster";
-        "INTERNALSUBNET"    = "$internalSubnetName";
-        "INTERNALIP"        = "$internalIp";
+        "CUSTOMERID"         = $customerid;
+        "EXTERNALSUBNET"     = "$externalSubnetName";
+        "EXTERNALIP"         = "$externalIp";
+        "#REPLACE-RUNMASTER" = "$runOnMaster";
+        "INTERNALSUBNET"     = "$internalSubnetName";
+        "INTERNALIP"         = "$internalIp";
     }
 
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "dns" -tokens $tokens -resources $($config.resources.dns)
@@ -429,7 +436,7 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
     
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/http" -tokens $tokens -resources $($config.resources.ingress.http)
 
-    if($isAzure){
+    if ($isAzure) {
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/azure" -tokens $tokens -resources $($config.resources.ingress.tcp.azure)
     }
     else {
@@ -595,16 +602,18 @@ function global:DeploySimpleServices([Parameter(Mandatory = $true)][ValidateNotN
 }
 
 function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$baseUrl, [int]$ssl, `
-                                    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$ingressInternalType, `
-                                    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$ingressExternalType, `
-                                    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$customerid, `
-                                    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $isOnPrem, `
-                                    [string]$externalIp, `
-                                    [string]$internalIp, `
-                                    [string]$externalSubnetName, `
-                                    [string]$internalSubnetName) 
-{
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$ingressInternalType, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$ingressExternalType, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] [string]$customerid, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $isOnPrem, `
+        [string]$externalIp, `
+        [string]$internalIp, `
+        [string]$externalSubnetName, `
+        [string]$internalSubnetName) {
     [hashtable]$Return = @{} 
+
+    if(!$externalSubnetName){$externalSubnetName=$($config.networking.subnet)}
+    if(!$internalSubnetName){$internalSubnetName=$($config.networking.subnet)}
 
     # delete existing containers
     kubectl delete 'pods,services,configMaps,deployments,ingress' -l k8s-traefik=traefik -n kube-system --ignore-not-found=true
@@ -628,12 +637,12 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     # $traefiklabels = "external,internal"
 
     [hashtable]$tokens = @{ 
-        "CUSTOMERID"        = $customerid;
-        "EXTERNALSUBNET"    = "$externalSubnetName";
-        "EXTERNALIP"        = "$externalIp";
-        "#REPLACE-RUNMASTER"= "$runOnMaster";
-        "INTERNALSUBNET"    = "$internalSubnetName";
-        "INTERNALIP"        = "$internalIp";
+        "CUSTOMERID"         = $customerid;
+        "EXTERNALSUBNET"     = "$externalSubnetName";
+        "EXTERNALIP"         = "$externalIp";
+        "#REPLACE-RUNMASTER" = "$runOnMaster";
+        "INTERNALSUBNET"     = "$internalSubnetName";
+        "INTERNALIP"         = "$internalIp";
     }    
 
     $namespace = "kube-system"
@@ -905,7 +914,7 @@ function global:WriteSecretValueToOutput([Parameter(Mandatory = $true)][Validate
     Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$secretvalue"
 }
 
-function global:RunRealtimeTester([ValidateNotNullOrEmpty()][string] $baseUrl){
+function global:RunRealtimeTester([ValidateNotNullOrEmpty()][string] $baseUrl) {
     # show commands to download the tester and run it passing in certhostname and password
     $certhostname = $(ReadSecretValue certhostname $namespace)
     $certpassword = $(ReadSecretPassword certpassword $namespace)
