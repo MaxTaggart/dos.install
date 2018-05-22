@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.21.01"
+$versionazurecommon = "2018.05.21.02"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -43,12 +43,12 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     $AKS_SUPPORT_WINDOWS_CONTAINERS = $config.azure.create_windows_containers
     $AKS_USE_AZURE_NETWORKING = $config.azure.use_azure_networking
 
-    if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
-        # azure networking is not supported with windows containers
-        if ($AKS_USE_AZURE_NETWORKING) {
-            Write-Error "Azure networking is not supported with Windows containers"
-        }
-    }
+    # if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
+    #     # azure networking is not supported with windows containers
+    #     if ($AKS_USE_AZURE_NETWORKING) {
+    #         Write-Error "Azure networking is not supported with Windows containers"
+    #     }
+    # }
 
     # service account to own the resources
     $AKS_SERVICE_PRINCIPAL_NAME = $config.service_principal.name
@@ -332,23 +332,23 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
         } 
     }
 
-    if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
+    # if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
 
-        if ("$AKS_VNET_NAME") {
-            Write-Host "Adding subnet to azuredeploy.json to work around acs-engine bug"
-            $outputdeployfile = "$acsoutputfolder\azuredeploy.json"
-            # https://github.com/Azure/acs-engine/issues/1767
-            # "subnet": "${mysubnetid}"
-            # replace     "vnetSubnetID": "[parameters('masterVnetSubnetID')]"
-            # "subnet": "[parameters('masterVnetSubnetID')]"
+    #     if ("$AKS_VNET_NAME") {
+    #         Write-Host "Adding subnet to azuredeploy.json to work around acs-engine bug"
+    #         $outputdeployfile = "$acsoutputfolder\azuredeploy.json"
+    #         # https://github.com/Azure/acs-engine/issues/1767
+    #         # "subnet": "${mysubnetid}"
+    #         # replace     "vnetSubnetID": "[parameters('masterVnetSubnetID')]"
+    #         # "subnet": "[parameters('masterVnetSubnetID')]"
 
-            #there is a bug in acs-engine: https://github.com/Azure/acs-engine/issues/1767
-            $mydeployjson = Get-Content -Raw -Path $outputdeployfile | ConvertFrom-Json
-            $mydeployjson.variables | Add-Member -Type NoteProperty -Name 'subnet' -Value "[parameters('masterVnetSubnetID')]"
-            $outjson = ConvertTo-Json -InputObject $mydeployjson -Depth 10
-            Set-Content -Path $outputdeployfile -Value $outjson  
-        }
-    }
+    #         #there is a bug in acs-engine: https://github.com/Azure/acs-engine/issues/1767
+    #         $mydeployjson = Get-Content -Raw -Path $outputdeployfile | ConvertFrom-Json
+    #         $mydeployjson.variables | Add-Member -Type NoteProperty -Name 'subnet' -Value "[parameters('masterVnetSubnetID')]"
+    #         $outjson = ConvertTo-Json -InputObject $mydeployjson -Depth 10
+    #         Set-Content -Path $outputdeployfile -Value $outjson  
+    #     }
+    # }
 
     # --orchestrator-version 1.8 `
     # --ssh-key-value 

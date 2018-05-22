@@ -10,8 +10,8 @@
         "version": "2.0.30"
     },
     "azure": {
-        "subscription": "Health Catalyst - Fabric",
-        "resourceGroup": "devkubernetes",
+        "subscription": "PE-DevOps",
+        "resourceGroup": "sharedkubernetes",
         "location": "westus",
         "create_windows_containers": false,
         "use_azure_networking": true,
@@ -19,7 +19,8 @@
             "version": "0.15.0"
         },
         "masterVMSize": "Standard_DS2_v2",
-        "workerVMSize": "Standard_DS2_v2"
+        "workerVMSize": "Standard_DS2_v2",
+        "privatecluster": false
     },
     "service_principal": {
         "name": "",
@@ -31,9 +32,9 @@
     "local_folder": "c:\\kubernetes",
     "customerid": "hcut",
     "ssl": false,
-    "allow_kubectl_from_outside_vnet": false,
+    "allow_kubectl_from_outside_vnet": true,
     "ingress": {
-        "external": {
+        "external":{
             "type": "vnetonly"
         },
         "internal": {
@@ -41,16 +42,16 @@
         }
     },
     "networking": {
-        "vnet": "DevKubernetes",
+        "vnet": "SharedKubernetesVnet",
         "subnet": "default",
-        "subnet_resource_group": "DevKubernetes"
+        "subnet_resource_group": "SharedKubernetesVnetRg"
     },
     "network_security_group": {
         "name": "",
-        "create_nsg_rules": true
+        "create_nsg_rules": false
     },
     "dns": {
-        "name": "devkubernetes.hqcatalyst.local",
+        "name": "hcut.healthcatalyst.net",
         "create_dns_entries": false,
         "dns_resource_group": "dns"
     }
