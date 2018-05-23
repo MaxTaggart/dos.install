@@ -1,0 +1,27 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dnsNamePrefix": {
+            "value": "sharedkubernetes"
+        },
+        "adminUsername": {
+            "value": "azureuser"
+        },
+        "sshRSAPublicKey": {
+            "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDcA9FcggKe08pxthR6Ly+o8hU4CycmiYdGT4Kjq540381MB5pY3BOwLONZkwGh7Pq63XmAfFHRQ4iBzciqijpgpE7xOqVmbsOBzEcE8Zno2Ez7XB2M5pAD3AXavgBEv1vaUZfNxzG6CQjEl+oD6NBlIHadSUy+1lE/j4jPYJjYVzni8xdbEAoE5wZPxdFEps7URSvw+SVoMdm1MCdmMPTGmC1J1c+Fsugp4d94Uv6vDPwzsL8uIuyaeOP3J8K8d9q3Pv7BKO7/gpaEj8KtBZwPq1VoFnrs0oIfeE24bBt3/HSgv/Wk9TADqJ5yuK+O7o5f0VtR2P6veco3LSLdBdkb azureuser@linuxvm"
+        },
+        "servicePrincipalClientId": {
+            "value": "79f97c12-689f-473d-a14e-46578c82f25c"
+        },
+        "servicePrincipalClientSecret": {
+            "value": "7312ba2c-f12b-4d57-a392-3d268e62c655"
+        },
+        "orchestratorType": {
+            "value": "Kubernetes"
+        },
+        "vnetSubnetID": {
+            "value": "/subscriptions/051183a5-a271-4323-842b-c6856ed7114a/resourceGroups/SharedKubernetesVnetRg/providers/Microsoft.Network/virtualNetworks/SharedKubernetesVnet/subnets/default"
+        }        
+    }
+}

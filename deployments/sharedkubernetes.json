@@ -35,10 +35,12 @@
     "allow_kubectl_from_outside_vnet": false,
     "ingress": {
         "external":{
-            "type": "vnetonly"
+            "type": "vnetonly",
+            "ipAddress": "10.13.5.96"
         },
         "internal": {
-            "type": "vnetonly"
+            "type": "vnetonly",
+            "ipAddress": "10.13.5.97"
         }
     },
     "networking": {
