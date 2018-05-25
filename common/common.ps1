@@ -31,6 +31,8 @@ function global:DeleteAzureFileShare([Parameter(Mandatory = $true)][ValidateNotN
 function global:CreateShareInStorageAccount([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $storageAccountName, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $sharename, $deleteExisting) { 
     [hashtable]$Return = @{} 
 
+    [int]$filesharesize=128
+
     $storageAccountConnectionString = az storage account show-connection-string -n $storageAccountName -g $resourceGroup -o tsv
     
     # Write-Information -MessageData "Storage connection string: $storageAccountConnectionString"
@@ -41,7 +43,7 @@ function global:CreateShareInStorageAccount([Parameter(Mandatory = $true)][Valid
 
     if ($(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv) -eq "false") {
         Write-Information -MessageData "Creating the file share: $sharename"        
-        az storage share create -n $sharename --connection-string $storageAccountConnectionString --quota 512       
+        az storage share create -n $sharename --connection-string $storageAccountConnectionString --quota $filesharesize       
 
         Write-Information -MessageData "Waiting for completion of create for the file share: $sharename"        
         Do {
