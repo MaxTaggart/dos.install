@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: solrserver
-          image: healthcatalyst/fabric.nlp.docker.solr:latest
+          image: healthcatalyst/fabric.nlp.docker.solr:1
           imagePullPolicy: Always          
           volumeMounts:
             - name: solr-persistent-storage

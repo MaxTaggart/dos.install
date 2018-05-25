@@ -20,7 +20,7 @@
         },
         "masterVMSize": "Standard_DS2_v2",
         "workerVMSize": "Standard_DS2_v2",
-        "privatecluster": false
+        "privatecluster": true
     },
     "service_principal": {
         "name": "",
@@ -32,13 +32,15 @@
     "local_folder": "c:\\kubernetes",
     "customerid": "hcut",
     "ssl": false,
-    "allow_kubectl_from_outside_vnet": true,
+    "allow_kubectl_from_outside_vnet": false,
     "ingress": {
         "external":{
-            "type": "vnetonly"
+            "type": "vnetonly",
+            "ipAddress": "10.13.5.96"
         },
         "internal": {
-            "type": "vnetonly"
+            "type": "vnetonly",
+            "ipAddress": "10.13.5.97"
         }
     },
     "networking": {
@@ -51,7 +53,7 @@
         "create_nsg_rules": false
     },
     "dns": {
-        "name": "hcut.healthcatalyst.net",
+        "name": "kubernetes.hqcatalyst.local",
         "create_dns_entries": false,
         "dns_resource_group": "dns"
     }

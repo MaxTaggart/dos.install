@@ -26,7 +26,7 @@ spec:
         # name of this pod
         - name: mysqlserver
           # image to pull
-          image: healthcatalyst/fabric.nlp.docker.mysql:latest
+          image: healthcatalyst/fabric.nlp.docker.mysql:1
           # specify to always pull a new image
           imagePullPolicy: Always
           # environment variables

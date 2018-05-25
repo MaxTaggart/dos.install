@@ -98,7 +98,9 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     if ($downloadACSEngine -eq "y") {
         $url = "https://github.com/Azure/acs-engine/releases/download/${DESIRED_ACS_ENGINE_VERSION}/acs-engine-${DESIRED_ACS_ENGINE_VERSION}-windows-amd64.zip"
         Write-Host "Downloading acs-engine.exe from $url to $ACS_ENGINE_FILE"
-        Remove-Item -Path "$ACS_ENGINE_FILE" -Force
+        if(Test-Path "$ACS_ENGINE_FILE"){
+            Remove-Item -Path "$ACS_ENGINE_FILE" -Force
+        }
 
         DownloadFile -url $url -targetFile "$AKS_LOCAL_FOLDER\acs-engine.zip"
 
@@ -332,23 +334,20 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
         } 
     }
 
-    # if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
+    if ($AKS_SUPPORT_WINDOWS_CONTAINERS) {
+        Write-Host "Adding subnet to azuredeploy.json to work around acs-engine bug"
+        $outputdeployfile = "$acsoutputfolder\azuredeploy.json"
+        # https://github.com/Azure/acs-engine/issues/1767
+        # "subnet": "${mysubnetid}"
+        # replace     "vnetSubnetID": "[parameters('masterVnetSubnetID')]"
+        # "subnet": "[parameters('masterVnetSubnetID')]"
 
-    #     if ("$AKS_VNET_NAME") {
-    #         Write-Host "Adding subnet to azuredeploy.json to work around acs-engine bug"
-    #         $outputdeployfile = "$acsoutputfolder\azuredeploy.json"
-    #         # https://github.com/Azure/acs-engine/issues/1767
-    #         # "subnet": "${mysubnetid}"
-    #         # replace     "vnetSubnetID": "[parameters('masterVnetSubnetID')]"
-    #         # "subnet": "[parameters('masterVnetSubnetID')]"
-
-    #         #there is a bug in acs-engine: https://github.com/Azure/acs-engine/issues/1767
-    #         $mydeployjson = Get-Content -Raw -Path $outputdeployfile | ConvertFrom-Json
-    #         $mydeployjson.variables | Add-Member -Type NoteProperty -Name 'subnet' -Value "[parameters('masterVnetSubnetID')]"
-    #         $outjson = ConvertTo-Json -InputObject $mydeployjson -Depth 10
-    #         Set-Content -Path $outputdeployfile -Value $outjson  
-    #     }
-    # }
+        #there is a bug in acs-engine: https://github.com/Azure/acs-engine/issues/1767
+        $mydeployjson = Get-Content -Raw -Path $outputdeployfile | ConvertFrom-Json
+        $mydeployjson.variables | Add-Member -Type NoteProperty -Name 'subnet' -Value "[parameters('masterVnetSubnetID')]"
+        $outjson = ConvertTo-Json -InputObject $mydeployjson -Depth 10
+        Set-Content -Path $outputdeployfile -Value $outjson  
+    }
 
     # --orchestrator-version 1.8 `
     # --ssh-key-value 
@@ -1159,28 +1158,31 @@ function global:SaveKeyInVault([Parameter(Mandatory = $true)][ValidateNotNullOrE
     az keyvault secret set --vault-name "${resourceGroup}-keyvault" --name "$key" --value "$value"
 }
 
-function OpenPortInAzure([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][number]$port, `
+function OpenPortInAzure([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, `
+                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][number]$port, `
                         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$name, `
                         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$protocol, `
                         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$type) 
 {
-    # if ([string]::IsNullOrWhiteSpace($(az network nsg rule show --name "$name" --nsg-name $NETWORK_SECURITY_GROUP --resource-group $AKS_PERS_RESOURCE_GROUP))) {
+    # $sourceTagForAccess = "VirtualNetwork"
+    # $networkSecurityGroup="${resourceGroup}-nsg"
+
+    # if ([string]::IsNullOrWhiteSpace($(az network nsg rule show --name "$name" --nsg-name $networkSecurityGroup --resource-group $resourceGroup))) {
     #     Write-Host "Creating rule: $name"
-    #     az network nsg rule create -g $AKS_PERS_RESOURCE_GROUP --nsg-name $NETWORK_SECURITY_GROUP -n $name --priority 501 `
-    #         --source-address-prefixes $sourceTagForHttpAccess --source-port-ranges '*' `
-    #         --destination-address-prefixes '*' --destination-port-ranges 443 --access Allow `
-    #         --protocol Tcp --description "allow HTTPS access from $sourceTagForHttpAccess." `
+    #     az network nsg rule create -g $resourceGroup --nsg-name $networkSecurityGroup -n $name --priority 501 `
+    #         --source-address-prefixes $sourceTagForAccess --source-port-ranges '*' `
+    #         --destination-address-prefixes '*' --destination-port-ranges $port --access Allow `
+    #         --protocol $protocol --description "allow HTTPS access from $sourceTagForAccess." `
     #         --query "provisioningState" -o tsv
     # }
     # else {
-    #     Write-Host "Updating rule: HttpsPort"
-    #     az network nsg rule update -g $AKS_PERS_RESOURCE_GROUP --nsg-name $NETWORK_SECURITY_GROUP -n $name --priority 501 `
-    #         --source-address-prefixes $sourceTagForHttpAccess --source-port-ranges '*' `
-    #         --destination-address-prefixes '*' --destination-port-ranges 443 --access Allow `
-    #         --protocol Tcp --description "allow HTTPS access from $sourceTagForHttpAccess." `
+    #     Write-Host "Updating rule: $name"
+    #     az network nsg rule update -g $resourceGroup --nsg-name $networkSecurityGroup -n $name --priority 501 `
+    #         --source-address-prefixes $sourceTagForAccess --source-port-ranges '*' `
+    #         --destination-address-prefixes '*' --destination-port-ranges $port --access Allow `
+    #         --protocol $protocol --description "allow HTTPS access from $sourceTagForAccess." `
     #         --query "provisioningState" -o tsv
     # }    
-
 }
 
 # --------------------

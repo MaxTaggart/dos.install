@@ -49,10 +49,7 @@
         },
         "windowsProfile": {
             "adminUsername": "azureuser",
-            "adminPassword": "REPLACE-WINDOWS-PASSWORD",
-            "windowsPublisher": "MicrosoftWindowsServer",
-            "windowsOffer": "WindowsServerSemiAnnual",
-            "windowsSku": "Datacenter-Core-1803-with-Containers-smalldisk"            
+            "adminPassword": "REPLACE-WINDOWS-PASSWORD"
         },
         "servicePrincipalProfile": {
             "clientId": "REPLACE-CLIENTID",

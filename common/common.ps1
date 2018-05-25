@@ -1793,8 +1793,9 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
     if($config.ports){
         Write-Information -MessageData "Opening ports"
         if($isAzure){
+            $resourceGroup = $(GetResourceGroup).ResourceGroup
             foreach ($portEntry in $ports) {
-                OpenPortInAzure -port $portEntry.port -name $portEntry.name -protocol $portEntry.protocol -type $portEntry.type
+                OpenPortInAzure -resourceGroup $resourceGroup -port $portEntry.port -name $portEntry.name -protocol $portEntry.protocol -type $portEntry.type
             }
         }
         else {
