@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.22.01"
+$versionkubecommon = "2018.05.25.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -41,19 +41,38 @@ function global:ReadSecretPassword([Parameter(Mandatory = $true)][ValidateNotNul
     return ReadSecretData -secretname $secretname -valueName "password" -namespace $namespace
 }
 
-function global:ReadAllSecretsAsHashTable([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function global:ReadAllSecretsAsHashTable([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     [hashtable]$Return = @{} 
-    
+
+    $Return.Secrets = @()
+
+    Write-Information -MessageData  "---- $namespace ---"
+
     $secrets = $(kubectl get secrets -n $namespace -o jsonpath="{.items[?(@.type=='Opaque')].metadata.name}")
     if ($secrets) {
         foreach ($secret in $secrets.Split(" ")) {
             $secretjson = $(kubectl get secret $secret -n $namespace -o json) | ConvertFrom-Json
             foreach ($secretitem in $secretjson.data) {
-                $Return[$secret] = @{}
+                $properties=$($secretitem | Get-Member -MemberType NoteProperty)
+                $secretlist = @()
+                foreach ($property in $properties) {
+                    $propertyName = $property.Name
+                    Write-Information -MessageData  $propertyName
+                    $value = $($secretitem | Select-Object -ExpandProperty $propertyName)
+                    $secretvalue = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($value))
+                    $secretlist += @{
+                        key = "$propertyName"
+                        value = "$secretvalue"    
+                    }                        
+                }
+                $Return.Secrets += @{
+                    secretname = "$secret"
+                    namespace = "$namespace"
+                    secretvalues = $secretlist
+                }
             }
         }
     }
-
     return $Return
 }
 
@@ -922,6 +941,7 @@ function global:RunRealtimeTester([ValidateNotNullOrEmpty()][string] $baseUrl) {
     Write-Host "Run on your client machine in a PowerShell window:"
     Write-Host "curl -useb $baseUrl/realtime/realtimetester.ps1 | iex $certhostname $certpassword"
 }
+
 
 # --------------------
 Write-Information -MessageData "end common-kube.ps1 version $versionkubecommon"

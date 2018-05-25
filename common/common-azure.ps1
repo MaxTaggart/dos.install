@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.21.02"
+$versionazurecommon = "2018.05.25.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -1150,12 +1150,38 @@ function global:OpenTraefikDashboard() {
     Write-Host "Launching http://$customerid.healthcatalyst.net/external in the web browser"
     Start-Process -FilePath "http://$customerid.healthcatalyst.net/external";
 }
-function global:CreateKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $location) {
-    az keyvault create --name "${resourceGroup}-keyvault" --resource-group "$resourceGroup" --location "$location"
+function global:CreateKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+
+    [hashtable]$Return = @{} 
+
+    $keyvaultname="${resourceGroup}keyvault"
+
+    $location = az group show --name $resourceGroup --query "location" -o tsv
+
+    $result = $(az keyvault show --name "$keyvaultname" --resource-group "$resourceGroup" --query "id")
+    if(!$result)
+    {
+        Write-Information -MessageData "Creating keyvault: $keyvaultname"
+        az keyvault create --name "$keyvaultname" --resource-group "$resourceGroup" --location "$location" --query "id"
+    }
+    else
+    {
+        Write-Information -MessageData "keyvault $keyvaultname exists so no need to create"
+    }
+
+    Return $Return         
 }
 
 function global:SaveKeyInVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $key, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $value) {
-    az keyvault secret set --vault-name "${resourceGroup}-keyvault" --name "$key" --value "$value"
+    az keyvault secret set --vault-name "${resourceGroup}keyvault" --name "$key" --value "$value" --query "id"
+}
+
+function global:GetKeyInVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, `
+                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $key) 
+{
+    [hashtable]$Return = @{} 
+    $Return.Value = $(az keyvault secret show --vault-name "${resourceGroup}keyvault" --name "$key" --query "value" -o tsv)
+    return $Return    
 }
 
 function OpenPortInAzure([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, `
@@ -1185,5 +1211,30 @@ function OpenPortInAzure([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][
     # }    
 }
 
+function global:CopyKubernetesSecretsToKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup){
+
+    [hashtable]$Return = @{} 
+
+    CreateKeyVault -resourceGroup $resourceGroup
+
+    $systemnamespaces=@("kube-system","kube-public")
+    $namespaces = $(kubectl get namespaces -o jsonpath="{.items[*].metadata.name}").Split(" ")
+    foreach ($namespace in $namespaces) {
+        if($systemnamespaces -notcontains $namespace){
+            $secrets=$(ReadAllSecretsAsHashTable -namespace $namespace)
+            Write-Information -MessageData  "---- $namespace ---"
+            foreach ($secret in $secrets.Secrets) {
+                # echo "$($secret.secretname) in $($secret.namespace)"
+                foreach ($item in $secret.secretvalues) {
+                    $fullkey="kubernetes00$($secret.namespace)00$($secret.secretname)00$($item.key)"
+                    Write-Information -MessageData "$fullkey = $($item.value)"
+                    SaveKeyInVault -resourceGroup $resourceGroup -key $fullkey -value $($item.value)
+                }
+            }    
+        }
+    }
+
+    Return $Return         
+}
 # --------------------
 Write-Information -MessageData "end common-azure.ps1 version $versionazurecommon"
