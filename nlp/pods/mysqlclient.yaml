@@ -23,7 +23,7 @@ spec:
         app: mysqlclient
     spec:
       containers:
-      - image: healthcatalyst/fabric.mysqlclient:latest
+      - image: healthcatalyst/fabric.mysqlclient:1
         # command:
         #   - sleep
         #   - "3600"

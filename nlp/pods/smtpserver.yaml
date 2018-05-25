@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: smtpserver
-          image: healthcatalyst/fabric.smtp.agent:latest
+          image: healthcatalyst/fabric.smtp.agent:1
           imagePullPolicy: Always       
           # environment variables
           env:
