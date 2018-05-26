@@ -1,5 +1,5 @@
 param([bool]$prerelease, [bool]$local)    
-$version = "2018.05.16.02"
+$version = "2018.05.25.01"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
@@ -10,6 +10,10 @@ Write-Host "prerelease flag: $prerelease"
 if ($local) {
     Write-Host "use local files: $local"    
 }
+
+# https://stackoverflow.com/questions/9948517/how-to-stop-a-powershell-script-on-the-first-error
+# Set-StrictMode -Version latest
+
 # stop whenever there is an error
 $ErrorActionPreference = "Stop"
 # show Information messages
@@ -104,6 +108,8 @@ while ($userinput -ne "q") {
     Write-Host "23: View status of DNS pods"
     Write-Host "24: Restart all VMs"
     Write-Host "25: Flush DNS on local machine"
+    Write-Host "26: Copy Kubernetes secrets to keyvault"
+    Write-Host "27: Copy secrets from keyvault to kubernetes"
     Write-Host "------ Load Balancer -------"
     Write-Host "30: Test load balancer"
     Write-Host "31: Fix load balancers"
@@ -236,6 +242,14 @@ while ($userinput -ne "q") {
             Read-Host "Script needs elevated privileges to flushdns.  Hit ENTER to launch script to set PATH"
             Start-Process powershell -verb RunAs -ArgumentList "ipconfig /flushdns"
         } 
+        '26' {
+            $DEFAULT_RESOURCE_GROUP = ReadSecretData -secretname azure-secret -valueName resourcegroup
+            CopyKubernetesSecretsToKeyVault -resourceGroup $DEFAULT_RESOURCE_GROUP
+        }
+        '27' {
+            $DEFAULT_RESOURCE_GROUP = ReadSecretData -secretname azure-secret -valueName resourcegroup
+            CopyKeyVaultSecretsToKubernetes -resourceGroup $DEFAULT_RESOURCE_GROUP
+        }
         '30' {
             TestAzureLoadBalancer
         } 

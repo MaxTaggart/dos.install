@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.25.01"
+$versionazurecommon = "2018.05.25.02"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -98,7 +98,7 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     if ($downloadACSEngine -eq "y") {
         $url = "https://github.com/Azure/acs-engine/releases/download/${DESIRED_ACS_ENGINE_VERSION}/acs-engine-${DESIRED_ACS_ENGINE_VERSION}-windows-amd64.zip"
         Write-Host "Downloading acs-engine.exe from $url to $ACS_ENGINE_FILE"
-        if(Test-Path "$ACS_ENGINE_FILE"){
+        if (Test-Path "$ACS_ENGINE_FILE") {
             Remove-Item -Path "$ACS_ENGINE_FILE" -Force
         }
 
@@ -132,6 +132,15 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     $AKS_FIRST_STATIC_IP = $VnetInfo.AKS_FIRST_STATIC_IP
     $AKS_SUBNET_CIDR = $VnetInfo.AKS_SUBNET_CIDR
 
+    CreateKeyVault -resourceGroup $resourceGroup
+
+    # if kubectl can connect to it
+    kubectl get secrets
+    $result = $?
+    if ($result) {
+        CopyKubernetesSecretsToKeyVault -resourceGroup $AKS_PERS_RESOURCE_GROUP
+    }
+
     # Azure minimum IP: https://github.com/Azure/azure-container-networking/blob/master/docs/acs.md
 
     CleanResourceGroup -resourceGroup ${AKS_PERS_RESOURCE_GROUP} -location $AKS_PERS_LOCATION -vnet $AKS_VNET_NAME `
@@ -142,6 +151,7 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
 
     Write-Host "checking if Service Principal already exists"
     $AKS_SERVICE_PRINCIPAL_CLIENTID = az ad sp list --display-name ${AKS_SERVICE_PRINCIPAL_NAME} --query "[].appId" --output tsv
+    $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = $(GetKeyInVault -resourceGroup $AKS_PERS_RESOURCE_GROUP -key ServicePrincipalClientSecret)
 
     $myscope = "/subscriptions/${AKS_SUBSCRIPTION_ID}/resourceGroups/${AKS_PERS_RESOURCE_GROUP}"
 
@@ -200,6 +210,8 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
         $subnetscope = "/subscriptions/${AKS_SUBSCRIPTION_ID}/resourceGroups/${AKS_SUBNET_RESOURCE_GROUP}"
         az role assignment create --assignee $AKS_SERVICE_PRINCIPAL_CLIENTID --role "contributor" --scope "$subnetscope"
     }
+
+    SaveKeyInVault -resourceGroup $AKS_PERS_RESOURCE_GROUP -key ServicePrincipalClientSecret -value $AKS_SERVICE_PRINCIPAL_CLIENTSECRET
 
     Write-Host "Create Azure Container Service cluster"
 
@@ -364,9 +376,9 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     #     --master-vnet-subnet-id="$mysubnetid" `
     #     --agent-vnet-subnet-id="$mysubnetid"
 
-    $deploymentfile="$acsoutputfolder\azuredeploy.json"
-    if($useAKS){
-        $deploymentfile="aks\kube-managed.json"
+    $deploymentfile = "$acsoutputfolder\azuredeploy.json"
+    if ($useAKS) {
+        $deploymentfile = "aks\kube-managed.json"
     }
     
     Write-Host "Validating deployment"
@@ -457,10 +469,12 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     Write-Host "You can connect to master VM in Git Bash for debugging using:"
     Write-Host "ssh -i ${SSH_PRIVATE_KEY_FILE_UNIX_PATH} azureuser@${MASTER_VM_NAME}"
 
+    CopyKeyVaultSecretsToKubernetes -resourceGroup $AKS_PERS_RESOURCE_GROUP
+
     Stop-Transcript
 }
 
-function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNull()] $config){
+function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNull()] $config) {
     # $WINDOWS_PASSWORD
 
     $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-configurekubernetes.txt"
@@ -472,7 +486,7 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
     $customerid = $($config.customerid)
     Write-Host "CustomerID: $customerid"
 
-    $storageAccountName="${resourceGroup}storage"
+    $storageAccountName = "${resourceGroup}storage"
 
     Write-Host "Check nodes via kubectl"
     # set the environment variable so kubectl gets the new config
@@ -516,11 +530,6 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
     #     kubectl delete pod $line -n kube-system
     # } 
 
-    if ($($config.azure.sethostfile)) {
-        SetHostFileInVms -resourceGroup $resourceGroup
-        SetupCronTab -resourceGroup $resourceGroup
-    }
-
     Write-Host "Removing extra stuff that acs-engine creates"
     # k8s-master-lb-24203516
     # k8s-master-ip-prod-kub-sjtn-rg-24203516
@@ -549,6 +558,12 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
     Write-Host "Run the following to see status of the cluster"
     Write-Host "kubectl get deployments,pods,services,ingress,secrets --namespace=kube-system -o wide"
 
+
+    if ($($config.azure.sethostfile)) {
+        SetHostFileInVms -resourceGroup $resourceGroup
+        RestartVMsInResourceGroup -resourceGroup $resourceGroup
+        SetupCronTab -resourceGroup $resourceGroup
+    }
     Stop-Transcript
 }
 
@@ -704,13 +719,13 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     
     Write-Host "baseUrl: $baseUrl"
 
-    $externalSubnetName=""
-    if($($config.ingress.external.subnet)){
-        $externalSubnetName=$($config.ingress.external.subnet);
+    $externalSubnetName = ""
+    if ($($config.ingress.external.subnet)) {
+        $externalSubnetName = $($config.ingress.external.subnet);
     }
 
-    $externalIp=""
-    if($($config.ingress.external.ipAddress)){
+    $externalIp = ""
+    if ($($config.ingress.external.ipAddress)) {
         $externalIp = $($config.ingress.external.ipAddress);
     }
     elseif ("$($config.ingress.external.type)" -ne "vnetonly") {
@@ -724,21 +739,21 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
         Write-Host "Using Public IP: [$externalip]"
     }
 
-    $internalSubnetName=""
-    if($($config.ingress.internal.subnet)){
-        $internalSubnetName=$($config.ingress.internal.subnet);
+    $internalSubnetName = ""
+    if ($($config.ingress.internal.subnet)) {
+        $internalSubnetName = $($config.ingress.internal.subnet);
     }
 
-    $internalIp=""
-    if($($config.ingress.internal.ipAddress)){
+    $internalIp = ""
+    if ($($config.ingress.internal.ipAddress)) {
         $internalIp = $($config.ingress.internal.ipAddress);
     }
     
     LoadLoadBalancerStack -baseUrl $baseUrl -ssl $($config.ssl) `
-                            -ingressInternalType "$ingressInternalType" -ingressExternalType "$ingressExternalType" `
-                            -customerid $customerid -isOnPrem $false `
-                            -externalSubnetName "$externalSubnetName" -externalIp "$externalip" `
-                            -internalSubnetName "$internalSubnetName" -internalIp "$internalIp"
+        -ingressInternalType "$ingressInternalType" -ingressExternalType "$ingressExternalType" `
+        -customerid $customerid -isOnPrem $false `
+        -externalSubnetName "$externalSubnetName" -externalIp "$externalip" `
+        -internalSubnetName "$internalSubnetName" -internalIp "$internalIp"
     
     # setting up traefik
     # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
@@ -1154,18 +1169,16 @@ function global:CreateKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrE
 
     [hashtable]$Return = @{} 
 
-    $keyvaultname="${resourceGroup}keyvault"
+    $keyvaultname = "${resourceGroup}keyvault"
 
     $location = az group show --name $resourceGroup --query "location" -o tsv
 
     $result = $(az keyvault show --name "$keyvaultname" --resource-group "$resourceGroup" --query "id")
-    if(!$result)
-    {
+    if (!$result) {
         Write-Information -MessageData "Creating keyvault: $keyvaultname"
         az keyvault create --name "$keyvaultname" --resource-group "$resourceGroup" --location "$location" --query "id"
     }
-    else
-    {
+    else {
         Write-Information -MessageData "keyvault $keyvaultname exists so no need to create"
     }
 
@@ -1177,19 +1190,49 @@ function global:SaveKeyInVault([Parameter(Mandatory = $true)][ValidateNotNullOrE
 }
 
 function global:GetKeyInVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, `
-                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $key) 
-{
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $key) {
     [hashtable]$Return = @{} 
     $Return.Value = $(az keyvault secret show --vault-name "${resourceGroup}keyvault" --name "$key" --query "value" -o tsv)
     return $Return    
 }
+function global:GetListOfSecretsInVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+    [hashtable]$Return = @{} 
+    $Return.Secrets = @()
 
-function OpenPortInAzure([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $resourceGroup, `
-                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][number]$port, `
-                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$name, `
-                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$protocol, `
-                        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$type) 
-{
+    $secretids = az keyvault secret list --vault-name "${resourceGroup}keyvault" --query "[].id" -o tsv
+    foreach ($secretid in $secretids) {
+        $secretname = $secretid.SubString($secretid.LastIndexOf("/") + 1, $secretid.Length - 1 - $secretid.LastIndexOf("/"))
+        $secretvaluejson = $(GetKeyInVault -resourceGroup $resourceGroup -key $secretname).Value
+        $secretparts = $($secretname -split "00");
+        if ($secretparts[0] -eq "kubernetes") {
+            $secretvalue = $($secretvaluejson | ConvertFrom-Json)
+            if ($secretvalue -is [array]) {
+                $Return.Secrets += @{
+                    namespace    = $secretparts[1]
+                    secretname   = $secretparts[2]
+                    secretkey    = $secretparts[3]
+                    secretvalues = $secretvalue
+                }    
+            }
+            else {
+                $Return.Secrets += @{
+                    namespace    = $secretparts[1]
+                    secretname   = $secretparts[2]
+                    secretkey    = $secretparts[3]
+                    secretvalues = @($secretvalue)
+                }    
+            }
+        }
+    }
+
+    return $Return
+}
+
+function OpenPortInAzure([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][number]$port, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$name, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$protocol, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$type) {
     # $sourceTagForAccess = "VirtualNetwork"
     # $networkSecurityGroup="${resourceGroup}-nsg"
 
@@ -1211,30 +1254,68 @@ function OpenPortInAzure([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][
     # }    
 }
 
-function global:CopyKubernetesSecretsToKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup){
+function global:CopyKubernetesSecretsToKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
 
     [hashtable]$Return = @{} 
 
+    Write-Information -MessageData "Copying existing kubernetes secrets to KeyVault"
+
     CreateKeyVault -resourceGroup $resourceGroup
 
-    $systemnamespaces=@("kube-system","kube-public")
+    $systemnamespaces = @("kube-system", "kube-public")
     $namespaces = $(kubectl get namespaces -o jsonpath="{.items[*].metadata.name}").Split(" ")
     foreach ($namespace in $namespaces) {
-        if($systemnamespaces -notcontains $namespace){
-            $secrets=$(ReadAllSecretsAsHashTable -namespace $namespace)
+        if ($systemnamespaces -notcontains $namespace) {
+            $secrets = $(ReadAllSecretsAsHashTable -namespace $namespace)
             Write-Information -MessageData  "---- $namespace ---"
             foreach ($secret in $secrets.Secrets) {
                 # echo "$($secret.secretname) in $($secret.namespace)"
+                $fullkey = "kubernetes00$($secret.namespace)00$($secret.secretname)"
+                $secretvalues = @()
                 foreach ($item in $secret.secretvalues) {
-                    $fullkey="kubernetes00$($secret.namespace)00$($secret.secretname)00$($item.key)"
-                    Write-Information -MessageData "$fullkey = $($item.value)"
-                    SaveKeyInVault -resourceGroup $resourceGroup -key $fullkey -value $($item.value)
+                    $secretvalues += @{
+                        secretkey   = "$($item.key)"
+                        secretvalue = "$($item.value)"
+                    }
                 }
+                $secretjson = $secretvalues | ConvertTo-Json -Compress 
+                $secretjson = $secretjson -replace '"', "'" # az keyvault strips double quotes
+                Write-Information -MessageData "$fullkey"
+                SaveKeyInVault -resourceGroup $resourceGroup -key $fullkey -value $secretjson
             }    
         }
     }
 
     Return $Return         
 }
+function global:CopyKeyVaultSecretsToKubernetes([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+
+    [hashtable]$Return = @{} 
+    Write-Information -MessageData "Copying existing secrets from keyvault to kubernetes"
+
+    $secrets = $(GetListOfSecretsInVault -resourceGroup $resourceGroup).Secrets
+
+    foreach ($secret in $secrets) {
+        $secretname = $secret.secretname
+        $namespace = $secret.namespace
+        $secretvalues = $secret.secretvalues
+        $command = "kubectl create secret generic $secretname --namespace=$namespace"
+        foreach ($secretvalue in $secretvalues) {
+            $command = "$command --from-literal=$($secretvalue.secretkey)=$($secretvalue.secretvalue)"
+        }
+        CreateNamespaceIfNotExists -namespace $namespace
+
+        if ([string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
+            Invoke-Expression -Command $command
+            Write-Information -MessageData $command
+        }
+        else {
+            Write-Information -MessageData "secret $secretname already set in namespace $namespace so nothing to do"
+        }
+    }
+
+    Return $Return         
+}
+
 # --------------------
 Write-Information -MessageData "end common-azure.ps1 version $versionazurecommon"
