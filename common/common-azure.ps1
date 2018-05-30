@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.29.01"
+$versionazurecommon = "2018.05.29.02"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -486,7 +486,7 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
     $customerid = $($config.customerid)
     Write-Host "CustomerID: $customerid"
 
-    $storageAccountName = $(GetStorageAccountName).StorageAccountName
+    $storageAccountName = $(GetStorageAccountName -resourceGroup $resourceGroup).StorageAccountName
 
     Write-Host "Check nodes via kubectl"
     # set the environment variable so kubectl gets the new config
