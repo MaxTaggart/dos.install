@@ -21,6 +21,8 @@ spec:
     spec:
       serviceAccountName: traefik-ingress-serviceaccount
       terminationGracePeriodSeconds: 60
+      nodeSelector:
+        beta.kubernetes.io/os: linux
       volumes:
         - name: config
           configMap:

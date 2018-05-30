@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.29.02"
+$versionkubecommon = "2018.05.30.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -209,17 +209,21 @@ function global:AskForSecretValue ([Parameter(Mandatory = $true)][ValidateNotNul
     return $Return
 }
 
-function global:ReadYamlAndReplaceTokens([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $templateFile, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][hashtable] $tokens  ) {
+function global:ReadYamlAndReplaceTokens([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+                                        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $templateFile, `
+                                        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][hashtable] $tokens, `
+                                        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $local) 
+{
     [hashtable]$Return = @{} 
     
     Write-Information -MessageData "Reading from url: ${baseUrl}/${templateFile}"
 
-    if ($baseUrl.StartsWith("http")) { 
+    if ($baseUrl.StartsWith("http") -and !$local) { 
         $response = $(Invoke-WebRequest -Uri "${baseUrl}/${templateFile}?f=${randomstring}" -UseBasicParsing -ErrorAction:Stop -ContentType "text/plain; charset=utf-8")
         $content = $response | Select-Object -Expand Content
     }
     else {
-        $content = $(Get-Content -Path "$baseUrl/$templateFile")
+        $content = $(Get-Content -Path "$baseUrl/$templateFile" -Raw)
     }
 
     $content = $(Merge-Tokens $content $tokens)
@@ -358,16 +362,20 @@ function global:CleanKubConfig() {
 }
 
 
-function global:DeployYamlFiles([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
-        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $folder, `
-        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][hashtable] $tokens, $resources) {
+function global:DeployYamlFiles([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
+                                [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+                                [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
+                                [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $folder, `
+                                [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][hashtable] $tokens, `
+                                [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $local, `
+                                $resources) {
     # $resources can be null
     [hashtable]$Return = @{} 
 
     if ($resources) {
         Write-Information -MessageData "-- Deploying $folder --"
         foreach ($file in $resources) {
-            $(ReadYamlAndReplaceTokens -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -tokens $tokens).Content | kubectl apply -f -
+            $(ReadYamlAndReplaceTokens -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -local $local -tokens $tokens).Content | kubectl apply -f -
             $result = $?
             if ($result -ne $True) {
                 throw "Error applying kubernetes template: ${appfolder}/${folder}/${file}"
@@ -380,11 +388,12 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
         [Parameter(Mandatory = $true)][ValidateNotNull()] $config,
-    $isAzure, `
+        $isAzure, `
         [string]$externalIp, `
         [string]$internalIp, `
         [string]$externalSubnetName, `
-        [string]$internalSubnetName) 
+        [string]$internalSubnetName, `
+        [Parameter(Mandatory = $true)][ValidateNotNull()][bool] $local) 
 {
     [hashtable]$Return = @{} 
 
@@ -436,39 +445,39 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
         "INTERNALIP"         = "$internalIp";
     }
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "dns" -tokens $tokens -resources $($config.resources.dns)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "dns" -tokens $tokens -resources $($config.resources.dns) -local $local
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "configmaps" -tokens $tokens -resources $($config.resources.configmaps)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "configmaps" -tokens $tokens -resources $($config.resources.configmaps) -local $local
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "roles" -tokens $tokens -resources $($config.resources.roles)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "roles" -tokens $tokens -resources $($config.resources.roles) -local $local
     
     if ($isAzure) {
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumes/azure" -tokens $tokens -resources $($config.resources.volumes.azure)
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumes/azure" -tokens $tokens -resources $($config.resources.volumes.azure) -local $local
     }
     else {
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumes/onprem" -tokens $tokens -resources $($config.resources.volumes.onprem)
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumes/onprem" -tokens $tokens -resources $($config.resources.volumes.onprem) -local $local
     }
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumeclaims" -tokens $tokens -resources $($config.resources.volumeclaims)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "volumeclaims" -tokens $tokens -resources $($config.resources.volumeclaims) -local $local
     
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "pods" -tokens $tokens -resources $($config.resources.pods)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "pods" -tokens $tokens -resources $($config.resources.pods) -local $local
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "services/cluster" -tokens $tokens -resources $($config.resources.services.cluster)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "services/cluster" -tokens $tokens -resources $($config.resources.services.cluster) -local $local
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "services/external" -tokens $tokens -resources $($config.resources.services.external)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "services/external" -tokens $tokens -resources $($config.resources.services.external) -local $local
     
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/http" -tokens $tokens -resources $($config.resources.ingress.http)
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/http" -tokens $tokens -resources $($config.resources.ingress.http) -local $local
 
     if ($isAzure) {
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/azure" -tokens $tokens -resources $($config.resources.ingress.tcp.azure)
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/azure" -tokens $tokens -resources $($config.resources.ingress.tcp.azure) -local $local
     }
     else {
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/onprem" -tokens $tokens -resources $($config.resources.ingress.tcp.onprem)
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/onprem" -tokens $tokens -resources $($config.resources.ingress.tcp.onprem) -local $local
     }
 
     if($(HasProperty -object $($config.resources.ingress) "jobs"))
     {
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -tokens $tokens -resources $($config.resources.ingress.jobs)
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -tokens $tokens -resources $($config.resources.ingress.jobs) -local $local
     }
 
     # DeploySimpleServices -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -tokens $tokens -resources $($config.resources.ingress.simpleservices)
@@ -641,7 +650,8 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
         [string]$externalIp, `
         [string]$internalIp, `
         [string]$externalSubnetName, `
-        [string]$internalSubnetName) {
+        [string]$internalSubnetName, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool]$local) {
     [hashtable]$Return = @{} 
 
     # delete existing containers
@@ -651,7 +661,7 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     # http://blog.kubernetes.io/2017/04/configuring-private-dns-zones-upstream-nameservers-kubernetes.html
     kubectl delete -f "$baseUrl/loadbalancer/dns/upstream.yaml" --ignore-not-found=true
     Start-Sleep -Seconds 10
-    kubectl create -f "$baseUrl/loadbalancer/dns/upstream.yaml"
+    kubectl apply -f "$baseUrl/loadbalancer/dns/upstream.yaml"
     # to debug dns: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#inheriting-dns-from-the-node
 
     kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
@@ -688,11 +698,11 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     $folder = "configmaps"
     if ($ssl) {
         $files = "config.ssl.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ") -local $local
     }
     else {
         $files = "config.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ") -local $local
     }
 
     Write-Information -MessageData "Deploying pods"
@@ -700,20 +710,20 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
 
     if ($ingressExternalType -eq "onprem" ) {
         $files = "traefik-onprem.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ") -local $local
     }
     elseif ($ingressInternalType -eq "public" ) {
         $files = "traefik-azure.both.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ") -local $local
     }
     else {
         if ($ssl) {
             $files = "traefik-azure.external.ssl.yaml traefik-azure.internal.ssl.yaml"
-            DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
+            DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ") -local $local
         }
         else {
             $files = "traefik-azure.external.yaml traefik-azure.internal.yaml"
-            DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
+            DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ") -local $local
         }    
     }
 
@@ -729,7 +739,7 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     if ($ingressExternalType -eq "onprem" ) {
         Write-Information -MessageData "Setting up external load balancer"
         $files = "loadbalancer.onprem.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ") -local $local
     }    
     elseif ("$ingressExternalType" -ne "vnetonly") {
         Write-Information -MessageData "Setting up a public load balancer"
@@ -738,12 +748,12 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
 
         Write-Information -MessageData "Setting up external load balancer"
         $files = "loadbalancer.external.public.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ") -local $local
     }
     else {
         Write-Information -MessageData "Setting up an external load balancer"
         $files = "loadbalancer.external.vnetonly.yaml"
-        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ") -local $local
     }
 
 
@@ -758,11 +768,12 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
         Write-Information -MessageData "Using Internal IP: [$internalIp]"
         $files = "loadbalancer.internal.vnetonly.yaml"
     }
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
+    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ") -local $local
 
     InstallStack -baseUrl $baseUrl -namespace $namespace -appfolder $appfolder `
                 -externalSubnetName "$externalSubnetName" -externalIp "$externalip" `
-                -internalSubnetName "$internalSubnetName" -internalIp "$internalIp"    
+                -internalSubnetName "$internalSubnetName" -internalIp "$internalIp" `
+                -local $local
 
     WaitForPodsInNamespace -namespace kube-system -interval 5
 

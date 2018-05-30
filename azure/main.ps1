@@ -1,5 +1,5 @@
 param([bool]$prerelease, [bool]$local)    
-$version = "2018.05.29.02"
+$version = "2018.05.30.01"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
@@ -24,7 +24,13 @@ $InformationPreference = "Continue"
 #   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | pwsh -Interactive -NoExit -c -;
 
 if ($prerelease) {
-    $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+    if($local){
+        #$GITHUB_URL = "."
+        $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+    }
+    else {
+        $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+    }
 }
 else {
     $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/release"
@@ -272,7 +278,7 @@ while ($userinput -ne "q") {
             $config = $(ReadConfigFile).Config
             Write-Host $config
         
-            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
+            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config -local $local
             WriteDNSCommands
         }         
         '33' {

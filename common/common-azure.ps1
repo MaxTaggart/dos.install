@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.30.01"
+$versionazurecommon = "2018.05.30.02"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -580,7 +580,8 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
 }
 
 function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
-        [Parameter(Mandatory = $true)][ValidateNotNull()] $config) {
+        [Parameter(Mandatory = $true)][ValidateNotNull()] $config, `
+        [Parameter(Mandatory = $true)][ValidateNotNull()][bool] $local) {
    
     $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-SetupAzureLoadBalancer.txt"
     WriteToConsole "Logging to $logfile"
@@ -786,7 +787,8 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
         -ingressInternalType "$ingressInternalType" -ingressExternalType "$ingressExternalType" `
         -customerid $customerid -isOnPrem $false `
         -externalSubnetName "$externalSubnetName" -externalIp "$externalip" `
-        -internalSubnetName "$internalSubnetName" -internalIp "$internalIp"
+        -internalSubnetName "$internalSubnetName" -internalIp "$internalIp" `
+        -local $local
     
     # setting up traefik
     # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
