@@ -132,7 +132,7 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     $AKS_FIRST_STATIC_IP = $VnetInfo.AKS_FIRST_STATIC_IP
     $AKS_SUBNET_CIDR = $VnetInfo.AKS_SUBNET_CIDR
 
-    CreateKeyVault -resourceGroup $AKS_SUBNET_RESOURCE_GROUP
+    CreateKeyVault -resourceGroup $AKS_PERS_RESOURCE_GROUP
 
     # if kubectl can connect to it
     kubectl get secrets
@@ -1203,6 +1203,11 @@ function global:CreateKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrE
     [hashtable]$Return = @{} 
 
     $keyvaultname = "${resourceGroup}keyvault"
+    $keyvaultname = $keyvaultname -replace '[^a-zA-Z0-9]', ''
+    $keyvaultname = $keyvaultname.ToLower()
+    if ($keyvaultname.Length -gt 24) {
+        $keyvaultname = $keyvaultname.Substring(0, 24) # azure does not allow names longer than 24
+    }
 
     $location = az group show --name $resourceGroup --query "location" -o tsv
 
