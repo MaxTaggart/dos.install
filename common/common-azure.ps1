@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.25.02"
+$versionazurecommon = "2018.05.29.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -486,7 +486,7 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
     $customerid = $($config.customerid)
     Write-Host "CustomerID: $customerid"
 
-    $storageAccountName = "${resourceGroup}storage"
+    $storageAccountName = $(GetStorageAccountName).StorageAccountName
 
     Write-Host "Check nodes via kubectl"
     # set the environment variable so kubectl gets the new config
@@ -510,9 +510,21 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
     # Write-Host "Storagekey: [$STORAGE_KEY]"
 
     Write-Host "Creating kubernetes secret for Azure Storage Account: azure-secret"
-    kubectl create secret generic azure-secret --from-literal=resourcegroup="${resourceGroup}" --from-literal=azurestorageaccountname="${storageAccountName}" --from-literal=azurestorageaccountkey="${storageKey}"
+    $secretname = "azure-secret"
+    $namespace="default"
+    if (![string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
+        kubectl delete secret $secretname -n $namespace
+    }
+    kubectl create secret generic $secretname -n $namespace --from-literal=resourcegroup="${resourceGroup}" --from-literal=azurestorageaccountname="${storageAccountName}" --from-literal=azurestorageaccountkey="${storageKey}"
+
     Write-Host "Creating kubernetes secret for customerid: customerid"
+    $secretname = "customerid"
+    $namespace="default"
+    if (![string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
+        kubectl delete secret $secretname -n $namespace
+    }
     kubectl create secret generic customerid --from-literal=value=$customerid
+
     if (![string]::IsNullOrEmpty($WINDOWS_PASSWORD)) {
         Write-Host "Creating kubernetes secret for windows VM"
         kubectl create secret generic windowspassword --from-literal=password="$WINDOWS_PASSWORD"
@@ -567,7 +579,8 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
     Stop-Transcript
 }
 
-function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, [Parameter(Mandatory = $true)][ValidateNotNull()] $config) {
+function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+                                        [Parameter(Mandatory = $true)][ValidateNotNull()] $config) {
    
     $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-SetupAzureLoadBalancer.txt"
     WriteToConsole "Logging to $logfile"

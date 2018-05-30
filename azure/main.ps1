@@ -1,5 +1,5 @@
 param([bool]$prerelease, [bool]$local)    
-$version = "2018.05.25.01"
+$version = "2018.05.29.01"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
@@ -113,6 +113,7 @@ while ($userinput -ne "q") {
     Write-Host "------ Load Balancer -------"
     Write-Host "30: Test load balancer"
     Write-Host "31: Fix load balancers"
+    Write-Host "32: Redeploy load balancers"
     Write-Host "33: Launch Load Balancer Dashboard"
     Write-Host "-----------"
     Write-Host "50: Troubleshooting Menu"
@@ -267,6 +268,13 @@ while ($userinput -ne "q") {
             }
             FixLoadBalancers -resourceGroup $AKS_PERS_RESOURCE_GROUP
         } 
+        '32' {
+            $config = $(ReadConfigFile).Config
+            Write-Host $config
+        
+            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
+            WriteDNSCommands
+        }         
         '33' {
             OpenTraefikDashboard
         } 

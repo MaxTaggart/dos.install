@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.21.01"
+$versioncommon = "2018.05.29.01"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -385,6 +385,21 @@ function global:CleanResourceGroup([Parameter(Mandatory = $true)][ValidateNotNul
     return $Return
 }
 
+function global:GetStorageAccountName([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup){
+    [hashtable]$Return = @{} 
+
+    $storageAccountName = "${resourceGroup}storage"
+    # remove non-alphanumeric characters and use lowercase since azure doesn't allow those in a storage account
+    $storageAccountName = $storageAccountName -replace '[^a-zA-Z0-9]', ''
+    $storageAccountName = $storageAccountName.ToLower()
+    if ($storageAccountName.Length -gt 24) {
+        $storageAccountName = $storageAccountName.Substring(0, 24) # azure does not allow names longer than 24
+    }
+
+    $Return.StorageAccountName = $storageAccountName
+    return $Return
+    
+}
 function global:CreateStorageIfNotExists([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, $deleteStorageAccountIfExists) {
     #Create an hashtable variable 
     [hashtable]$Return = @{} 
@@ -394,13 +409,7 @@ function global:CreateStorageIfNotExists([Parameter(Mandatory = $true)][Validate
     $location = az group show --name $resourceGroup --query "location" -o tsv
 
     if ([string]::IsNullOrWhiteSpace($storageAccountName)) {
-        $storageAccountName = "${resourceGroup}storage"
-        # remove non-alphanumeric characters and use lowercase since azure doesn't allow those in a storage account
-        $storageAccountName = $storageAccountName -replace '[^a-zA-Z0-9]', ''
-        $storageAccountName = $storageAccountName.ToLower()
-        if ($storageAccountName.Length -gt 24) {
-            $storageAccountName = $storageAccountName.Substring(0, 24) # azure does not allow names longer than 24
-        }
+        $storageAccountName = $(GetStorageAccountName).StorageAccountName
         Write-Information -MessageData "Using storage account: [$storageAccountName]"
     }
     Write-Information -MessageData "Checking to see if storage account exists"
