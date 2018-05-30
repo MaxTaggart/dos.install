@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.29.08"
+$versionazurecommon = "2018.05.30.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -723,14 +723,22 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     
         kubectl delete secret traefik-cert-ahmn -n kube-system --ignore-not-found=true
 
-        # download the intermediate certificate and append to certificate
-        # $intermediatecert = $(Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl/intermediate.crt").Content
-        # $sitecert = Get-Content "$AKS_SSL_CERT_FOLDER\tls.crt" -Raw 
+        if ($($config.ssl_merge_intermediate_cert)) {
+            # download the intermediate certificate and append to certificate
+            $intermediatecert = $(Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl/intermediate.crt").Content
+            $sitecert = Get-Content "$AKS_SSL_CERT_FOLDER\tls.crt" -Raw 
 
-        # $siteplusintermediatecert = 
+            $siteplusintermediatecert = $sitecert + $intermediatecert
     
-        Write-Host "Storing TLS certs from $AKS_SSL_CERT_FOLDER_UNIX_PATH as kubernetes secret"
-        kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.crt" --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.key"
+            $siteplusintermediatecert | Out-File -FilePath "$AKS_SSL_CERT_FOLDER\tlsplusintermediate.crt"
+
+            Write-Host "Storing TLS certs plus intermediate cert from $AKS_SSL_CERT_FOLDER_UNIX_PATH as kubernetes secret"
+            kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tlsplusintermediate.crt" --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.key"
+        }
+        else {
+            Write-Host "Storing TLS certs from $AKS_SSL_CERT_FOLDER_UNIX_PATH as kubernetes secret"
+            kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.crt" --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.key"                
+        }
     }
     else {
         Write-Host "SSL option was not specified in the deployment config: $($config.ssl)"
@@ -741,7 +749,8 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     $externalSubnetName = ""
     if ($($config.ingress.external.subnet)) {
         $externalSubnetName = $($config.ingress.external.subnet);
-    } elseif($($config.networking.subnet)) {
+    }
+    elseif ($($config.networking.subnet)) {
         $externalSubnetName = $($config.networking.subnet);
     }
 
@@ -763,7 +772,8 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     $internalSubnetName = ""
     if ($($config.ingress.internal.subnet)) {
         $internalSubnetName = $($config.ingress.internal.subnet);
-    } elseif($($config.networking.subnet)) {
+    }
+    elseif ($($config.networking.subnet)) {
         $internalSubnetName = $($config.networking.subnet);
     }
 
