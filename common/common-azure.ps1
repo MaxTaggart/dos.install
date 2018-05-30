@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.29.02"
+$versionazurecommon = "2018.05.29.03"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -511,7 +511,7 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
 
     Write-Host "Creating kubernetes secret for Azure Storage Account: azure-secret"
     $secretname = "azure-secret"
-    $namespace="default"
+    $namespace = "default"
     if (![string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
         kubectl delete secret $secretname -n $namespace
     }
@@ -519,13 +519,13 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
 
     Write-Host "Creating kubernetes secret for customerid: customerid"
     $secretname = "customerid"
-    $namespace="default"
+    $namespace = "default"
     if (![string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
         kubectl delete secret $secretname -n $namespace
     }
     kubectl create secret generic customerid --from-literal=value=$customerid
 
-    if (![string]::IsNullOrEmpty($WINDOWS_PASSWORD)) {
+    if (Test-Path variable:WINDOWS_PASSWORD) {
         Write-Host "Creating kubernetes secret for windows VM"
         kubectl create secret generic windowspassword --from-literal=password="$WINDOWS_PASSWORD"
     }
@@ -580,7 +580,7 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
 }
 
 function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
-                                        [Parameter(Mandatory = $true)][ValidateNotNull()] $config) {
+        [Parameter(Mandatory = $true)][ValidateNotNull()] $config) {
    
     $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-SetupAzureLoadBalancer.txt"
     WriteToConsole "Logging to $logfile"
