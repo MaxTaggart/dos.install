@@ -31,7 +31,7 @@ function global:DeleteAzureFileShare([Parameter(Mandatory = $true)][ValidateNotN
 function global:CreateShareInStorageAccount([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $storageAccountName, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $sharename, $deleteExisting) { 
     [hashtable]$Return = @{} 
 
-    [int]$filesharesize=128
+    [int]$filesharesize = 128
 
     $storageAccountConnectionString = az storage account show-connection-string -n $storageAccountName -g $resourceGroup -o tsv
     
@@ -1754,14 +1754,13 @@ function global:WaitForLoadBalancers([Parameter(Mandatory = $true)][ValidateNotN
 }
 
 function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
-                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
-                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
-                            $isAzure, `
-                            [string]$externalIp, `
-                            [string]$internalIp, `
-                            [string]$externalSubnetName, `
-                            [string]$internalSubnetName ) 
-{
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
+        $isAzure, `
+        [string]$externalIp, `
+        [string]$internalIp, `
+        [string]$externalSubnetName, `
+        [string]$internalSubnetName ) {
     [hashtable]$Return = @{} 
 
     if ($isAzure) {
@@ -1782,26 +1781,27 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
     
     $config = $(Invoke-WebRequest -useb $configpath | ConvertFrom-Json)
 
-    LoadStack -namespace $namespace -baseUrl $baseUrl -appfolder "$appfolder" -config $config `
-                -isAzure $isAzure `
-                -externalIp $externalIp -internalIp $internalIp `
-                -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName
+    LoadStack -namespace $namespace -baseUrl $baseUrl -appfolder "$appfolder" `
+        -config $config `
+        -isAzure $isAzure `
+        -externalIp $externalIp -internalIp $internalIp `
+        -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName
     
     if ($isAzure) {
         WaitForLoadBalancers -resourceGroup $(GetResourceGroup).ResourceGroup
     }
     
     # open ports specified
-    if($config.ports){
+    if ($(HasProperty -object $($config) "ports")) {
         Write-Information -MessageData "Opening ports"
-        if($isAzure){
+        if ($isAzure) {
             $resourceGroup = $(GetResourceGroup).ResourceGroup
-            foreach ($portEntry in $ports) {
+            foreach ($portEntry in $config.ports) {
                 OpenPortInAzure -resourceGroup $resourceGroup -port $portEntry.port -name $portEntry.name -protocol $portEntry.protocol -type $portEntry.type
             }
         }
         else {
-            foreach ($portEntry in $ports) {
+            foreach ($portEntry in $config.ports) {
                 OpenPortOnPrem -port $portEntry.port -name $portEntry.name -protocol $portEntry.protocol -type $portEntry.type
             }
         }

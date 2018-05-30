@@ -5,16 +5,27 @@ function global:GetCommonMenuVersion() {
     return $versionmenucommon
 }
 
-function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $namespace, `
-                        $isAzure, `
-                        [string]$externalIp, `
-                        [string]$internalIp, `
-                        [string]$externalSubnetName, `
-                        [string]$internalSubnetName )
+function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, `
+                        [ValidateNotNullOrEmpty()][string] $namespace, `
+                        $isAzure )
 {
+    # read deployment config
+    $loadbalancerInfo = $(GetLoadBalancerIPs)
+    $externalIP = $loadbalancerInfo.ExternalIP
+    $internalIP = $loadbalancerInfo.InternalIP
+
+    $loadbalancerExternal = "traefik-ingress-service-public"
+    $loadbalancerInternal = "traefik-ingress-service-internal" 
+    
+    $internalSubnetName = $(kubectl get svc $loadbalancerInternal -n kube-system -o jsonpath="{.metadata.annotations.service\.beta\.kubernetes\.io/azure-load-balancer-internal-subnet}")
+    $externalSubnetName = $(kubectl get svc $loadbalancerExternal -n kube-system -o jsonpath="{.metadata.annotations.service\.beta\.kubernetes\.io/azure-load-balancer-internal-subnet}")
+    
+    if(!$externalSubnetName){$externalSubnetName=$internalSubnetName}
+    if(!$internalSubnetName){$internalSubnetName=$externalSubnetName}
+
     if ($namespace -eq "fabricrealtime") {
         InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "realtime" -isAzure $isAzure `
-                    -externalIp "" -internalIp "" -externalSubnetName "" -internalSubnetName ""
+                        -externalIp $externalIP -internalIp $internalIP -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName
     }
     elseif ($namespace -eq "fabricnlp") {
         $namespace = "fabricnlp"
@@ -24,7 +35,7 @@ function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNo
         SaveSecretValue -secretname "nlpweb-external-url" -valueName "value" -value "nlp.$dnshostname" -namespace $namespace
         SaveSecretValue -secretname "jobserver-external-url" -valueName "value" -value "nlpjobs.$dnshostname" -namespace $namespace
         InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "nlp" -isAzure $isAzure `
-                    -externalIp "" -internalIp "" -externalSubnetName "" -internalSubnetName ""                    
+                        -externalIp $externalIP -internalIp $internalIP -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName                 
     }
 }
 function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $namespace, [bool] $isAzure) {

@@ -5,7 +5,7 @@ Write-Host "prerelease flag: $prerelease"
 
 # http://www.rlmueller.net/PSGotchas.htm
 # Trap {"Error: $_"; Break;}
-# Set-StrictMode -Version latest
+Set-StrictMode -Version latest
 
 if ($local) {
     Write-Host "use local files: $local"    

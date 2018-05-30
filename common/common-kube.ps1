@@ -379,17 +379,14 @@ function global:DeployYamlFiles([Parameter(Mandatory = $true)][ValidateNotNullOr
 function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
-        [Parameter(Mandatory = $true)]$config,
+        [Parameter(Mandatory = $true)][ValidateNotNull()] $config,
     $isAzure, `
         [string]$externalIp, `
         [string]$internalIp, `
         [string]$externalSubnetName, `
-        [string]$internalSubnetName) {
+        [string]$internalSubnetName) 
+{
     [hashtable]$Return = @{} 
-
-
-    if(!$externalSubnetName){$externalSubnetName=$($config.networking.subnet)}
-    if(!$internalSubnetName){$internalSubnetName=$($config.networking.subnet)}
 
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
         Write-Information -MessageData "namespace $namespace does not exist so creating it"
@@ -422,6 +419,13 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
     $customerid = ReadSecretValue -secretname customerid
     $customerid = $customerid.ToLower().Trim()
     Write-Information -MessageData "Customer ID: $customerid"
+
+    Write-Information -MessageData "EXTERNALSUBNET: $externalSubnetName"
+    Write-Information -MessageData "EXTERNALIP: $externalIp"
+    Write-Information -MessageData "INTERNALSUBNET: $internalSubnetName"
+    Write-Information -MessageData "INTERNALIP: $internalIp"
+
+    $runOnMaster = $false
 
     [hashtable]$tokens = @{ 
         "CUSTOMERID"         = $customerid;
@@ -462,12 +466,21 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/onprem" -tokens $tokens -resources $($config.resources.ingress.tcp.onprem)
     }
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -tokens $tokens -resources $($config.resources.ingress.jobs)
-    
+    if($(HasProperty -object $($config.resources.ingress) "jobs"))
+    {
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -tokens $tokens -resources $($config.resources.ingress.jobs)
+    }
+
     # DeploySimpleServices -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -tokens $tokens -resources $($config.resources.ingress.simpleservices)
 
     WaitForPodsInNamespace -namespace $namespace -interval 5
     return $Return
+}
+
+function HasProperty([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] $object, `
+                    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$propertyName)
+{
+    $propertyName -in $object.PSobject.Properties.Name
 }
 
 function global:WaitForPodsInNamespace([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, $interval) {
