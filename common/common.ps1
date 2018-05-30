@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.21.01"
+$versioncommon = "2018.05.29.02"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -31,6 +31,8 @@ function global:DeleteAzureFileShare([Parameter(Mandatory = $true)][ValidateNotN
 function global:CreateShareInStorageAccount([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $storageAccountName, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $sharename, $deleteExisting) { 
     [hashtable]$Return = @{} 
 
+    [int]$filesharesize = 128
+
     $storageAccountConnectionString = az storage account show-connection-string -n $storageAccountName -g $resourceGroup -o tsv
     
     # Write-Information -MessageData "Storage connection string: $storageAccountConnectionString"
@@ -41,7 +43,7 @@ function global:CreateShareInStorageAccount([Parameter(Mandatory = $true)][Valid
 
     if ($(az storage share exists -n $sharename --connection-string $storageAccountConnectionString --query "exists" -o tsv) -eq "false") {
         Write-Information -MessageData "Creating the file share: $sharename"        
-        az storage share create -n $sharename --connection-string $storageAccountConnectionString --quota 512       
+        az storage share create -n $sharename --connection-string $storageAccountConnectionString --quota $filesharesize       
 
         Write-Information -MessageData "Waiting for completion of create for the file share: $sharename"        
         Do {
@@ -383,6 +385,21 @@ function global:CleanResourceGroup([Parameter(Mandatory = $true)][ValidateNotNul
     return $Return
 }
 
+function global:GetStorageAccountName([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup){
+    [hashtable]$Return = @{} 
+
+    $storageAccountName = "${resourceGroup}storage"
+    # remove non-alphanumeric characters and use lowercase since azure doesn't allow those in a storage account
+    $storageAccountName = $storageAccountName -replace '[^a-zA-Z0-9]', ''
+    $storageAccountName = $storageAccountName.ToLower()
+    if ($storageAccountName.Length -gt 24) {
+        $storageAccountName = $storageAccountName.Substring(0, 24) # azure does not allow names longer than 24
+    }
+
+    $Return.StorageAccountName = $storageAccountName
+    return $Return
+    
+}
 function global:CreateStorageIfNotExists([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, $deleteStorageAccountIfExists) {
     #Create an hashtable variable 
     [hashtable]$Return = @{} 
@@ -392,13 +409,7 @@ function global:CreateStorageIfNotExists([Parameter(Mandatory = $true)][Validate
     $location = az group show --name $resourceGroup --query "location" -o tsv
 
     if ([string]::IsNullOrWhiteSpace($storageAccountName)) {
-        $storageAccountName = "${resourceGroup}storage"
-        # remove non-alphanumeric characters and use lowercase since azure doesn't allow those in a storage account
-        $storageAccountName = $storageAccountName -replace '[^a-zA-Z0-9]', ''
-        $storageAccountName = $storageAccountName.ToLower()
-        if ($storageAccountName.Length -gt 24) {
-            $storageAccountName = $storageAccountName.Substring(0, 24) # azure does not allow names longer than 24
-        }
+        $storageAccountName = $(GetStorageAccountName -resourceGroup $resourceGroup).StorageAccountName
         Write-Information -MessageData "Using storage account: [$storageAccountName]"
     }
     Write-Information -MessageData "Checking to see if storage account exists"
@@ -1752,14 +1763,13 @@ function global:WaitForLoadBalancers([Parameter(Mandatory = $true)][ValidateNotN
 }
 
 function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
-                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
-                            [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
-                            $isAzure, `
-                            [string]$externalIp, `
-                            [string]$internalIp, `
-                            [string]$externalSubnetName, `
-                            [string]$internalSubnetName ) 
-{
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
+        $isAzure, `
+        [string]$externalIp, `
+        [string]$internalIp, `
+        [string]$externalSubnetName, `
+        [string]$internalSubnetName ) {
     [hashtable]$Return = @{} 
 
     if ($isAzure) {
@@ -1780,26 +1790,27 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
     
     $config = $(Invoke-WebRequest -useb $configpath | ConvertFrom-Json)
 
-    LoadStack -namespace $namespace -baseUrl $baseUrl -appfolder "$appfolder" -config $config `
-                -isAzure $isAzure `
-                -externalIp $externalIp -internalIp $internalIp `
-                -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName
+    LoadStack -namespace $namespace -baseUrl $baseUrl -appfolder "$appfolder" `
+        -config $config `
+        -isAzure $isAzure `
+        -externalIp $externalIp -internalIp $internalIp `
+        -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName
     
     if ($isAzure) {
         WaitForLoadBalancers -resourceGroup $(GetResourceGroup).ResourceGroup
     }
     
     # open ports specified
-    if($config.ports){
+    if ($(HasProperty -object $($config) "ports")) {
         Write-Information -MessageData "Opening ports"
-        if($isAzure){
+        if ($isAzure) {
             $resourceGroup = $(GetResourceGroup).ResourceGroup
-            foreach ($portEntry in $ports) {
+            foreach ($portEntry in $config.ports) {
                 OpenPortInAzure -resourceGroup $resourceGroup -port $portEntry.port -name $portEntry.name -protocol $portEntry.protocol -type $portEntry.type
             }
         }
         else {
-            foreach ($portEntry in $ports) {
+            foreach ($portEntry in $config.ports) {
                 OpenPortOnPrem -port $portEntry.port -name $portEntry.name -protocol $portEntry.protocol -type $portEntry.type
             }
         }

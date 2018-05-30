@@ -19,11 +19,11 @@
             "version": "0.15.0"
         },
         "masterVMSize": "Standard_DS2_v2",
-        "workerVMSize": "Standard_DS2_v2",
+        "workerVMSize": "Standard_DS3_v2",
         "sethostfile": true
     },
     "service_principal": {
-        "name": "",
+        "name": "prod-kub-sjtn-rg2",
         "delete_if_exists": false
     },
     "storage_account": {
@@ -40,7 +40,8 @@
             "whitelist": "40.70.58.54,192.55.208.0/24"
         },
         "internal": {
-            "type": "vnetonly"
+            "type": "vnetonly",
+            "ipAddress": "10.9.0.96"
         }
     },
     "networking": {

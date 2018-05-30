@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.05.21.05"
+$versiononpremcommon = "2018.05.29.01"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -90,6 +90,8 @@ function SetupMaster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][stri
 }
 
 function SetupNewMasterNode([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl) {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingCmdletAliases", "", Justification="We're calling linux commands")]
+
     [hashtable]$Return = @{} 
 
     $u = "$(whoami)"
@@ -370,8 +372,6 @@ function SetupNewLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpt
 
     WriteToLog "deleting existing service account for traefik"
     kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
-
-    $publicip = ""
 
     AskForSecretValue -secretname "customerid" -prompt "Customer ID "
     WriteToLog "reading secret from kubernetes"
@@ -926,7 +926,7 @@ function ShowKubernetesServiceStatus() {
     sudo journalctl -u kube-apiserve
 }
 
-function OpenPortOnPrem([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][number]$port, `
+function OpenPortOnPrem([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][int]$port, `
                         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$name, `
                         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$protocol, `
                         [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$type) 

@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.22.01"
+$versionkubecommon = "2018.05.29.02"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -41,19 +41,38 @@ function global:ReadSecretPassword([Parameter(Mandatory = $true)][ValidateNotNul
     return ReadSecretData -secretname $secretname -valueName "password" -namespace $namespace
 }
 
-function global:ReadAllSecretsAsHashTable([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
+function global:ReadAllSecretsAsHashTable([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     [hashtable]$Return = @{} 
-    
+
+    $Return.Secrets = @()
+
+    Write-Information -MessageData  "---- $namespace ---"
+
     $secrets = $(kubectl get secrets -n $namespace -o jsonpath="{.items[?(@.type=='Opaque')].metadata.name}")
     if ($secrets) {
         foreach ($secret in $secrets.Split(" ")) {
             $secretjson = $(kubectl get secret $secret -n $namespace -o json) | ConvertFrom-Json
             foreach ($secretitem in $secretjson.data) {
-                $Return[$secret] = @{}
+                $properties=$($secretitem | Get-Member -MemberType NoteProperty)
+                $secretlist = @()
+                foreach ($property in $properties) {
+                    $propertyName = $property.Name
+                    Write-Information -MessageData  $propertyName
+                    $value = $($secretitem | Select-Object -ExpandProperty $propertyName)
+                    $secretvalue = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($value))
+                    $secretlist += @{
+                        key = "$propertyName"
+                        value = "$secretvalue"    
+                    }                        
+                }
+                $Return.Secrets += @{
+                    secretname = "$secret"
+                    namespace = "$namespace"
+                    secretvalues = $secretlist
+                }
             }
         }
     }
-
     return $Return
 }
 
@@ -360,17 +379,14 @@ function global:DeployYamlFiles([Parameter(Mandatory = $true)][ValidateNotNullOr
 function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
-        [Parameter(Mandatory = $true)]$config,
+        [Parameter(Mandatory = $true)][ValidateNotNull()] $config,
     $isAzure, `
         [string]$externalIp, `
         [string]$internalIp, `
         [string]$externalSubnetName, `
-        [string]$internalSubnetName) {
+        [string]$internalSubnetName) 
+{
     [hashtable]$Return = @{} 
-
-
-    if(!$externalSubnetName){$externalSubnetName=$($config.networking.subnet)}
-    if(!$internalSubnetName){$internalSubnetName=$($config.networking.subnet)}
 
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
         Write-Information -MessageData "namespace $namespace does not exist so creating it"
@@ -403,6 +419,13 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
     $customerid = ReadSecretValue -secretname customerid
     $customerid = $customerid.ToLower().Trim()
     Write-Information -MessageData "Customer ID: $customerid"
+
+    Write-Information -MessageData "EXTERNALSUBNET: $externalSubnetName"
+    Write-Information -MessageData "EXTERNALIP: $externalIp"
+    Write-Information -MessageData "INTERNALSUBNET: $internalSubnetName"
+    Write-Information -MessageData "INTERNALIP: $internalIp"
+
+    $runOnMaster = $false
 
     [hashtable]$tokens = @{ 
         "CUSTOMERID"         = $customerid;
@@ -443,12 +466,21 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/onprem" -tokens $tokens -resources $($config.resources.ingress.tcp.onprem)
     }
 
-    DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -tokens $tokens -resources $($config.resources.ingress.jobs)
-    
+    if($(HasProperty -object $($config.resources.ingress) "jobs"))
+    {
+        DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -tokens $tokens -resources $($config.resources.ingress.jobs)
+    }
+
     # DeploySimpleServices -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -tokens $tokens -resources $($config.resources.ingress.simpleservices)
 
     WaitForPodsInNamespace -namespace $namespace -interval 5
     return $Return
+}
+
+function HasProperty([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] $object, `
+                    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$propertyName)
+{
+    $propertyName -in $object.PSobject.Properties.Name
 }
 
 function global:WaitForPodsInNamespace([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, $interval) {
@@ -612,9 +644,6 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
         [string]$internalSubnetName) {
     [hashtable]$Return = @{} 
 
-    if(!$externalSubnetName){$externalSubnetName=$($config.networking.subnet)}
-    if(!$internalSubnetName){$internalSubnetName=$($config.networking.subnet)}
-
     # delete existing containers
     kubectl delete 'pods,services,configMaps,deployments,ingress' -l k8s-traefik=traefik -n kube-system --ignore-not-found=true
 
@@ -635,7 +664,15 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     $runOnMaster = ""
 
     # $traefiklabels = "external,internal"
+    Write-Information -MessageData "LoadLoadBalancerStack"
+          
+    Write-Information -MessageData "Customer ID: $customerid"
 
+    Write-Information -MessageData "EXTERNALSUBNET: $externalSubnetName"
+    Write-Information -MessageData "EXTERNALIP: $externalIp"
+    Write-Information -MessageData "INTERNALSUBNET: $internalSubnetName"
+    Write-Information -MessageData "INTERNALIP: $internalIp"
+    
     [hashtable]$tokens = @{ 
         "CUSTOMERID"         = $customerid;
         "EXTERNALSUBNET"     = "$externalSubnetName";
@@ -723,7 +760,9 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     }
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
 
-    InstallStack -baseUrl $baseUrl -namespace $namespace -appfolder $appfolder
+    InstallStack -baseUrl $baseUrl -namespace $namespace -appfolder $appfolder `
+                -externalSubnetName "$externalSubnetName" -externalIp "$externalip" `
+                -internalSubnetName "$internalSubnetName" -internalIp "$internalIp"    
 
     WaitForPodsInNamespace -namespace kube-system -interval 5
 
@@ -922,6 +961,7 @@ function global:RunRealtimeTester([ValidateNotNullOrEmpty()][string] $baseUrl) {
     Write-Host "Run on your client machine in a PowerShell window:"
     Write-Host "curl -useb $baseUrl/realtime/realtimetester.ps1 | iex $certhostname $certpassword"
 }
+
 
 # --------------------
 Write-Information -MessageData "end common-kube.ps1 version $versionkubecommon"

@@ -20,7 +20,8 @@
         },
         "masterVMSize": "Standard_DS2_v2",
         "workerVMSize": "Standard_DS2_v2",
-        "privatecluster": true
+        "privatecluster": true,
+        "sethostfile": true
     },
     "service_principal": {
         "name": "",
@@ -56,5 +57,11 @@
         "name": "kubernetes.hqcatalyst.local",
         "create_dns_entries": false,
         "dns_resource_group": "dns"
+    },
+    "monitoring":{
+        "oms":{
+            "workspaceid":"633dbeb5-2dd3-408c-b7ab-012dfa5ed844",
+            "workspacekey": "z/VW6vaTDTJKYP9SWWWJm2xt3/cjp5dQHufwa5nlnIeEv8NvmibON/8VxqA57L0y4XEVgtoJCdGdIfMlZrzcHg=="
+        }
     }
 }

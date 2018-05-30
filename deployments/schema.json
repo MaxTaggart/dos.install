@@ -146,6 +146,15 @@
                     "examples": [
                         true
                     ]
+                },
+                "sethostfile": {
+                    "$id": "/properties/azure/properties/sethostfile",
+                    "type": "boolean",
+                    "title": "Whether to create host file entries",
+                    "default": false,
+                    "examples": [
+                        true
+                    ]
                 }
             },
             "required": [
