@@ -724,10 +724,10 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
         kubectl delete secret traefik-cert-ahmn -n kube-system --ignore-not-found=true
 
         # download the intermediate certificate and append to certificate
-        $intermediatecert = $(Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl/intermediate.crt").Content
-        $sitecert = Get-Content "$AKS_SSL_CERT_FOLDER\tls.crt" -Raw 
+        # $intermediatecert = $(Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl/intermediate.crt").Content
+        # $sitecert = Get-Content "$AKS_SSL_CERT_FOLDER\tls.crt" -Raw 
 
-        $siteplusintermediatecert = 
+        # $siteplusintermediatecert = 
     
         Write-Host "Storing TLS certs from $AKS_SSL_CERT_FOLDER_UNIX_PATH as kubernetes secret"
         kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.crt" --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.key"
