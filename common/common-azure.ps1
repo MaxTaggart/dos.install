@@ -1171,7 +1171,7 @@ function global:TestAzureLoadBalancer() {
     # Invoke-WebRequest -useb -Headers @{"Host" = "nlp.$customerid.healthcatalyst.net"} -Uri http://$loadBalancerIP/nlpweb | Select-Object -Expand Content
 
     Write-Host "To test out the load balancer, open Git Bash and run:"
-    Write-Host "curl --header 'Host: $url' 'http://$ip/dashboard' -k" 
+    Write-Host "curl --header 'Host: $url' 'http://$ip/external' -k" 
 }
 
 function global:OpenTraefikDashboard() {

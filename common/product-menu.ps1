@@ -89,7 +89,7 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
         
                     Write-Host "To test out the NLP services, open Git Bash and run:"
                     Write-Host "curl -L --verbose --header 'Host: solr.$customerid.healthcatalyst.net' 'http://$loadBalancerInternalIP/solr' -k" 
-                    Write-Host "curl -L --verbose --header 'Host: $customerid.healthcatalyst.net' 'http://$loadBalancerInternalIP/dashboard' -k" 
+                    Write-Host "curl -L --verbose --header 'Host: $customerid.healthcatalyst.net' 'http://$loadBalancerInternalIP/external' -k" 
                     Write-Host "curl -L --verbose --header 'Host: nlp.$customerid.healthcatalyst.net' 'http://$loadBalancerIP/nlpweb' -k" 
                     Write-Host "curl -L --verbose --header 'Host: nlpjobs.$customerid.healthcatalyst.net' 'http://$loadBalancerIP/nlp' -k"
         
@@ -100,8 +100,8 @@ function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullO
                     Write-Host "$loadBalancerInternalIP $customerid.healthcatalyst.net"            
                     
                     # clear Google DNS cache: http://www.redsome.com/flush-clear-dns-cache-google-chrome-browser/
-                    Write-Host "Launching http://$loadBalancerInternalIP/dashboard in the web browser"
-                    Start-Process -FilePath "http://$loadBalancerInternalIP/dashboard";
+                    Write-Host "Launching http://$loadBalancerInternalIP/external in the web browser"
+                    Start-Process -FilePath "http://$loadBalancerInternalIP/external";
                     Write-Host "Launching http://$loadBalancerInternalIP/solr in the web browser"
                     Start-Process -FilePath "http://$loadBalancerInternalIP/solr";
                     Write-Host "Launching http://$loadBalancerIP/nlpweb in the web browser"
