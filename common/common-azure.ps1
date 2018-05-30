@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.29.06"
+$versionazurecommon = "2018.05.29.07"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -151,7 +151,7 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
 
     Write-Host "checking if Service Principal already exists"
     $AKS_SERVICE_PRINCIPAL_CLIENTID = az ad sp list --display-name ${AKS_SERVICE_PRINCIPAL_NAME} --query "[].appId" --output tsv
-    $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = $(GetKeyInVault -resourceGroup $AKS_PERS_RESOURCE_GROUP -key ServicePrincipalClientSecret)
+    $AKS_SERVICE_PRINCIPAL_CLIENTSECRET = $(GetKeyInVault -resourceGroup $AKS_PERS_RESOURCE_GROUP -key ServicePrincipalClientSecret).Value
 
     $myscope = "/subscriptions/${AKS_SUBSCRIPTION_ID}/resourceGroups/${AKS_PERS_RESOURCE_GROUP}"
 
