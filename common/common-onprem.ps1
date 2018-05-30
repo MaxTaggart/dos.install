@@ -90,6 +90,8 @@ function SetupMaster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][stri
 }
 
 function SetupNewMasterNode([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string] $baseUrl) {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingCmdletAliases", "", Justification="We're calling linux commands")]
+
     [hashtable]$Return = @{} 
 
     $u = "$(whoami)"

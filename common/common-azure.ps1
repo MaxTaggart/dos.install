@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.29.04"
+$versionazurecommon = "2018.05.29.05"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -735,8 +735,8 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     $externalSubnetName = ""
     if ($($config.ingress.external.subnet)) {
         $externalSubnetName = $($config.ingress.external.subnet);
-    } elseif($($config.ingress.networking.subnet)) {
-        $externalSubnetName = $($config.ingress.networking.subnet);
+    } elseif($($config.networking.subnet)) {
+        $externalSubnetName = $($config.networking.subnet);
     }
 
     $externalIp = ""
@@ -757,8 +757,8 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     $internalSubnetName = ""
     if ($($config.ingress.internal.subnet)) {
         $internalSubnetName = $($config.ingress.internal.subnet);
-    } elseif($($config.ingress.networking.subnet)) {
-        $internalSubnetName = $($config.ingress.networking.subnet);
+    } elseif($($config.networking.subnet)) {
+        $internalSubnetName = $($config.networking.subnet);
     }
 
     $internalIp = ""

@@ -664,7 +664,8 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     $runOnMaster = ""
 
     # $traefiklabels = "external,internal"
-
+    Write-Information -MessageData "LoadLoadBalancerStack"
+          
     Write-Information -MessageData "Customer ID: $customerid"
 
     Write-Information -MessageData "EXTERNALSUBNET: $externalSubnetName"
