@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.29.01"
+$versionkubecommon = "2018.05.29.02"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -665,6 +665,13 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
 
     # $traefiklabels = "external,internal"
 
+    Write-Information -MessageData "Customer ID: $customerid"
+
+    Write-Information -MessageData "EXTERNALSUBNET: $externalSubnetName"
+    Write-Information -MessageData "EXTERNALIP: $externalIp"
+    Write-Information -MessageData "INTERNALSUBNET: $internalSubnetName"
+    Write-Information -MessageData "INTERNALIP: $internalIp"
+    
     [hashtable]$tokens = @{ 
         "CUSTOMERID"         = $customerid;
         "EXTERNALSUBNET"     = "$externalSubnetName";
