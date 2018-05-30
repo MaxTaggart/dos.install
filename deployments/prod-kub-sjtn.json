@@ -40,7 +40,8 @@
             "whitelist": "40.70.58.54,192.55.208.0/24"
         },
         "internal": {
-            "type": "vnetonly"
+            "type": "vnetonly",
+            "ipAddress": "10.9.0.96"
         }
     },
     "networking": {

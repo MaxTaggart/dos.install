@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.25.01"
+$versionkubecommon = "2018.05.29.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -644,9 +644,6 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
         [string]$internalSubnetName) {
     [hashtable]$Return = @{} 
 
-    if(!$externalSubnetName){$externalSubnetName=$($config.networking.subnet)}
-    if(!$internalSubnetName){$internalSubnetName=$($config.networking.subnet)}
-
     # delete existing containers
     kubectl delete 'pods,services,configMaps,deployments,ingress' -l k8s-traefik=traefik -n kube-system --ignore-not-found=true
 
@@ -755,7 +752,9 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     }
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ")
 
-    InstallStack -baseUrl $baseUrl -namespace $namespace -appfolder $appfolder
+    InstallStack -baseUrl $baseUrl -namespace $namespace -appfolder $appfolder `
+                -externalSubnetName "$externalSubnetName" -externalIp "$externalip" `
+                -internalSubnetName "$internalSubnetName" -internalIp "$internalIp"    
 
     WaitForPodsInNamespace -namespace kube-system -interval 5
 
