@@ -373,8 +373,6 @@ function SetupNewLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpt
     WriteToLog "deleting existing service account for traefik"
     kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
 
-    $publicip = ""
-
     AskForSecretValue -secretname "customerid" -prompt "Customer ID "
     WriteToLog "reading secret from kubernetes"
     $customerid = $(ReadSecretValue -secretname "customerid")

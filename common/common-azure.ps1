@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.29.05"
+$versionazurecommon = "2018.05.29.06"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -132,7 +132,7 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     $AKS_FIRST_STATIC_IP = $VnetInfo.AKS_FIRST_STATIC_IP
     $AKS_SUBNET_CIDR = $VnetInfo.AKS_SUBNET_CIDR
 
-    CreateKeyVault -resourceGroup $resourceGroup
+    CreateKeyVault -resourceGroup $AKS_SUBNET_RESOURCE_GROUP
 
     # if kubectl can connect to it
     kubectl get secrets
