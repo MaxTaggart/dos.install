@@ -150,7 +150,7 @@ while ($userinput -ne "q") {
         
             CreateACSCluster -baseUrl $GITHUB_URL -config $config
             ConfigureKubernetes -config $config
-            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
+            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config -local $local
             WriteDNSCommands
         } 
         '2' {
@@ -158,7 +158,7 @@ while ($userinput -ne "q") {
             Write-Host $config
         
             ConfigureKubernetes -config $config
-            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
+            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config -local $local
             WriteDNSCommands
         } 
         '3' {

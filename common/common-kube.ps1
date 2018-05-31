@@ -108,22 +108,23 @@ function global:SaveSecretValue([Parameter(Mandatory = $true)][ValidateNotNullOr
 }
 
 function global:SaveMultipleSecretValues([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
-                                        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, `
-                                        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][array] $secretvalues) 
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][array] $secretvalues) 
 {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
 
-    if (![string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
-        kubectl delete secret $secretname -n $namespace        
+    if ([string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
+        $command = "kubectl create secret generic $secretname --namespace=$namespace"
+        foreach ($secretvalue in $secretvalues) {
+            $command = "$command --from-literal=$($secretvalue.secretkey)=$($secretvalue.secretvalue)"
+        }
+        Invoke-Expression -Command $command
     }
-
-    $command = "kubectl create secret generic $secretname --namespace=$namespace"
-    foreach ($secretvalue in $secretvalues) {
-        $command = "$command --from-literal=$($secretvalue.secretkey)=$($secretvalue.secretvalue)"
-    }
-    Invoke-Expression -Command $command
+    else {
+        Write-Information -MessageData "$secretname secret already set so will reuse it"
+    }   
 
     return $Return
 }

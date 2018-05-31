@@ -1822,6 +1822,20 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
             }
         }
     }
+
+    if($isAzure){
+        # find services that are LoadBalancer and external
+        # find the port
+        # find the azure load balancer rule with that port
+        # change the IP of that rule to the external IP
+
+        # find services that are LoadBalancer and internal
+        # find the port
+        # find the azure load balancer rule with that port
+        # change the IP of that rule to the internal IP
+
+
+    }
     return $Return
 }
 
