@@ -25,7 +25,9 @@ function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, `
 
     if ($namespace -eq "fabricrealtime") {
         InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "realtime" -isAzure $isAzure `
-                        -externalIp $externalIP -internalIp $internalIP -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName
+                        -externalIp $externalIP -internalIp $internalIP `
+                        -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName `
+                        -local $false
     }
     elseif ($namespace -eq "fabricnlp") {
         $namespace = "fabricnlp"
@@ -35,7 +37,9 @@ function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, `
         SaveSecretValue -secretname "nlpweb-external-url" -valueName "value" -value "nlp.$dnshostname" -namespace $namespace
         SaveSecretValue -secretname "jobserver-external-url" -valueName "value" -value "nlpjobs.$dnshostname" -namespace $namespace
         InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "nlp" -isAzure $isAzure `
-                        -externalIp $externalIP -internalIp $internalIP -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName                 
+                        -externalIp $externalIP -internalIp $internalIP `
+                        -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName                  `
+                        -local $false
     }
 }
 function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $namespace, [bool] $isAzure) {
