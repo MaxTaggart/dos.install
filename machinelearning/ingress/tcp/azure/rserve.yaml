@@ -1,7 +1,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: interfaceengine-direct-port
+  name: rserve-direct-port
   namespace: fabricmachinelearning
   annotations:
     # from https://radu-matei.com/blog/k8s-appsvc/
