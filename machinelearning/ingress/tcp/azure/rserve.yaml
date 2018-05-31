@@ -1,0 +1,22 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: interfaceengine-direct-port
+  namespace: fabricmachinelearning
+  annotations:
+    # from https://radu-matei.com/blog/k8s-appsvc/
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: $EXTERNALSUBNET$
+  labels:
+    dns: rserve    
+spec:
+  selector:
+    app: rserve
+  ports:
+  - name: rserveport
+    protocol: TCP
+    port: 6311
+    targetPort: 6311
+  type: LoadBalancer
+  loadBalancerIP: $EXTERNALIP$    
+---

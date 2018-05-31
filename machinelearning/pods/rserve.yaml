@@ -1,0 +1,70 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+# name for this pod
+  name: rserve
+# namespace for this pod
+  namespace: fabricmachinelearning
+  labels:
+    app: rserve
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3  # Clean-up old Replica Sets deployed; only keep previous 3.
+  strategy:
+    # We need to kill the existing Pod before creating an new one
+    # for the new one to be able to attach the persistent disk.
+    type: Recreate        
+  selector:
+    matchLabels:
+      app: rserve
+  template:
+    metadata:
+      labels:
+        app: rserve
+    spec:
+      containers:
+        # name of this pod
+        - name: rserve
+          # image to pull
+          image: healthcatalyst/fabric.machinelearning.rserve:latest
+          # specify to always pull a new image
+          imagePullPolicy: Always
+          # environment variables
+          env:
+            - name: SERVICE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mlserviceaccount
+                  key: user
+            - name: SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlserviceaccount
+                  key: password
+            - name: AD_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: mlserviceaccount
+                  key: domain
+            - name: AD_DOMAIN_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: mlserviceaccount
+                  key: domainserver
+            - name: DEBUG
+              value: 1
+            - name: MYSQL_USER
+              value: mirthuser
+          ports:
+            - containerPort: 6311
+              # name of the port
+              name: rserve
+      #     volumeMounts:
+      #       - name: rserve-persistent-storage
+      #         # point the /var/lib/mysql folder inside the container to the volume called mysql-persistent-storage
+      #         mountPath: /var/lib/mysql
+      #         subPath: rserve              
+      # volumes:
+      # - name: rserve-persistent-storage
+      #   persistentVolumeClaim:
+      #     claimName: ml.rserve            

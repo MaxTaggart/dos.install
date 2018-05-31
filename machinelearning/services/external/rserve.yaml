@@ -1,0 +1,14 @@
+# ----- Services exposed to the outside world ------
+# solr web server
+kind: Service
+apiVersion: v1
+metadata:
+  name: rserve
+  namespace: fabricmachinelearning
+spec:
+  selector:
+    app: rserve
+  ports:
+  - port: 6311
+    targetPort: 6311
+---

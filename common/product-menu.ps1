@@ -1,4 +1,4 @@
-$versionmenucommon = "2018.05.11.01"
+$versionmenucommon = "2018.05.31.01"
 
 Write-Information -MessageData "Including product-menu.ps1 version $versionmenucommon"
 function global:GetCommonMenuVersion() {
@@ -6,9 +6,8 @@ function global:GetCommonMenuVersion() {
 }
 
 function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, `
-                        [ValidateNotNullOrEmpty()][string] $namespace, `
-                        $isAzure )
-{
+        [ValidateNotNullOrEmpty()][string] $namespace, `
+        $isAzure ) {
     # read deployment config
     $loadbalancerInfo = $(GetLoadBalancerIPs)
     $externalIP = $loadbalancerInfo.ExternalIP
@@ -20,30 +19,62 @@ function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, `
     $internalSubnetName = $(kubectl get svc $loadbalancerInternal -n kube-system -o jsonpath="{.metadata.annotations.service\.beta\.kubernetes\.io/azure-load-balancer-internal-subnet}")
     $externalSubnetName = $(kubectl get svc $loadbalancerExternal -n kube-system -o jsonpath="{.metadata.annotations.service\.beta\.kubernetes\.io/azure-load-balancer-internal-subnet}")
     
-    if(!$externalSubnetName){$externalSubnetName=$internalSubnetName}
-    if(!$internalSubnetName){$internalSubnetName=$externalSubnetName}
+    if (!$externalSubnetName) {$externalSubnetName = $internalSubnetName}
+    if (!$internalSubnetName) {$internalSubnetName = $externalSubnetName}
+
+    $folder = $namespace.Replace("fabric", "")
 
     if ($namespace -eq "fabricrealtime") {
-        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "realtime" -isAzure $isAzure `
-                        -externalIp $externalIP -internalIp $internalIP `
-                        -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName `
-                        -local $false
+        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder $folder -isAzure $isAzure `
+            -externalIp $externalIP -internalIp $internalIP `
+            -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName `
+            -local $false
     }
     elseif ($namespace -eq "fabricnlp") {
-        $namespace = "fabricnlp"
         CreateNamespaceIfNotExists $namespace
         AskForPasswordAnyCharacters -secretname "smtprelaypassword" -prompt "Please enter SMTP relay password" -namespace $namespace
         $dnshostname = $(ReadSecretValue -secretname "dnshostname" -namespace "default")
         SaveSecretValue -secretname "nlpweb-external-url" -valueName "value" -value "nlp.$dnshostname" -namespace $namespace
         SaveSecretValue -secretname "jobserver-external-url" -valueName "value" -value "nlpjobs.$dnshostname" -namespace $namespace
-        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder "nlp" -isAzure $isAzure `
-                        -externalIp $externalIP -internalIp $internalIP `
-                        -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName                  `
-                        -local $false
+        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder $folder -isAzure $isAzure `
+            -externalIp $externalIP -internalIp $internalIP `
+            -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName                  `
+            -local $false
+    }
+    elseif ($namespace -eq "fabricmachinelearning") {
+        CreateNamespaceIfNotExists $namespace
+
+        $USERNAME = Read-Host "Service account user: (Default: $($env:USERNAME))"
+        if ([string]::IsNullOrWhiteSpace($USERNAME)) {
+            $USERNAME = $($env:USERNAME)
+        }
+
+        $AD_DOMAIN = Read-Host "Active Directory domain: (Default: $($env:USERDNSDOMAIN))"
+        if ([string]::IsNullOrWhiteSpace($USERNAME)) {
+            $AD_DOMAIN = $env:USERDNSDOMAIN
+        }
+        
+        $AD_DOMAIN_SERVER = $($env:LOGONSERVER).Replace("\\", "")
+        $AD_DOMAIN_SERVER = Read-Host "Active Directory domain server: (Default: $AD_DOMAIN_SERVER)"
+        if ([string]::IsNullOrWhiteSpace($USERNAME)) {
+            $AD_DOMAIN_SERVER = $($env:LOGONSERVER).Replace("\\", "")
+        }
+
+        Do {$password = Read-Host -assecurestring -Prompt "Please enter your password for ${USERNAME}@${AD_DOMAIN}"} while ($($password.Length) -lt 1)
+        $password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
+
+        SaveSecretValue -secretname "mlserviceaccount" -valueName "user" -value "$USERNAME" -namespace $namespace
+        SaveSecretValue -secretname "mlserviceaccount" -valueName "password" -value "$password" -namespace $namespace
+        SaveSecretValue -secretname "mlserviceaccount" -valueName "domain" -value "$AD_DOMAIN" -namespace $namespace
+        SaveSecretValue -secretname "mlserviceaccount" -valueName "domainserver" -value "$AD_DOMAIN_SERVER" -namespace $namespace
+
+        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder $folder -isAzure $isAzure `
+            -externalIp $externalIP -internalIp $internalIP `
+            -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName                  `
+            -local $false
     }
 }
 function showMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [ValidateNotNullOrEmpty()][string] $namespace, [bool] $isAzure) {
-    $folder = $namespace.Replace("fabric", "")
     $userinput = ""
     while ($userinput -ne "q") {
         Write-Host "================ $namespace menu version $version, common functions kube:$(GetCommonKubeVersion) ================"
