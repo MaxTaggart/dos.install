@@ -19,5 +19,4 @@ spec:
     port: 6661
     targetPort: 6661
   type: LoadBalancer
-  loadBalancerIP: $EXTERNALIP$
 ---

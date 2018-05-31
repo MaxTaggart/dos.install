@@ -19,5 +19,4 @@ spec:
     port: 3307
     targetPort: 3306
   type: LoadBalancer
-  loadBalancerIP: $INTERNALIP$
 ---

@@ -19,5 +19,4 @@ spec:
     port: 6311
     targetPort: 6311
   type: LoadBalancer
-  loadBalancerIP: $INTERNALIP$    
 ---
