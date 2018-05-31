@@ -6,9 +6,10 @@ metadata:
   annotations:
     # from https://radu-matei.com/blog/k8s-appsvc/
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
-#    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: $INTERNALSUBNET$
+    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: $INTERNALSUBNET$
   labels:
     dns: rabbitmq
+    expose: internal    
 spec:
   selector:
     app: rabbitmq
@@ -18,4 +19,5 @@ spec:
     port: 5671
     targetPort: 5671
   type: LoadBalancer
+  loadBalancerIP: $INTERNALIP$
 ---

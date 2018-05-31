@@ -8,7 +8,8 @@ metadata:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
     service.beta.kubernetes.io/azure-load-balancer-internal-subnet: $EXTERNALSUBNET$
   labels:
-    dns: interfaceengine    
+    dns: interfaceengine
+    expose: external    
 spec:
   selector:
     app: interfaceengine
@@ -18,5 +19,5 @@ spec:
     port: 6661
     targetPort: 6661
   type: LoadBalancer
-  loadBalancerIP: $EXTERNALIP$    
+  loadBalancerIP: $EXTERNALIP$
 ---

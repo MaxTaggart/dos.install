@@ -41,7 +41,7 @@ spec:
       - name: proxy-tcp
         image: healthcatalyst/tcp-proxy:latest
         imagePullPolicy: Always
-        args: [ "tcp", "6661", "rserve.fabricml.svc.cluster.local" ]
+        args: [ "tcp", "6311", "rserve.fabricmachinelearning.svc.cluster.local" ]
         ports:
         - name: tcp
           protocol: TCP
