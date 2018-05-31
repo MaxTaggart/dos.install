@@ -1,4 +1,4 @@
-$versionmenucommon = "2018.05.31.01"
+$versionmenucommon = "2018.05.31.02"
 
 Write-Information -MessageData "Including product-menu.ps1 version $versionmenucommon"
 function global:GetCommonMenuVersion() {
@@ -69,10 +69,24 @@ function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, `
             $TEST_SQL_SERVER="$env:computername.$env:userdnsdomain"
         }
 
-        SaveSecretValue -secretname "mlserviceaccount" -valueName "user" -value "$USERNAME" -namespace $namespace
-        SaveSecretValue -secretname "mlserviceaccount" -valueName "password" -value "$password" -namespace $namespace
-        SaveSecretValue -secretname "mlserviceaccount" -valueName "domain" -value "$AD_DOMAIN" -namespace $namespace
-        SaveSecretValue -secretname "mlserviceaccount" -valueName "domainserver" -value "$AD_DOMAIN_SERVER" -namespace $namespace
+        $secretvalues = @()
+        $secretvalues += @{
+            secretkey = "user" 
+            secretvalue = "$USERNAME"
+        }
+        $secretvalues += @{
+            secretkey = "password" 
+            secretvalue = "$password"
+        }
+        $secretvalues += @{
+            secretkey = "domain" 
+            secretvalue = "$AD_DOMAIN"
+        }
+        $secretvalues += @{
+            secretkey = "domainserver" 
+            secretvalue = "$AD_DOMAIN_SERVER"
+        }
+        SaveMultipleSecretValues -namespace $namespace -secretname "mlserviceaccount" -secretvalues $secretvalues
 
         SaveSecretValue -secretname "mltestsqlserver" -valueName "value" -value "$TEST_SQL_SERVER" -namespace $namespace
 

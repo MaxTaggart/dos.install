@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.31.01"
+$versionkubecommon = "2018.05.31.02"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -103,6 +103,27 @@ function global:SaveSecretValue([Parameter(Mandatory = $true)][ValidateNotNullOr
     }
 
     kubectl create secret generic $secretname --namespace=$namespace --from-literal=${valueName}=$value
+
+    return $Return
+}
+
+function global:SaveMultipleSecretValues([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
+                                        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname, `
+                                        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][array] $secretvalues) 
+{
+    [hashtable]$Return = @{} 
+
+    if ([string]::IsNullOrWhiteSpace($namespace)) { $namespace = "default"}
+
+    if (![string]::IsNullOrWhiteSpace($(kubectl get secret $secretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
+        kubectl delete secret $secretname -n $namespace        
+    }
+
+    $command = "kubectl create secret generic $secretname --namespace=$namespace"
+    foreach ($secretvalue in $secretvalues) {
+        $command = "$command --from-literal=$($secretvalue.secretkey)=$($secretvalue.secretvalue)"
+    }
+    Invoke-Expression -Command $command
 
     return $Return
 }
@@ -679,7 +700,7 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     # http://blog.kubernetes.io/2017/04/configuring-private-dns-zones-upstream-nameservers-kubernetes.html
     kubectl delete -f "$baseUrl/loadbalancer/dns/upstream.yaml" --ignore-not-found=true
     Start-Sleep -Seconds 10
-    $tokens=@{}
+    $tokens = @{}
     DeployYamlFile -baseUrl $baseUrl -templateFile "loadbalancer/dns/upstream.yaml" -tokens $tokens -local $local
     
     # to debug dns: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#inheriting-dns-from-the-node
