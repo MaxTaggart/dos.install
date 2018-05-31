@@ -50,23 +50,31 @@ function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, `
         }
 
         $AD_DOMAIN = Read-Host "Active Directory domain: (Default: $($env:USERDNSDOMAIN))"
-        if ([string]::IsNullOrWhiteSpace($USERNAME)) {
+        if ([string]::IsNullOrWhiteSpace($AD_DOMAIN)) {
             $AD_DOMAIN = $env:USERDNSDOMAIN
         }
         
         $AD_DOMAIN_SERVER = $($env:LOGONSERVER).Replace("\\", "")
         $AD_DOMAIN_SERVER = Read-Host "Active Directory domain server: (Default: $AD_DOMAIN_SERVER)"
-        if ([string]::IsNullOrWhiteSpace($USERNAME)) {
+        if ([string]::IsNullOrWhiteSpace($AD_DOMAIN_SERVER)) {
             $AD_DOMAIN_SERVER = $($env:LOGONSERVER).Replace("\\", "")
         }
 
         Do {$password = Read-Host -assecurestring -Prompt "Please enter your password for ${USERNAME}@${AD_DOMAIN}"} while ($($password.Length) -lt 1)
         $password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
 
+        $TEST_SQL_SERVER="$env:computername.$env:userdnsdomain"
+        $TEST_SQL_SERVER = Read-Host "Test SQL Server: (Default: $TEST_SQL_SERVER)"
+        if ([string]::IsNullOrWhiteSpace($TEST_SQL_SERVER)) {
+            $TEST_SQL_SERVER="$env:computername.$env:userdnsdomain"
+        }
+
         SaveSecretValue -secretname "mlserviceaccount" -valueName "user" -value "$USERNAME" -namespace $namespace
         SaveSecretValue -secretname "mlserviceaccount" -valueName "password" -value "$password" -namespace $namespace
         SaveSecretValue -secretname "mlserviceaccount" -valueName "domain" -value "$AD_DOMAIN" -namespace $namespace
         SaveSecretValue -secretname "mlserviceaccount" -valueName "domainserver" -value "$AD_DOMAIN_SERVER" -namespace $namespace
+
+        SaveSecretValue -secretname "mltestsqlserver" -valueName "value" -value "$TEST_SQL_SERVER" -namespace $namespace
 
         InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder $folder -isAzure $isAzure `
             -externalIp $externalIP -internalIp $internalIP `

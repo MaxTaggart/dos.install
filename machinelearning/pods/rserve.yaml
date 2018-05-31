@@ -51,8 +51,13 @@ spec:
                 secretKeyRef:
                   name: mlserviceaccount
                   key: domainserver
+            - name: TEST_SQL_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: mltestsqlserver
+                  key: value
             - name: DEBUG
-              value: 1
+             value: 1
             - name: MYSQL_USER
               value: mirthuser
           ports:
