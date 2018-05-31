@@ -57,7 +57,7 @@ spec:
                   name: mltestsqlserver
                   key: value
             - name: DEBUG
-              value: 1
+              value: "1"
             - name: MYSQL_USER
               value: mirthuser
           ports:
