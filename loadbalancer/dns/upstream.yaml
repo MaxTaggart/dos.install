@@ -4,6 +4,8 @@ kind: ConfigMap
 metadata:
   name: kube-dns
   namespace: kube-system
+  labels:
+    kubedns: kubedns
 data:
   upstreamNameservers: |
     ["8.8.8.8"]

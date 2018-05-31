@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.30.01"
+$versioncommon = "2018.05.31.01"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -1790,11 +1790,10 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
     $configpath = "$baseUrl/${appfolder}/index.json"
     Write-Information -MessageData "Loading stack manifest from $configpath"
     
-    if($local){
-        $config = $(Get-Content -Path $configpath -Raw | ConvertFrom-Json)
-
-    } else {
+    if ($baseUrl.StartsWith("http")) { 
         $config = $(Invoke-WebRequest -useb $configpath | ConvertFrom-Json)
+    } else {
+        $config = $(Get-Content -Path $configpath -Raw | ConvertFrom-Json)
     }
 
     LoadStack -namespace $namespace -baseUrl $baseUrl -appfolder "$appfolder" `

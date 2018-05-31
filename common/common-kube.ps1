@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.30.01"
+$versionkubecommon = "2018.05.31.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -53,7 +53,7 @@ function global:ReadAllSecretsAsHashTable([Parameter(Mandatory = $true)][Validat
         foreach ($secret in $secrets.Split(" ")) {
             $secretjson = $(kubectl get secret $secret -n $namespace -o json) | ConvertFrom-Json
             foreach ($secretitem in $secretjson.data) {
-                $properties=$($secretitem | Get-Member -MemberType NoteProperty)
+                $properties = $($secretitem | Get-Member -MemberType NoteProperty)
                 $secretlist = @()
                 foreach ($property in $properties) {
                     $propertyName = $property.Name
@@ -61,13 +61,13 @@ function global:ReadAllSecretsAsHashTable([Parameter(Mandatory = $true)][Validat
                     $value = $($secretitem | Select-Object -ExpandProperty $propertyName)
                     $secretvalue = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($value))
                     $secretlist += @{
-                        key = "$propertyName"
+                        key   = "$propertyName"
                         value = "$secretvalue"    
                     }                        
                 }
                 $Return.Secrets += @{
-                    secretname = "$secret"
-                    namespace = "$namespace"
+                    secretname   = "$secret"
+                    namespace    = "$namespace"
                     secretvalues = $secretlist
                 }
             }
@@ -210,25 +210,36 @@ function global:AskForSecretValue ([Parameter(Mandatory = $true)][ValidateNotNul
 }
 
 function global:ReadYamlAndReplaceTokens([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
-                                        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $templateFile, `
-                                        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][hashtable] $tokens, `
-                                        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $local) 
-{
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $templateFile, `
+        [Parameter(Mandatory = $true)][ValidateNotNull()][hashtable] $tokens, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $local) {
     [hashtable]$Return = @{} 
     
     Write-Information -MessageData "Reading from url: ${baseUrl}/${templateFile}"
 
-    if ($baseUrl.StartsWith("http") -and !$local) { 
+    if ($baseUrl.StartsWith("http")) { 
         $response = $(Invoke-WebRequest -Uri "${baseUrl}/${templateFile}?f=${randomstring}" -UseBasicParsing -ErrorAction:Stop -ContentType "text/plain; charset=utf-8")
         $content = $response | Select-Object -Expand Content
     }
     else {
-        $content = $(Get-Content -Path "$baseUrl/$templateFile" -Raw)
+        $content = $(Get-Content -Path "$baseUrl/$templateFile")
     }
 
     $content = $(Merge-Tokens $content $tokens)
     
     $Return.Content = $content
+    return $Return
+}
+
+function global:ReadYaml([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $templateFile, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $local) {
+    [hashtable]$Return = @{} 
+    
+    [hashtable]$tokens = @{ 
+    }
+
+    $Return.Content = $(ReadYamlAndReplaceTokens -baseUrl $baseUrl -templateFile $templateFile -tokens $tokens -local $local).Content
     return $Return
 }
 
@@ -361,25 +372,35 @@ function global:CleanKubConfig() {
     return $Return
 }
 
+function global:DeployYamlFile([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $templateFile, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+        [Parameter(Mandatory = $true)][ValidateNotNull()][hashtable] $tokens, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $local) {
+    # $resources can be null
+    [hashtable]$Return = @{} 
+
+    $(ReadYamlAndReplaceTokens -baseUrl $baseUrl -templateFile $templateFile -local $local -tokens $tokens).Content | kubectl apply -f -
+    $result = $?
+    if ($result -ne $True) {
+        throw "Error applying kubernetes template: $templateFile"
+    }
+    return $Return
+}
 
 function global:DeployYamlFiles([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
-                                [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
-                                [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
-                                [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $folder, `
-                                [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][hashtable] $tokens, `
-                                [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $local, `
-                                $resources) {
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $folder, `
+        [Parameter(Mandatory = $true)][ValidateNotNull()][hashtable] $tokens, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $local, `
+        $resources) {
     # $resources can be null
     [hashtable]$Return = @{} 
 
     if ($resources) {
         Write-Information -MessageData "-- Deploying $folder --"
         foreach ($file in $resources) {
-            $(ReadYamlAndReplaceTokens -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -local $local -tokens $tokens).Content | kubectl apply -f -
-            $result = $?
-            if ($result -ne $True) {
-                throw "Error applying kubernetes template: ${appfolder}/${folder}/${file}"
-            }
+            DeployYamlFile -baseUrl $baseUrl -templateFile "${appfolder}/${folder}/${file}" -tokens $tokens -local $local
         }
     }
     return $Return
@@ -388,13 +409,12 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $appfolder, `
         [Parameter(Mandatory = $true)][ValidateNotNull()] $config,
-        $isAzure, `
+    $isAzure, `
         [string]$externalIp, `
         [string]$internalIp, `
         [string]$externalSubnetName, `
         [string]$internalSubnetName, `
-        [Parameter(Mandatory = $true)][ValidateNotNull()][bool] $local) 
-{
+        [Parameter(Mandatory = $true)][ValidateNotNull()][bool] $local) {
     [hashtable]$Return = @{} 
 
     if ([string]::IsNullOrWhiteSpace($(kubectl get namespace $namespace --ignore-not-found=true))) {
@@ -475,8 +495,7 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "ingress/tcp/onprem" -tokens $tokens -resources $($config.resources.ingress.tcp.onprem) -local $local
     }
 
-    if($(HasProperty -object $($config.resources.ingress) "jobs"))
-    {
+    if ($(HasProperty -object $($config.resources.ingress) "jobs")) {
         DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder "jobs" -tokens $tokens -resources $($config.resources.ingress.jobs) -local $local
     }
 
@@ -487,8 +506,7 @@ function global:LoadStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty(
 }
 
 function HasProperty([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()] $object, `
-                    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$propertyName)
-{
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$propertyName) {
     $propertyName -in $object.PSobject.Properties.Name
 }
 
@@ -661,7 +679,9 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     # http://blog.kubernetes.io/2017/04/configuring-private-dns-zones-upstream-nameservers-kubernetes.html
     kubectl delete -f "$baseUrl/loadbalancer/dns/upstream.yaml" --ignore-not-found=true
     Start-Sleep -Seconds 10
-    kubectl apply -f "$baseUrl/loadbalancer/dns/upstream.yaml"
+    $tokens=@{}
+    DeployYamlFile -baseUrl $baseUrl -templateFile "loadbalancer/dns/upstream.yaml" -tokens $tokens -local $local
+    
     # to debug dns: https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#inheriting-dns-from-the-node
 
     kubectl delete ServiceAccount traefik-ingress-controller-serviceaccount -n kube-system --ignore-not-found=true
@@ -771,9 +791,9 @@ function global:LoadLoadBalancerStack([Parameter(Mandatory = $true)][ValidateNot
     DeployYamlFiles -namespace $namespace -baseUrl $baseUrl -appfolder $appfolder -folder $folder -tokens $tokens -resources $files.Split(" ") -local $local
 
     InstallStack -baseUrl $baseUrl -namespace $namespace -appfolder $appfolder `
-                -externalSubnetName "$externalSubnetName" -externalIp "$externalip" `
-                -internalSubnetName "$internalSubnetName" -internalIp "$internalIp" `
-                -local $local
+        -externalSubnetName "$externalSubnetName" -externalIp "$externalip" `
+        -internalSubnetName "$internalSubnetName" -internalIp "$internalIp" `
+        -local $local
 
     WaitForPodsInNamespace -namespace kube-system -interval 5
 

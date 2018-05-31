@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.30.02"
+$versionazurecommon = "2018.05.31.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -1320,7 +1320,7 @@ function global:CopyKubernetesSecretsToKeyVault([Parameter(Mandatory = $true)][V
                 }
                 $secretjson = $secretvalues | ConvertTo-Json -Compress 
                 $secretjson = $secretjson -replace '"', "'" # az keyvault strips double quotes
-                Write-Information -MessageData "$fullkey"
+                # Write-Information -MessageData "$fullkey"
                 SaveKeyInVault -resourceGroup $resourceGroup -key $fullkey -value $secretjson
             }    
         }
