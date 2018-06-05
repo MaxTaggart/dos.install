@@ -1,4 +1,4 @@
-$versionmenucommon = "2018.05.31.02"
+$versionmenucommon = "2018.06.05.01"
 
 Write-Information -MessageData "Including product-menu.ps1 version $versionmenucommon"
 function global:GetCommonMenuVersion() {
@@ -8,20 +8,23 @@ function global:GetCommonMenuVersion() {
 function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, `
         [ValidateNotNullOrEmpty()][string] $namespace, `
         $isAzure ) {
-    # read deployment config
-    $loadbalancerInfo = $(GetLoadBalancerIPs)
-    $externalIP = $loadbalancerInfo.ExternalIP
-    $internalIP = $loadbalancerInfo.InternalIP
 
-    $loadbalancerExternal = "traefik-ingress-service-public"
-    $loadbalancerInternal = "traefik-ingress-service-internal" 
-    
-    $internalSubnetName = $(kubectl get svc $loadbalancerInternal -n kube-system -o jsonpath="{.metadata.annotations.service\.beta\.kubernetes\.io/azure-load-balancer-internal-subnet}")
-    $externalSubnetName = $(kubectl get svc $loadbalancerExternal -n kube-system -o jsonpath="{.metadata.annotations.service\.beta\.kubernetes\.io/azure-load-balancer-internal-subnet}")
-    
-    if (!$externalSubnetName) {$externalSubnetName = $internalSubnetName}
-    if (!$internalSubnetName) {$internalSubnetName = $externalSubnetName}
+    if ($isAzure) {
+        # read deployment config
+        $loadbalancerInfo = $(GetLoadBalancerIPs)
+        $externalIP = $loadbalancerInfo.ExternalIP
+        $internalIP = $loadbalancerInfo.InternalIP
 
+        $loadbalancerExternal = "traefik-ingress-service-public"
+        $loadbalancerInternal = "traefik-ingress-service-internal" 
+    
+        $internalSubnetName = $(kubectl get svc $loadbalancerInternal -n kube-system -o jsonpath="{.metadata.annotations.service\.beta\.kubernetes\.io/azure-load-balancer-internal-subnet}")
+        $externalSubnetName = $(kubectl get svc $loadbalancerExternal -n kube-system -o jsonpath="{.metadata.annotations.service\.beta\.kubernetes\.io/azure-load-balancer-internal-subnet}")
+    
+        if (!$externalSubnetName) {$externalSubnetName = $internalSubnetName}
+        if (!$internalSubnetName) {$internalSubnetName = $externalSubnetName}
+    }
+            
     $folder = $namespace.Replace("fabric", "")
 
     if ($namespace -eq "fabricrealtime") {
@@ -63,27 +66,27 @@ function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, `
         Do {$password = Read-Host -assecurestring -Prompt "Please enter your password for ${USERNAME}@${AD_DOMAIN}"} while ($($password.Length) -lt 1)
         $password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
 
-        $TEST_SQL_SERVER="$env:computername.$env:userdnsdomain"
+        $TEST_SQL_SERVER = "$env:computername.$env:userdnsdomain"
         $TEST_SQL_SERVER = Read-Host "Test SQL Server: (Default: $TEST_SQL_SERVER)"
         if ([string]::IsNullOrWhiteSpace($TEST_SQL_SERVER)) {
-            $TEST_SQL_SERVER="$env:computername.$env:userdnsdomain"
+            $TEST_SQL_SERVER = "$env:computername.$env:userdnsdomain"
         }
 
         $secretvalues = @()
         $secretvalues += @{
-            secretkey = "user" 
+            secretkey   = "user" 
             secretvalue = "$USERNAME"
         }
         $secretvalues += @{
-            secretkey = "password" 
+            secretkey   = "password" 
             secretvalue = "$password"
         }
         $secretvalues += @{
-            secretkey = "domain" 
+            secretkey   = "domain" 
             secretvalue = "$AD_DOMAIN"
         }
         $secretvalues += @{
-            secretkey = "domainserver" 
+            secretkey   = "domainserver" 
             secretvalue = "$AD_DOMAIN_SERVER"
         }
         SaveMultipleSecretValues -namespace $namespace -secretname "mlserviceaccount" -secretvalues $secretvalues
