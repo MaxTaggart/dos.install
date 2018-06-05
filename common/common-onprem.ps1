@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.06.05.02"
+$versiononpremcommon = "2018.06.05.03"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -429,7 +429,8 @@ function SetupNewLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpt
                         -ingressInternalType $ingressInternalType -ingressExternalType $ingressExternalType `
                         -isOnPrem $true `
                         -externalSubnetName "" -externalIp "$externalIp" `
-                        -internalSubnetName "" -internalIp "$internalIp"
+                        -internalSubnetName "" -internalIp "$internalIp" `
+                        -local $False
 
     return $Return
 }
