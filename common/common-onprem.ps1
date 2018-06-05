@@ -72,7 +72,7 @@ function SetupMaster([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][stri
     SetupNewLoadBalancer -baseUrl $baseUrl
 
     WriteToConsole "setting up kubernetes dashboard"   
-    InstallStack -baseUrl $baseUrl -namespace "kube-system" -appfolder "dashboard"
+    InstallStack -baseUrl $baseUrl -namespace "kube-system" -appfolder "dashboard" -local $False
     # clear
     WriteToLog "waiting for pods to run in kube-system"
     WaitForPodsInNamespace -namespace "kube-system" -interval 5    
