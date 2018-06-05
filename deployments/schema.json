@@ -241,6 +241,15 @@
                 "c:\\kubernetes"
             ]
         },
+        "ssl_merge_intermediate_cert": {
+            "$id": "/properties/ssl_merge_intermediate_cert",
+            "type": "boolean",
+            "title": "Whether to merge Digicert intermediate certificate",
+            "default": false,
+            "examples": [
+                false
+            ]
+        },
         "allow_kubectl_from_outside_vnet": {
             "$id": "/properties/allow_kubectl_from_outside_vnet",
             "type": "boolean",

@@ -1,5 +1,5 @@
 param([bool]$prerelease, [bool]$local)    
-$version = "2018.05.29.02"
+$version = "2018.05.31.01"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
@@ -24,7 +24,13 @@ $InformationPreference = "Continue"
 #   curl -sSL  https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/azure/main.ps1 | pwsh -Interactive -NoExit -c -;
 
 if ($prerelease) {
-    $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+    if($local){
+        #$GITHUB_URL = "."
+        $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+    }
+    else {
+        $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master"
+    }
 }
 else {
     $GITHUB_URL = "https://raw.githubusercontent.com/HealthCatalyst/dos.install/release"
@@ -122,6 +128,8 @@ while ($userinput -ne "q") {
     Write-Host "-----------"
     Write-Host "52: Fabric Realtime Menu"
     Write-Host "-----------"
+    Write-Host "53: Fabric MachineLearning Menu"
+    Write-Host "-----------"
     Write-Host "q: Quit"
     $userinput = Read-Host "Please make a selection"
     switch ($userinput) {
@@ -142,7 +150,7 @@ while ($userinput -ne "q") {
         
             CreateACSCluster -baseUrl $GITHUB_URL -config $config
             ConfigureKubernetes -config $config
-            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
+            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config -local $local
             WriteDNSCommands
         } 
         '2' {
@@ -150,7 +158,7 @@ while ($userinput -ne "q") {
             Write-Host $config
         
             ConfigureKubernetes -config $config
-            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
+            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config -local $local
             WriteDNSCommands
         } 
         '3' {
@@ -272,7 +280,7 @@ while ($userinput -ne "q") {
             $config = $(ReadConfigFile).Config
             Write-Host $config
         
-            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config
+            SetupAzureLoadBalancer -baseUrl $GITHUB_URL -config $config -local $local
             WriteDNSCommands
         }         
         '33' {
@@ -288,6 +296,10 @@ while ($userinput -ne "q") {
         } 
         '52' {
             showMenu -baseUrl $GITHUB_URL -namespace "fabricrealtime" -isAzure $true
+            $skip = $true
+        } 
+        '53' {
+            showMenu -baseUrl $GITHUB_URL -namespace "fabricmachinelearning" -isAzure $true
             $skip = $true
         } 
         'q' {

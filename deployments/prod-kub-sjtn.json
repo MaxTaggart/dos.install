@@ -33,6 +33,7 @@
     "customerid": "sjtn",
     "ssl": true,
     "ssl_folder": "c:\\kubernetes\\certs\\sjtn",
+    "ssl_merge_intermediate_cert": true,
     "allow_kubectl_from_outside_vnet": false,
     "ingress": {
         "external": {

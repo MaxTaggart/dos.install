@@ -1,0 +1,33 @@
+{
+    "$schema": "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/templates/schema.json",
+    "name": "Fabric Machine Learning",
+    "version": "4.0.0.2",
+    "ports": [
+        {
+            "name": "rserve",
+            "port": 6311,
+            "protocol": "tcp",
+            "type": "external"
+        }
+    ],
+    "resources": {
+        "pods": [
+            "rserve.yaml"
+        ],
+        "services": {
+            "external": [
+                "rserve.yaml"
+            ]
+        },
+        "ingress": {
+            "tcp": {
+                "azure": [
+                    "rserve.yaml"
+                ],
+                "onprem": [
+                    "rserve.yaml"
+                ]
+            }
+        }
+    }
+}

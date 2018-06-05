@@ -1,22 +1,22 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: mysql-direct-port
-  namespace: fabricrealtime
+  name: rserve-direct-port
+  namespace: fabricmachinelearning
   annotations:
     # from https://radu-matei.com/blog/k8s-appsvc/
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
     service.beta.kubernetes.io/azure-load-balancer-internal-subnet: $INTERNALSUBNET$
   labels:
-    dns: mysqlrealtime
-    expose: internal    
+    dns: rserve    
+    expose: internal
 spec:
   selector:
-    app: mysqlserver
+    app: rserve
   ports:
-  - name: mysqlport
+  - name: rserveport
     protocol: TCP
-    port: 3307
-    targetPort: 3306
+    port: 6311
+    targetPort: 6311
   type: LoadBalancer
 ---

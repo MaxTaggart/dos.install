@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.29.08"
+$versionazurecommon = "2018.05.31.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -132,7 +132,7 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     $AKS_FIRST_STATIC_IP = $VnetInfo.AKS_FIRST_STATIC_IP
     $AKS_SUBNET_CIDR = $VnetInfo.AKS_SUBNET_CIDR
 
-    CreateKeyVault -resourceGroup $AKS_SUBNET_RESOURCE_GROUP
+    CreateKeyVault -resourceGroup $AKS_PERS_RESOURCE_GROUP
 
     # if kubectl can connect to it
     kubectl get secrets
@@ -580,7 +580,8 @@ function global:ConfigureKubernetes([Parameter(Mandatory = $true)][ValidateNotNu
 }
 
 function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $baseUrl, `
-        [Parameter(Mandatory = $true)][ValidateNotNull()] $config) {
+        [Parameter(Mandatory = $true)][ValidateNotNull()] $config, `
+        [Parameter(Mandatory = $true)][ValidateNotNull()][bool] $local) {
    
     $logfile = "$(get-date -f yyyy-MM-dd-HH-mm)-SetupAzureLoadBalancer.txt"
     WriteToConsole "Logging to $logfile"
@@ -722,9 +723,23 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
         $AKS_SSL_CERT_FOLDER_UNIX_PATH = (($AKS_SSL_CERT_FOLDER -replace "\\", "/")).ToLower().Trim("/")    
     
         kubectl delete secret traefik-cert-ahmn -n kube-system --ignore-not-found=true
+
+        if ($($config.ssl_merge_intermediate_cert)) {
+            # download the intermediate certificate and append to certificate
+            $intermediatecert = $(Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl/intermediate.crt").Content
+            $sitecert = Get-Content "$AKS_SSL_CERT_FOLDER\tls.crt" -Raw 
+
+            $siteplusintermediatecert = $sitecert + $intermediatecert
     
-        Write-Host "Storing TLS certs from $AKS_SSL_CERT_FOLDER_UNIX_PATH as kubernetes secret"
-        kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.crt" --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.key"
+            $siteplusintermediatecert | Out-File -FilePath "$AKS_SSL_CERT_FOLDER\tlsplusintermediate.crt"
+
+            Write-Host "Storing TLS certs plus intermediate cert from $AKS_SSL_CERT_FOLDER_UNIX_PATH as kubernetes secret"
+            kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tlsplusintermediate.crt" --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.key"
+        }
+        else {
+            Write-Host "Storing TLS certs from $AKS_SSL_CERT_FOLDER_UNIX_PATH as kubernetes secret"
+            kubectl create secret generic traefik-cert-ahmn -n kube-system --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.crt" --from-file="$AKS_SSL_CERT_FOLDER_UNIX_PATH/tls.key"                
+        }
     }
     else {
         Write-Host "SSL option was not specified in the deployment config: $($config.ssl)"
@@ -735,7 +750,8 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     $externalSubnetName = ""
     if ($($config.ingress.external.subnet)) {
         $externalSubnetName = $($config.ingress.external.subnet);
-    } elseif($($config.networking.subnet)) {
+    }
+    elseif ($($config.networking.subnet)) {
         $externalSubnetName = $($config.networking.subnet);
     }
 
@@ -757,7 +773,8 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
     $internalSubnetName = ""
     if ($($config.ingress.internal.subnet)) {
         $internalSubnetName = $($config.ingress.internal.subnet);
-    } elseif($($config.networking.subnet)) {
+    }
+    elseif ($($config.networking.subnet)) {
         $internalSubnetName = $($config.networking.subnet);
     }
 
@@ -770,7 +787,8 @@ function global:SetupAzureLoadBalancer([Parameter(Mandatory = $true)][ValidateNo
         -ingressInternalType "$ingressInternalType" -ingressExternalType "$ingressExternalType" `
         -customerid $customerid -isOnPrem $false `
         -externalSubnetName "$externalSubnetName" -externalIp "$externalip" `
-        -internalSubnetName "$internalSubnetName" -internalIp "$internalIp"
+        -internalSubnetName "$internalSubnetName" -internalIp "$internalIp" `
+        -local $local
     
     # setting up traefik
     # https://github.com/containous/traefik/blob/master/docs/user-guide/kubernetes.md
@@ -1187,6 +1205,11 @@ function global:CreateKeyVault([Parameter(Mandatory = $true)][ValidateNotNullOrE
     [hashtable]$Return = @{} 
 
     $keyvaultname = "${resourceGroup}keyvault"
+    $keyvaultname = $keyvaultname -replace '[^a-zA-Z0-9]', ''
+    $keyvaultname = $keyvaultname.ToLower()
+    if ($keyvaultname.Length -gt 24) {
+        $keyvaultname = $keyvaultname.Substring(0, 24) # azure does not allow names longer than 24
+    }
 
     $location = az group show --name $resourceGroup --query "location" -o tsv
 
@@ -1297,7 +1320,7 @@ function global:CopyKubernetesSecretsToKeyVault([Parameter(Mandatory = $true)][V
                 }
                 $secretjson = $secretvalues | ConvertTo-Json -Compress 
                 $secretjson = $secretjson -replace '"', "'" # az keyvault strips double quotes
-                Write-Information -MessageData "$fullkey"
+                # Write-Information -MessageData "$fullkey"
                 SaveKeyInVault -resourceGroup $resourceGroup -key $fullkey -value $secretjson
             }    
         }

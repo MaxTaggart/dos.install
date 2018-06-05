@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.29.02"
+$versioncommon = "2018.05.31.01"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -1769,7 +1769,9 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
         [string]$externalIp, `
         [string]$internalIp, `
         [string]$externalSubnetName, `
-        [string]$internalSubnetName ) {
+        [string]$internalSubnetName, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $local) 
+{
     [hashtable]$Return = @{} 
 
     if ($isAzure) {
@@ -1788,13 +1790,18 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
     $configpath = "$baseUrl/${appfolder}/index.json"
     Write-Information -MessageData "Loading stack manifest from $configpath"
     
-    $config = $(Invoke-WebRequest -useb $configpath | ConvertFrom-Json)
+    if ($baseUrl.StartsWith("http")) { 
+        $config = $(Invoke-WebRequest -useb $configpath | ConvertFrom-Json)
+    } else {
+        $config = $(Get-Content -Path $configpath -Raw | ConvertFrom-Json)
+    }
 
     LoadStack -namespace $namespace -baseUrl $baseUrl -appfolder "$appfolder" `
         -config $config `
         -isAzure $isAzure `
         -externalIp $externalIp -internalIp $internalIp `
-        -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName
+        -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName `
+        -local $local
     
     if ($isAzure) {
         WaitForLoadBalancers -resourceGroup $(GetResourceGroup).ResourceGroup
@@ -1814,6 +1821,20 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
                 OpenPortOnPrem -port $portEntry.port -name $portEntry.name -protocol $portEntry.protocol -type $portEntry.type
             }
         }
+    }
+
+    if($isAzure){
+        # find services that are LoadBalancer and external
+        # find the port
+        # find the azure load balancer rule with that port
+        # change the IP of that rule to the external IP
+
+        # find services that are LoadBalancer and internal
+        # find the port
+        # find the azure load balancer rule with that port
+        # change the IP of that rule to the internal IP
+
+
     }
     return $Return
 }
