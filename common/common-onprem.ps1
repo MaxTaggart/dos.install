@@ -108,8 +108,9 @@ function SetupNewMasterNode([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty(
     # sudo kubeadm init --kubernetes-version=v${kubernetesversion} --pod-network-cidr=10.244.0.0/16 --feature-gates CoreDNS=true
     # https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/
     sudo kubeadm init --kubernetes-version=v${kubernetesserverversion} --pod-network-cidr=10.244.0.0/16 --skip-token-print --apiserver-cert-extra-sans $(hostname --fqdn)
-    $result = $?
-    if($result -ne $True){
+    $result = $LastExitCode
+    # $result = $?
+    if($result -ne 0){
         WriteToLog $result
         throw "Error running kubeadm init: $result"
     }
