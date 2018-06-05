@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.06.05.04"
+$versiononpremcommon = "2018.06.05.05"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -756,7 +756,7 @@ function mountSMBWithParams([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty(
         sudo mount --verbose -t cifs $pathToShare /mnt/data -o "username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm"
         $result=$LASTEXITCODE
         if($result -ne 0){
-            throw "Unable to mount $pathToShare with username=$username,domain=$domain"
+            throw "Unable to mount $pathToShare with username=$username,domain=$domain exitcode=$result"
         }
         echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm" | sudo tee -a /etc/fstab > /dev/null
     }
@@ -765,7 +765,7 @@ function mountSMBWithParams([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty(
         sudo mount --verbose -t cifs $pathToShare /mnt/data -o "username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino"
         $result=$LASTEXITCODE
         if($result -ne 0){
-            throw "Unable to mount $pathToShare with username=$username"
+            throw "Unable to mount $pathToShare with username=$username exitcode=$result"
         }
         echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null       
     }
