@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.06.05.05"
+$versiononpremcommon = "2018.06.05.07"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -750,19 +750,21 @@ function mountSMBWithParams([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty(
     # remove previous entry for this drive
     grep -v "/mnt/data" /etc/fstab | sudo tee /etc/fstab > /dev/null
 
+    sudo umount "/mnt/data"
+
     if ($isUNC -eq $True) {
         WriteToLog "Mounting as UNC folder"
-        WriteToLog "sudo mount --verbose -t cifs $pathToShare /mnt/data -o username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm"
-        sudo mount --verbose -t cifs $pathToShare /mnt/data -o "username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm"
+        WriteToLog "sudo mount --verbose -t cifs $pathToShare /mnt/data -o username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777"
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o "vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777"
         $result=$LASTEXITCODE
         if($result -ne 0){
             throw "Unable to mount $pathToShare with username=$username,domain=$domain exitcode=$result"
         }
-        echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm" | sudo tee -a /etc/fstab > /dev/null
+        echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777" | sudo tee -a /etc/fstab > /dev/null
     }
     else {
         WriteToLog "Mounting as non-UNC folder"
-        sudo mount --verbose -t cifs $pathToShare /mnt/data -o "username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino"
+        sudo mount --verbose -t cifs $pathToShare /mnt/data -o "vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino"
         $result=$LASTEXITCODE
         if($result -ne 0){
             throw "Unable to mount $pathToShare with username=$username exitcode=$result"
