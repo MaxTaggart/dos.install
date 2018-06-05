@@ -429,7 +429,8 @@ function SetupNewLoadBalancer([Parameter(Mandatory=$true)][ValidateNotNullOrEmpt
                         -ingressInternalType $ingressInternalType -ingressExternalType $ingressExternalType `
                         -isOnPrem $true `
                         -externalSubnetName "" -externalIp "$externalIp" `
-                        -internalSubnetName "" -internalIp "$internalIp"
+                        -internalSubnetName "" -internalIp "$internalIp" `
+                        -local $False
 
     return $Return
 }
