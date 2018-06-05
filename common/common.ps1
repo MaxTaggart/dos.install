@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versioncommon = "2018.05.31.01"
+$versioncommon = "2018.06.05.01"
 
 Write-Information -MessageData "---- Including common.ps1 version $versioncommon -----"
 function global:GetCommonVersion() {
@@ -385,7 +385,7 @@ function global:CleanResourceGroup([Parameter(Mandatory = $true)][ValidateNotNul
     return $Return
 }
 
-function global:GetStorageAccountName([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup){
+function global:GetStorageAccountName([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
     [hashtable]$Return = @{} 
 
     $storageAccountName = "${resourceGroup}storage"
@@ -1126,10 +1126,12 @@ function global:GetLoadBalancerIPs() {
     [int] $counter = 0
     Write-Information -MessageData "Waiting for IP to get assigned to the load balancer (Note: It can take upto 5 minutes for Azure to finish creating the load balancer)"
     Do { 
-        Start-Sleep -Seconds 10
         $counter = $counter + 1
-        Write-Information -MessageData "$counter"
         $externalIP = $(kubectl get svc $loadbalancer -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}')
+        if (!$externalIP) {
+            Write-Information -MessageData "$counter"
+            Start-Sleep -Seconds 10
+        }
     }
     while ([string]::IsNullOrWhiteSpace($externalIP) -and ($startDate.AddMinutes($timeoutInMinutes) -gt (Get-Date)))
     Write-Information -MessageData "External IP: $externalIP"
@@ -1137,10 +1139,12 @@ function global:GetLoadBalancerIPs() {
     $counter = 0
     Write-Information -MessageData "Waiting for IP to get assigned to the internal load balancer (Note: It can take upto 5 minutes for Azure to finish creating the load balancer)"
     Do { 
-        Start-Sleep -Seconds 10
         $counter = $counter + 1
-        Write-Information -MessageData "$counter"
         $internalIP = $(kubectl get svc $loadbalancerInternal -n kube-system -o jsonpath='{.status.loadBalancer.ingress[].ip}')
+        if (!$internalIP) {
+            Write-Information -MessageData "$counter"
+            Start-Sleep -Seconds 10
+        }
     }
     while ([string]::IsNullOrWhiteSpace($internalIP) -and ($startDate.AddMinutes($timeoutInMinutes) -gt (Get-Date)))
     Write-Information -MessageData "Internal IP: $internalIP"
@@ -1770,8 +1774,7 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
         [string]$internalIp, `
         [string]$externalSubnetName, `
         [string]$internalSubnetName, `
-        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $local) 
-{
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][bool] $local) {
     [hashtable]$Return = @{} 
 
     if ($isAzure) {
@@ -1792,7 +1795,8 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
     
     if ($baseUrl.StartsWith("http")) { 
         $config = $(Invoke-WebRequest -useb $configpath | ConvertFrom-Json)
-    } else {
+    }
+    else {
         $config = $(Get-Content -Path $configpath -Raw | ConvertFrom-Json)
     }
 
@@ -1823,18 +1827,10 @@ function global:InstallStack([Parameter(Mandatory = $true)][ValidateNotNullOrEmp
         }
     }
 
-    if($isAzure){
-        # find services that are LoadBalancer and external
-        # find the port
-        # find the azure load balancer rule with that port
-        # change the IP of that rule to the external IP
-
-        # find services that are LoadBalancer and internal
-        # find the port
-        # find the azure load balancer rule with that port
-        # change the IP of that rule to the internal IP
-
-
+    if ($isAzure) {
+        $resourceGroup = $(GetResourceGroup).ResourceGroup
+        WaitForLoadBalancersToGetIPs -namespace $namespace
+        MovePortsToLoadBalancerForNamespace -resourceGroup $resourceGroup -namespace $namespace
     }
     return $Return
 }
@@ -1899,5 +1895,174 @@ function global:MoveInternalLoadBalancerToIP([Parameter(Mandatory = $true)][Vali
         return $Return
     }
 }
+
+function global:MovePortsToLoadBalancer([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup) {
+    [hashtable]$Return = @{} 
+
+    $namespaces = $(kubectl get namespaces -o jsonpath="{.items[*].metadata.name}").Split(" ")
+
+    foreach ($namespace in $namespaces) {
+        MovePortsToLoadBalancerForNamespace -resourceGroup $resourceGroup -namespace $namespace
+    }
+
+    return $Return
+}
+
+function global:MovePortsToLoadBalancerForNamespace([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $resourceGroup, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
+    [hashtable]$Return = @{} 
+
+    Write-Information -MessageData "Checking if load balancers are setup correctly for resourceGroup: $resourceGroup"
+    # 1. assign the nics to the loadbalancer
+
+    # find loadbalancer with name 
+    $loadbalancer = "${resourceGroup}-internal"
+
+    $loadbalancerExists = $(az network lb show --name $loadbalancer --resource-group $resourceGroup --query "name" -o tsv)
+
+    # if internal load balancer exists then fix it
+    if ([string]::IsNullOrWhiteSpace($loadbalancerExists)) {
+        Write-Information -MessageData "Loadbalancer $loadbalancer does not exist so no need to fix it"
+        return
+    }
+    else {
+        Write-Information -MessageData "loadbalancer $loadbalancer exists with name: $loadbalancerExists"
+    }
+
+    $loadbalancerInfo = $(GetLoadBalancerIPs)
+    $loadbalanceripAddress = $loadbalancerInfo.InternalIP
+
+    if ($loadbalanceripAddress) {
+        $expose = "internal"
+        Write-Information -MessageData "Checking ports for $expose load balancer"
+    
+        AddPortsToLoadBalancerForNamespace -namespace $namespace -expose $expose -loadbalanceripAddress $loadbalanceripAddress
+    }
+
+    $loadbalanceripAddress = $loadbalancerInfo.ExternalIP
+    if ($loadbalanceripAddress) {
+
+        $expose = "external"
+        Write-Information -MessageData "Checking ports for $expose load balancer"
+
+        AddPortsToLoadBalancerForNamespace -namespace $namespace -expose $expose -loadbalanceripAddress $loadbalanceripAddress
+    }
+    
+    return $Return
+}
+
+function global:WaitForLoadBalancersToGetIPs([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
+
+    $servicesastext = $(kubectl get svc -n $namespace -o jsonpath="{.items[?(@.spec.type == 'LoadBalancer')].metadata.name}")
+
+    if ($servicesastext) {
+        $services = $servicesastext.Split(" ")
+        Write-Information -MessageData "Waiting for services to get IP: $servicesastext"
+        Do {       
+            $servicesMissingIp = @()
+            $servicesMissingIpText = ""
+            foreach ($service in $services) {
+                $loadBalancerIP = kubectl get svc $service -n $namespace -o jsonpath='{.status.loadBalancer.ingress[].ip}' --ignore-not-found=true
+                if (!$loadBalancerIP) {
+                    $servicesMissingIp += $service
+                    $servicesMissingIpText = $servicesMissingIpText + " $service"
+                }
+            }
+            $services = $servicesMissingIp
+            if ($servicesMissingIpText) {
+                Write-Information -MessageData "Waiting for services to get IP: $servicesMissingIpText"
+                Start-Sleep -Seconds 10
+            }
+        }
+        while ($services.Count -ne 0)  
+    }
+}
+function global:AddPortsToLoadBalancerForNamespace([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $expose, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $loadbalanceripAddress) {
+    Write-Information -MessageData "Checking ports in namespace: $namespace"
+    $servicesastext = $(kubectl get svc -n $namespace -o jsonpath="{.items[?(@.metadata.labels.expose == '$expose')].metadata.name}" --ignore-not-found=true)
+
+    if ($servicesastext) {
+        foreach ($service in $servicesastext.Split(" ")) {
+            Write-Information -MessageData "Checking service $service"
+            $portsastext = $(kubectl get svc $service -n $namespace -o jsonpath="{.spec.ports[0].port}")
+            $nodePortsastext = $(kubectl get svc $service -n $namespace -o jsonpath="{.spec.ports[0].nodePort}")
+            if ($portsastext) {
+                $ports = $portsastext.Split(" ")
+                $nodePorts = $nodePortsastext.Split(" ")
+                $nodePort = $nodePorts[0]
+
+                foreach ($port in $ports) {
+                    AddPortToLoadBalancer -loadbalanceripAddress $loadbalanceripAddress -frontendport $port -backendport $nodePort 
+                }
+            }
+        }
+    }
+}
+function global:AddPortToLoadBalancer([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $loadbalanceripAddress, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $frontendport, `
+        [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $backendport) {
+    [hashtable]$Return = @{} 
+
+    $frontendipname = $(az network lb frontend-ip list --resource-group=$resourceGroup --lb-name $loadbalancer --query "[?privateIpAddress=='$loadbalanceripAddress'].name" -o tsv)
+
+    $backendpool = "$resourceGroup"
+
+    # $query = '[?frontendPort == `' + $frontendport + '`].name'
+    # $rulename = $(az network lb rule list --lb-name $loadbalancer --resource-group $resourceGroup --query $query -o tsv)
+
+    # delete previous rule
+    # az network lb rule update --lb-name $loadbalancer --name $rulename --resource-group $resourceGroup --frontend-ip-name $frontendipname
+
+    # $query = '[?frontendPort == `' + $frontendport + '`].probe.id'
+    # $probeid = $(az network lb rule list --lb-name $loadbalancer --resource-group $resourceGroup --query $query -o tsv)
+
+    # $query = '[?id==`' + $probeid + '`].port'
+    # $backendport = $(az network lb probe list -g $resourceGroup --lb-name $loadbalancer --query $query -o tsv)
+
+    if (!$backendport) {
+        throw "no backend port found for frontendport $frontendport in load balancer $loadbalancer"
+    }
+    # $query = '[?id==`' + $probeid + '`].name'
+    # $probename=$(az network lb probe list -g $resourceGroup --lb-name $loadbalancer --query $query -o tsv)
+    
+    # create a new probe
+    $probename = "hcprobe$frontendport"
+    if (!$(az network lb probe list --lb-name $loadbalancer --resource-group $resourceGroup --query "[?name=='$probename'].name" -o tsv)) {
+        Write-Information -MessageData "Creating Probe: $probename with backendport: $backendport"
+        az network lb probe create --lb-name $loadbalancer --resource-group $resourceGroup `
+            --name $probename `
+            --port $backendport `
+            --protocol Tcp 
+    }
+    else {
+        Write-Information -MessageData "Probe: $probename already exists"
+    }
+    
+    $rulename = "hcrule$frontendport"
+    if (!$(az network lb rule list --lb-name $loadbalancer --resource-group $resourceGroup --query "[?name=='$rulename'].name" -o tsv)) {
+        Write-Information -MessageData "Creating rule: $rulename with frontendport: $frontendport backendport: $backendport"
+        az network lb rule create --lb-name $loadbalancer --resource-group $resourceGroup --name $rulename --protocol Tcp `
+            --backend-port $backendport --frontend-port $frontendport `
+            --frontend-ip-name $frontendipname --backend-pool-name $backendpool `
+            --probe-name $probename
+    }
+    else {
+        Write-Information -MessageData "Rule: $rulename already exists"        
+    }
+
+    # name
+    # frontend-ip-name
+    # port 3307
+    # backendport from health probe
+    # backend pool
+    # health probe
+
+    # az network lb frontend-ip delete --lb-name $loadbalancer --name "afc6ca56f652011e8878b000d3a3225e-default" --resource-group $resourceGroup
+
+    return $Return
+}
+
 #-------------------
 Write-Information -MessageData "end common.ps1 version $versioncommon"

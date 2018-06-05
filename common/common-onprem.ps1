@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.06.05.03"
+$versiononpremcommon = "2018.06.05.04"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -109,7 +109,6 @@ function SetupNewMasterNode([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty(
     # https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/
     sudo kubeadm init --kubernetes-version=v${kubernetesserverversion} --pod-network-cidr=10.244.0.0/16 --skip-token-print --apiserver-cert-extra-sans $(hostname --fqdn)
     $result = $LastExitCode
-    # $result = $?
     if($result -ne 0){
         WriteToLog $result
         throw "Error running kubeadm init: $result"
@@ -608,8 +607,9 @@ function UninstallDockerAndKubernetes() {
 function lockPackageVersion([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$packagelist) {
     $packages = $packagelist.Split(" ");
     foreach ($name in $packages) {
-        sudo yum list installed $name 
-        if (!($?)) {
+        sudo yum list installed $name
+        $result = $LASTEXITCODE
+        if ($result -eq 0) {
             sudo yum versionlock add $name 2>&1 >> yum.log
         }
     }
@@ -754,8 +754,8 @@ function mountSMBWithParams([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty(
         WriteToLog "Mounting as UNC folder"
         WriteToLog "sudo mount --verbose -t cifs $pathToShare /mnt/data -o username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm"
         sudo mount --verbose -t cifs $pathToShare /mnt/data -o "username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm"
-        $result=$?
-        if($result -ne $true){
+        $result=$LASTEXITCODE
+        if($result -ne 0){
             throw "Unable to mount $pathToShare with username=$username,domain=$domain"
         }
         echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,domain=$domain,password=$password,dir_mode=0777,file_mode=0777,sec=ntlm" | sudo tee -a /etc/fstab > /dev/null
@@ -763,8 +763,8 @@ function mountSMBWithParams([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty(
     else {
         WriteToLog "Mounting as non-UNC folder"
         sudo mount --verbose -t cifs $pathToShare /mnt/data -o "username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino"
-        $result=$?
-        if($result -ne $true){
+        $result=$LASTEXITCODE
+        if($result -ne 0){
             throw "Unable to mount $pathToShare with username=$username"
         }
         echo "$pathToShare /mnt/data cifs nofail,vers=2.1,username=$username,password=$password,dir_mode=0777,file_mode=0777,serverino" | sudo tee -a /etc/fstab > /dev/null       

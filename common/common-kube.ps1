@@ -1,5 +1,5 @@
 # this file contains common functions for kubernetes
-$versionkubecommon = "2018.05.31.02"
+$versionkubecommon = "2018.06.05.01"
 
 $set = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
 $randomstring += $set | Get-Random
@@ -402,8 +402,8 @@ function global:DeployYamlFile([Parameter(Mandatory = $true)][ValidateNotNullOrE
     [hashtable]$Return = @{} 
 
     $(ReadYamlAndReplaceTokens -baseUrl $baseUrl -templateFile $templateFile -local $local -tokens $tokens).Content | kubectl apply -f -
-    $result = $?
-    if ($result -ne $True) {
+    $result = $LASTEXITCODE
+    if ($result -ne 0) {
         throw "Error applying kubernetes template: $templateFile"
     }
     return $Return
