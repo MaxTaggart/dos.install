@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.05.31.01"
+$versionazurecommon = "2018.06.05.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -136,8 +136,8 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
 
     # if kubectl can connect to it
     kubectl get secrets
-    $result = $?
-    if ($result) {
+    $result = $LASTEXITCODE
+    if ($result -ne 0) {
         CopyKubernetesSecretsToKeyVault -resourceGroup $AKS_PERS_RESOURCE_GROUP
     }
 
@@ -337,8 +337,8 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
         #                     --output-directory "$acsoutputfolder"
 
         acs-engine generate $output --output-directory $acsoutputfolder
-
-        if ($?) {            
+        $result = $LASTEXITCODE
+        if ($result -ne 0) {            
             Write-Host "ACS Engine generated the template successfully"            
         }
         else {            

@@ -1,4 +1,4 @@
-$versionmenutroubleshooting = "2018.05.08.01"
+$versionmenutroubleshooting = "2018.06.05.01"
 
 Write-Information -MessageData "Including troubleshooting-menu.ps1 version $versionmenucommon"
 function global:GetTroubleshootingMenuVersion() {
@@ -28,6 +28,7 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [b
         Write-Host "31: Create a Single Node Cluster"
         Write-Host "32: Mount folder"
         Write-Host "33: Create kubeconfig"
+        Write-Host "34: Move TCP ports to main LoadBalancer"
         Write-Host "--- helpers ---"
         Write-Host "41: Optimize Centos under Hyper-V"
         Write-Host "q: Go back to main menu"
@@ -83,7 +84,9 @@ function showTroubleshootingMenu([ValidateNotNullOrEmpty()][string] $baseUrl, [b
             '33' {
                 GenerateKubeConfigFile
             } 
-                
+            '34' {
+                MovePortsToLoadBalancer -resourceGroup $(GetResourceGroup).ResourceGroup
+            } 
             '41' {
                 OptimizeCentosForHyperv
             } 
