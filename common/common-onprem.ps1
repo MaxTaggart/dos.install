@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.05.29.01"
+$versiononpremcommon = "2018.06.05.01"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
@@ -110,7 +110,8 @@ function SetupNewMasterNode([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty(
     sudo kubeadm init --kubernetes-version=v${kubernetesserverversion} --pod-network-cidr=10.244.0.0/16 --skip-token-print --apiserver-cert-extra-sans $(hostname --fqdn)
     $result = $?
     if($result -ne $True){
-        throw "Error running kubeadm init"
+        WriteToLog $result
+        throw "Error running kubeadm init: $result"
     }
 
     WriteToLog "Troubleshooting kubeadm: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/"
