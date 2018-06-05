@@ -1,4 +1,4 @@
-$versiononpremcommon = "2018.06.05.02"
+$versiononpremcommon = "2018.06.05.03"
 
 Write-Information -MessageData "Including common-onprem.ps1 version $versiononpremcommon"
 function global:GetCommonOnPremVersion() {
