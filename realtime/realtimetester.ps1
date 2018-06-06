@@ -22,11 +22,13 @@ $randomstring += $set | Get-Random
 
 Write-Host "Powershell version: $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor).$($PSVersionTable.PSVersion.Build)"
 
-DownloadFile -url $url -targetFile "$AKS_LOCAL_FOLDER\acs-engine.zip"
+$url = "https://github.com/HealthCatalyst/Fabric.Realtime.Tester/releases/download/1.0.0.1/RealtimeTester.zip"
+
+DownloadFile -url $url -targetFile "RealtimeTester.zip"
 
 # for some reason the download is not completely done by the time we get here
 Write-Host "Waiting for 10 seconds"
 Start-Sleep -Seconds 10
 
-Expand-Archive -Path "$AKS_LOCAL_FOLDER\acs-engine.zip" -DestinationPath "$AKS_LOCAL_FOLDER" -Force
+Expand-Archive -Path "RealtimeTester.zip" -DestinationPath "." -Force
 
