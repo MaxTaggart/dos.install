@@ -6,10 +6,10 @@ metadata:
   annotations:
     # from https://radu-matei.com/blog/k8s-appsvc/
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
-    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: $INTERNALSUBNET$
+    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: $EXTERNALSUBNET$
   labels:
     dns: rserve    
-    expose: internal
+    expose: external
 spec:
   selector:
     app: rserve
