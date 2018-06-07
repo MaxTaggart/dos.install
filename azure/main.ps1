@@ -1,5 +1,5 @@
 param([bool]$prerelease, [bool]$local)    
-$version = "2018.05.31.01"
+$version = "2018.06.06.01"
 Write-Host "--- main.ps1 version $version ---"
 Write-Host "prerelease flag: $prerelease"
 
@@ -124,11 +124,13 @@ while ($userinput -ne "q") {
     Write-Host "-----------"
     Write-Host "50: Troubleshooting Menu"
     Write-Host "-----------"
-    Write-Host "51: Fabric NLP Menu"
+    Write-Host "51: Fabric.NLP Menu"
     Write-Host "-----------"
-    Write-Host "52: Fabric Realtime Menu"
+    Write-Host "52: Fabric.Realtime Menu"
     Write-Host "-----------"
-    Write-Host "53: Fabric MachineLearning Menu"
+    Write-Host "53: Fabric.MachineLearning Menu"
+    Write-Host "-----------"
+    Write-Host "54: Fabric.EHR Menu"
     Write-Host "-----------"
     Write-Host "q: Quit"
     $userinput = Read-Host "Please make a selection"
@@ -300,6 +302,10 @@ while ($userinput -ne "q") {
         } 
         '53' {
             showMenu -baseUrl $GITHUB_URL -namespace "fabricmachinelearning" -isAzure $true
+            $skip = $true
+        } 
+        '54' {
+            showMenu -baseUrl $GITHUB_URL -namespace "fabricehr" -isAzure $true
             $skip = $true
         } 
         'q' {
