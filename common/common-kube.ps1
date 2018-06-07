@@ -996,14 +996,14 @@ function ShowSSHCommandsToContainers([Parameter(Mandatory = $true)][ValidateNotN
 function global:WriteSecretPasswordToOutput([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname) {
     $secretvalue = $(ReadSecretPassword -secretname $secretname -namespace $namespace)
     Write-Host "$secretname = $secretvalue"
-    Write-Host "To recreate the secret:"
-    Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
+    # Write-Host "To recreate the secret:"
+    # Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
 }
 function global:WriteSecretValueToOutput([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname) {
     $secretvalue = $(ReadSecretValue -secretname $secretname -namespace $namespace)
     Write-Host "$secretname = $secretvalue"
-    Write-Host "To recreate the secret:"
-    Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$secretvalue"
+    # Write-Host "To recreate the secret:"
+    # Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$secretvalue"
 }
 
 function global:RunRealtimeTester([ValidateNotNullOrEmpty()][string] $baseUrl) {

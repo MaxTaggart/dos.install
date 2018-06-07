@@ -82,7 +82,7 @@
         },
         "ingress": {
             "http": [
-                "web.yaml",
+                "certificateserver.yaml",
                 "rabbitmq.yaml",
                 "interfaceengine.yaml"
             ],
