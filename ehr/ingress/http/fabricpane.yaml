@@ -19,7 +19,7 @@ spec:
   rules:
   - http:
       paths:
-      - path: /fabricpane
+      - path: /ehr
         backend:
           serviceName: fabricpane
           servicePort: 80
