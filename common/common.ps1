@@ -1912,7 +1912,7 @@ function global:MovePortsToLoadBalancerForNamespace([Parameter(Mandatory = $true
         [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     [hashtable]$Return = @{} 
 
-    Write-Information -MessageData "Checking if load balancers are setup correctly for resourceGroup: $resourceGroup"
+    Write-Information -MessageData "Checking if load balancers are setup correctly for resourceGroup: $resourceGroup in namespace: $namespace"
     # 1. assign the nics to the loadbalancer
 
     # find loadbalancer with name 
@@ -2028,7 +2028,20 @@ function global:AddPortToLoadBalancer([Parameter(Mandatory = $true)][ValidateNot
     # $probename=$(az network lb probe list -g $resourceGroup --lb-name $loadbalancer --query $query -o tsv)
     
     # create a new probe
+    $rulename = "hcrule$frontendport"
     $probename = "hcprobe$frontendport"
+
+    # delete old rules and probes
+    if ($(az network lb rule list --lb-name $loadbalancer --resource-group $resourceGroup --query "[?name=='$rulename'].name" -o tsv)) {
+        Write-Information -MessageData "Deleting old rule: $rulename"
+        az network lb rule delete --lb-name $loadbalancer --resource-group $resourceGroup --name $rulename
+    }
+
+    if ($(az network lb probe list --lb-name $loadbalancer --resource-group $resourceGroup --query "[?name=='$probename'].name" -o tsv)) {
+        Write-Information -MessageData "Deleting old probe: $probename"
+        az network lb probe delete --lb-name $loadbalancer --resource-group $resourceGroup --name $probename
+    }
+
     if (!$(az network lb probe list --lb-name $loadbalancer --resource-group $resourceGroup --query "[?name=='$probename'].name" -o tsv)) {
         Write-Information -MessageData "Creating Probe: $probename with backendport: $backendport"
         az network lb probe create --lb-name $loadbalancer --resource-group $resourceGroup `
@@ -2040,7 +2053,6 @@ function global:AddPortToLoadBalancer([Parameter(Mandatory = $true)][ValidateNot
         Write-Information -MessageData "Probe: $probename already exists"
     }
     
-    $rulename = "hcrule$frontendport"
     if (!$(az network lb rule list --lb-name $loadbalancer --resource-group $resourceGroup --query "[?name=='$rulename'].name" -o tsv)) {
         Write-Information -MessageData "Creating rule: $rulename with frontendport: $frontendport backendport: $backendport"
         az network lb rule create --lb-name $loadbalancer --resource-group $resourceGroup --name $rulename --protocol Tcp `
