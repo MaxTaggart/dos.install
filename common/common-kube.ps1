@@ -988,7 +988,7 @@ function DeleteAllPodsInNamespace([Parameter(Mandatory = $true)][ValidateNotNull
 function ShowSSHCommandsToContainers([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     foreach ($pod in $pods.Split(" ")) {
-        Write-Host "kubectl exec -it $pod -n fabricnlp -- sh"
+        Write-Host "kubectl exec -it $pod -n $namespace -- sh"
     }
 
 }
