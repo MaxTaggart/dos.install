@@ -56,6 +56,9 @@ spec:
           #   initialDelaySeconds: 5
           #   periodSeconds: 5
           #   failureThreshold: 30          
+          resources:
+              requests:
+                  memory: "8Gi"
       # give pod more time to finish solr indexing
       terminationGracePeriodSeconds: 10      
       volumes:
