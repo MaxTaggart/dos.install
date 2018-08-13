@@ -49,13 +49,12 @@ spec:
           #     port: 8084
           #   initialDelaySeconds: 60
           #   periodSeconds: 60
-          resources:
-              requests:
-                  memory: "8Gi"
           volumeMounts:
             - name: jobs-persistent-storage
               mountPath: /opt/jobWork/
               subPath: jobs
+      nodeSelector:
+          joborsolr: job
       volumes:
       - name: jobs-persistent-storage
         persistentVolumeClaim:
