@@ -56,6 +56,8 @@ spec:
           #   initialDelaySeconds: 5
           #   periodSeconds: 5
           #   failureThreshold: 30          
+      nodeSelector:
+          joborsolr: solr
       # give pod more time to finish solr indexing
       terminationGracePeriodSeconds: 10      
       volumes:
