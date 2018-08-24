@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.08.24.01"
+$versionazurecommon = "2018.08.24.02"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -337,11 +337,12 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
         #                     --output-directory "$acsoutputfolder"
 
         acs-engine generate $output --output-directory $acsoutputfolder
-        $result = $LASTEXITCODE
-        if ($result -ne 0) {            
+        $result = $?
+        if ($result -eq $True) {            
             Write-Host "ACS Engine generated the template successfully"            
         }
         else {            
+            Write-Host "ACS Engine threw error code $result"            
             exit 1          
         } 
     }
