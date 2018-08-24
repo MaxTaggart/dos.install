@@ -1,8 +1,8 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: realtime.ingress
-  namespace: fabricrealtime
+  name: ehr.ingress
+  namespace: fabricehr
   labels:  
     expose: external        
   annotations:
@@ -19,7 +19,7 @@ spec:
   rules:
   - http:
       paths:
-      - path: /certificates
+      - path: /ehr
         backend:
-          serviceName: certificateserverpublic
+          serviceName: fabricpane
           servicePort: 80

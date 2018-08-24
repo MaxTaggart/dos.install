@@ -1,0 +1,14 @@
+# ----- Services exposed to the outside world ------
+# solr web server
+kind: Service
+apiVersion: v1
+metadata:
+  name: fabricpane
+  namespace: fabricehr
+spec:
+  selector:
+    app: fabricpane
+  ports:
+  - port: 80
+    targetPort: 3000
+---

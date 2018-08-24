@@ -1,0 +1,21 @@
+{
+    "$schema": "https://raw.githubusercontent.com/HealthCatalyst/dos.install/master/templates/schema.json",
+    "name": "Fabric EHR",
+    "version": "4.0.0.2",
+    "ports": [],
+    "resources": {
+        "pods": [
+            "fabricpane.yaml"
+        ],
+        "services": {
+            "external": [
+                "fabricpane.yaml"
+            ]
+        },
+        "ingress": {
+            "http": [
+                "fabricpane.yaml"
+            ]
+        }
+    }
+}

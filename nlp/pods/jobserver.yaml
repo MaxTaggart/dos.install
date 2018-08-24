@@ -53,6 +53,8 @@ spec:
             - name: jobs-persistent-storage
               mountPath: /opt/jobWork/
               subPath: jobs
+      nodeSelector:
+          joborsolr: job
       volumes:
       - name: jobs-persistent-storage
         persistentVolumeClaim:

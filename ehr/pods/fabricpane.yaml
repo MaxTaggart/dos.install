@@ -1,0 +1,63 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+# name for this pod
+  name: fabricpane
+# namespace for this pod
+  namespace: fabricehr
+  labels:
+    app: fabricpane
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3  # Clean-up old Replica Sets deployed; only keep previous 3.
+  strategy:
+    # We need to kill the existing Pod before creating an new one
+    # for the new one to be able to attach the persistent disk.
+    type: Recreate        
+  selector:
+    matchLabels:
+      app: fabricpane
+  template:
+    metadata:
+      labels:
+        app: fabricpane
+    spec:
+      containers:
+        # name of this pod
+        - name: fabricpane
+          # image to pull
+          image: healthcatalyst/fabric.ehr:latest
+          # specify to always pull a new image
+          imagePullPolicy: Always
+          # environment variables
+          env:
+            - name: SQLUser
+              valueFrom:
+                secretKeyRef:
+                  name: ehrserviceaccount
+                  key: user
+            - name: SQLPassword
+              valueFrom:
+                secretKeyRef:
+                  name: ehrserviceaccount
+                  key: password
+            - name: ADDomain
+              valueFrom:
+                secretKeyRef:
+                  name: ehrserviceaccount
+                  key: domain
+            - name: AD_DOMAIN_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: ehrserviceaccount
+                  key: domainserver
+            - name: SQLServer
+              valueFrom:
+                secretKeyRef:
+                  name: ehrsqlserver
+                  key: value
+          ports:
+            - containerPort: 3000
+              # name of the port
+              name: fabricpane
+         

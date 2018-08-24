@@ -1,4 +1,4 @@
-$versionmenucommon = "2018.06.05.01"
+$versionmenucommon = "2018.06.06.01"
 
 Write-Information -MessageData "Including product-menu.ps1 version $versionmenucommon"
 function global:GetCommonMenuVersion() {
@@ -47,52 +47,117 @@ function InstallProduct([ValidateNotNullOrEmpty()][string] $baseUrl, `
     elseif ($namespace -eq "fabricmachinelearning") {
         CreateNamespaceIfNotExists $namespace
 
-        $USERNAME = Read-Host "Service account user: (Default: $($env:USERNAME))"
-        if ([string]::IsNullOrWhiteSpace($USERNAME)) {
-            $USERNAME = $($env:USERNAME)
-        }
+        $serviceaccountsecretname="mlserviceaccount"
+        $sqlserversecretname="mltestsqlserver"
+        if ([string]::IsNullOrWhiteSpace($(kubectl get secret $serviceaccountsecretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
 
-        $AD_DOMAIN = Read-Host "Active Directory domain: (Default: $($env:USERDNSDOMAIN))"
-        if ([string]::IsNullOrWhiteSpace($AD_DOMAIN)) {
-            $AD_DOMAIN = $env:USERDNSDOMAIN
-        }
+            $USERNAME = Read-Host "Service account user: (Default: $($env:USERNAME))"
+            if ([string]::IsNullOrWhiteSpace($USERNAME)) {
+                $USERNAME = $($env:USERNAME)
+            }
+
+            $AD_DOMAIN = Read-Host "Active Directory domain: (Default: $($env:USERDNSDOMAIN))"
+            if ([string]::IsNullOrWhiteSpace($AD_DOMAIN)) {
+                $AD_DOMAIN = $env:USERDNSDOMAIN
+            }
         
-        $AD_DOMAIN_SERVER = $($env:LOGONSERVER).Replace("\\", "")
-        $AD_DOMAIN_SERVER = Read-Host "Active Directory domain server: (Default: $AD_DOMAIN_SERVER)"
-        if ([string]::IsNullOrWhiteSpace($AD_DOMAIN_SERVER)) {
             $AD_DOMAIN_SERVER = $($env:LOGONSERVER).Replace("\\", "")
-        }
+            $AD_DOMAIN_SERVER = Read-Host "Active Directory domain server: (Default: $AD_DOMAIN_SERVER)"
+            if ([string]::IsNullOrWhiteSpace($AD_DOMAIN_SERVER)) {
+                $AD_DOMAIN_SERVER = $($env:LOGONSERVER).Replace("\\", "")
+            }
 
-        Do {$password = Read-Host -assecurestring -Prompt "Please enter your password for ${USERNAME}@${AD_DOMAIN}"} while ($($password.Length) -lt 1)
-        $password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
+            Do {$password = Read-Host -assecurestring -Prompt "Please enter your password for ${USERNAME}@${AD_DOMAIN}"} while ($($password.Length) -lt 1)
+            $password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
 
-        $TEST_SQL_SERVER = "$env:computername.$env:userdnsdomain"
-        $TEST_SQL_SERVER = Read-Host "Test SQL Server: (Default: $TEST_SQL_SERVER)"
-        if ([string]::IsNullOrWhiteSpace($TEST_SQL_SERVER)) {
             $TEST_SQL_SERVER = "$env:computername.$env:userdnsdomain"
-        }
+            $TEST_SQL_SERVER = Read-Host "Test SQL Server: (Default: $TEST_SQL_SERVER)"
+            if ([string]::IsNullOrWhiteSpace($TEST_SQL_SERVER)) {
+                $TEST_SQL_SERVER = "$env:computername.$env:userdnsdomain"
+            }
 
-        $secretvalues = @()
-        $secretvalues += @{
-            secretkey   = "user" 
-            secretvalue = "$USERNAME"
-        }
-        $secretvalues += @{
-            secretkey   = "password" 
-            secretvalue = "$password"
-        }
-        $secretvalues += @{
-            secretkey   = "domain" 
-            secretvalue = "$AD_DOMAIN"
-        }
-        $secretvalues += @{
-            secretkey   = "domainserver" 
-            secretvalue = "$AD_DOMAIN_SERVER"
-        }
-        SaveMultipleSecretValues -namespace $namespace -secretname "mlserviceaccount" -secretvalues $secretvalues
+            $secretvalues = @()
+            $secretvalues += @{
+                secretkey   = "user" 
+                secretvalue = "$USERNAME"
+            }
+            $secretvalues += @{
+                secretkey   = "password" 
+                secretvalue = "$password"
+            }
+            $secretvalues += @{
+                secretkey   = "domain" 
+                secretvalue = "$AD_DOMAIN"
+            }
+            $secretvalues += @{
+                secretkey   = "domainserver" 
+                secretvalue = "$AD_DOMAIN_SERVER"
+            }
+            SaveMultipleSecretValues -namespace $namespace -secretname "$serviceaccountsecretname" -secretvalues $secretvalues
 
-        SaveSecretValue -secretname "mltestsqlserver" -valueName "value" -value "$TEST_SQL_SERVER" -namespace $namespace
+            SaveSecretValue -secretname "$sqlserversecretname" -valueName "value" -value "$TEST_SQL_SERVER" -namespace $namespace
+        }
+    
+        InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder $folder -isAzure $isAzure `
+            -externalIp $externalIP -internalIp $internalIP `
+            -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName                  `
+            -local $false
+    }
+    elseif ($namespace -eq "fabricehr") {
+        CreateNamespaceIfNotExists $namespace
 
+        $serviceaccountsecretname="ehrserviceaccount"
+        $sqlserversecretname="ehrsqlserver"
+
+        if ([string]::IsNullOrWhiteSpace($(kubectl get secret $serviceaccountsecretname -n $namespace -o jsonpath='{.data}' --ignore-not-found=true))) {
+
+            $USERNAME = Read-Host "Service account user: (Default: $($env:USERNAME))"
+            if ([string]::IsNullOrWhiteSpace($USERNAME)) {
+                $USERNAME = $($env:USERNAME)
+            }
+
+            $AD_DOMAIN = Read-Host "Active Directory domain: (Default: $($env:USERDNSDOMAIN))"
+            if ([string]::IsNullOrWhiteSpace($AD_DOMAIN)) {
+                $AD_DOMAIN = $env:USERDNSDOMAIN
+            }
+        
+            $AD_DOMAIN_SERVER = $($env:LOGONSERVER).Replace("\\", "")
+            $AD_DOMAIN_SERVER = Read-Host "Active Directory domain server: (Default: $AD_DOMAIN_SERVER)"
+            if ([string]::IsNullOrWhiteSpace($AD_DOMAIN_SERVER)) {
+                $AD_DOMAIN_SERVER = $($env:LOGONSERVER).Replace("\\", "")
+            }
+
+            Do {$password = Read-Host -assecurestring -Prompt "Please enter your password for ${USERNAME}@${AD_DOMAIN}"} while ($($password.Length) -lt 1)
+            $password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
+
+            $TEST_SQL_SERVER = "$env:computername.$env:userdnsdomain"
+            $TEST_SQL_SERVER = Read-Host "Test SQL Server: (Default: $TEST_SQL_SERVER)"
+            if ([string]::IsNullOrWhiteSpace($TEST_SQL_SERVER)) {
+                $TEST_SQL_SERVER = "$env:computername.$env:userdnsdomain"
+            }
+
+            $secretvalues = @()
+            $secretvalues += @{
+                secretkey   = "user" 
+                secretvalue = "$USERNAME"
+            }
+            $secretvalues += @{
+                secretkey   = "password" 
+                secretvalue = "$password"
+            }
+            $secretvalues += @{
+                secretkey   = "domain" 
+                secretvalue = "$AD_DOMAIN"
+            }
+            $secretvalues += @{
+                secretkey   = "domainserver" 
+                secretvalue = "$AD_DOMAIN_SERVER"
+            }
+            SaveMultipleSecretValues -namespace $namespace -secretname "$serviceaccountsecretname" -secretvalues $secretvalues
+
+            SaveSecretValue -secretname "$sqlserversecretname" -valueName "value" -value "$TEST_SQL_SERVER" -namespace $namespace
+        }
+    
         InstallStack -namespace $namespace -baseUrl $baseUrl -appfolder $folder -isAzure $isAzure `
             -externalIp $externalIP -internalIp $internalIP `
             -externalSubnetName $externalSubnetName -internalSubnetName $internalSubnetName                  `

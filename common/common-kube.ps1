@@ -402,8 +402,8 @@ function global:DeployYamlFile([Parameter(Mandatory = $true)][ValidateNotNullOrE
     [hashtable]$Return = @{} 
 
     $(ReadYamlAndReplaceTokens -baseUrl $baseUrl -templateFile $templateFile -local $local -tokens $tokens).Content | kubectl apply -f -
-    $result = $LASTEXITCODE
-    if ($result -ne 0) {
+    $result = $?
+    if ($result -ne $True) {
         throw "Error applying kubernetes template: $templateFile"
     }
     return $Return
@@ -988,7 +988,7 @@ function DeleteAllPodsInNamespace([Parameter(Mandatory = $true)][ValidateNotNull
 function ShowSSHCommandsToContainers([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace) {
     $pods = $(kubectl get pods -n $namespace -o jsonpath='{.items[*].metadata.name}')
     foreach ($pod in $pods.Split(" ")) {
-        Write-Host "kubectl exec -it $pod -n fabricnlp -- sh"
+        Write-Host "kubectl exec -it $pod -n $namespace -- sh"
     }
 
 }
@@ -996,14 +996,14 @@ function ShowSSHCommandsToContainers([Parameter(Mandatory = $true)][ValidateNotN
 function global:WriteSecretPasswordToOutput([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname) {
     $secretvalue = $(ReadSecretPassword -secretname $secretname -namespace $namespace)
     Write-Host "$secretname = $secretvalue"
-    Write-Host "To recreate the secret:"
-    Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
+    # Write-Host "To recreate the secret:"
+    # Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=password=$secretvalue"
 }
 function global:WriteSecretValueToOutput([Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $namespace, [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string] $secretname) {
     $secretvalue = $(ReadSecretValue -secretname $secretname -namespace $namespace)
     Write-Host "$secretname = $secretvalue"
-    Write-Host "To recreate the secret:"
-    Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$secretvalue"
+    # Write-Host "To recreate the secret:"
+    # Write-Host "kubectl create secret generic $secretname --namespace=$namespace --from-literal=value=$secretvalue"
 }
 
 function global:RunRealtimeTester([ValidateNotNullOrEmpty()][string] $baseUrl) {
