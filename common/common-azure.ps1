@@ -1,6 +1,6 @@
 # This file contains common functions for Azure
 # 
-$versionazurecommon = "2018.06.05.01"
+$versionazurecommon = "2018.08.24.01"
 
 Write-Information -MessageData "---- Including common-azure.ps1 version $versionazurecommon -----"
 function global:GetCommonAzureVersion() {
@@ -137,7 +137,7 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
     # if kubectl can connect to it
     kubectl get secrets
     $result = $?
-    if ($result -ne $True) {
+    if ($result -eq $True) {
         CopyKubernetesSecretsToKeyVault -resourceGroup $AKS_PERS_RESOURCE_GROUP
     }
 
