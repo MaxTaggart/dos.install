@@ -402,8 +402,8 @@ function global:DeployYamlFile([Parameter(Mandatory = $true)][ValidateNotNullOrE
     [hashtable]$Return = @{} 
 
     $(ReadYamlAndReplaceTokens -baseUrl $baseUrl -templateFile $templateFile -local $local -tokens $tokens).Content | kubectl apply -f -
-    $result = $LASTEXITCODE
-    if ($result -ne 0) {
+    $result = $?
+    if ($result -ne $True) {
         throw "Error applying kubernetes template: $templateFile"
     }
     return $Return

@@ -136,8 +136,8 @@ function global:CreateACSCluster([Parameter(Mandatory = $true)][ValidateNotNullO
 
     # if kubectl can connect to it
     kubectl get secrets
-    $result = $LASTEXITCODE
-    if ($result -ne 0) {
+    $result = $?
+    if ($result -ne $True) {
         CopyKubernetesSecretsToKeyVault -resourceGroup $AKS_PERS_RESOURCE_GROUP
     }
 
